@@ -2,16 +2,9 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { usePosStore } from '../store/posStore';
-import { KeyRound, Mail, Lock, Store, ChefHat, Coffee, Shield, ShoppingBag } from 'lucide-react';
+import { KeyRound, Mail, Lock, Store, ShoppingBag } from 'lucide-react';
 
 
-
-const ROLE_CONFIG = {
-  admin: { icon: Shield, color: '#fb923c', label: 'Admin', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.3)' },
-  manager: { icon: Store, color: '#60a5fa', label: 'Manager', bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.3)' },
-  waiter: { icon: Coffee, color: '#a78bfa', label: 'Waiter', bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.3)' },
-  kitchen_manager: { icon: ChefHat, color: '#f43f5e', label: 'Kitchen', bg: 'rgba(244,63,94,0.1)', border: 'rgba(244,63,94,0.3)' },
-};
 
 export default function Login() {
   const [email, setEmail] = useState('');
