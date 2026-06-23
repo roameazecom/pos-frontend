@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { usePosStore } from '../store/posStore';
-import { KeyRound, Mail, Lock, Store, ShoppingBag } from 'lucide-react';
+import { KeyRound, Mail, Lock, Store, Coffee, ChefHat, ShoppingBag } from 'lucide-react';
 
 
 
