@@ -2,13 +2,9 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { usePosStore } from '../store/posStore';
-import { KeyRound, Mail, Lock, Store, ChevronRight, User, ChefHat, Coffee, Shield, ShoppingBag } from 'lucide-react';
+import { KeyRound, Mail, Lock, Store, ChefHat, Coffee, Shield, ShoppingBag } from 'lucide-react';
 
-const DUMMY_USERS = [
-  { id: 1, name: 'Admin User', email: 'admin@appthat.com', password: 'password', role: 'admin' },
-  { id: 2, name: 'John Waiter', email: 'waiter@appthat.com', password: 'password', role: 'waiter' },
-  { id: 3, name: 'Chef Mario', email: 'kitchen@appthat.com', password: 'password', role: 'kitchen_manager' }
-];
+
 
 const ROLE_CONFIG = {
   admin: { icon: Shield, color: '#fb923c', label: 'Admin', bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.3)' },
@@ -44,17 +40,7 @@ export default function Login() {
     }
   };
 
-  const handleQuickLogin = async (userEmail, userPassword) => {
-    setError('');
-    setIsLoading(true);
-    try {
-      const user = await login(userEmail, userPassword);
-      redirectUser(user.role);
-    } catch (err) {
-      setError(err.message);
-      setIsLoading(false);
-    }
-  };
+
 
   const redirectUser = (role) => {
     if (from !== '/') { navigate(from, { replace: true }); return; }
@@ -253,52 +239,7 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex-1 h-px bg-surface-700" />
-            <span className="text-xs font-bold uppercase tracking-widest text-surface-400">or quick access</span>
-            <div className="flex-1 h-px bg-surface-700" />
-          </div>
 
-          {/* Quick login cards */}
-          <div className="grid grid-cols-1 gap-3">
-            {DUMMY_USERS.map((u) => {
-              const config = ROLE_CONFIG[u.role] || ROLE_CONFIG.admin;
-              const Icon = config.icon;
-              return (
-                <button
-                  key={u.id}
-                  onClick={() => handleQuickLogin(u.email, u.password)}
-                  disabled={isLoading}
-                  className="flex items-center gap-4 p-4 rounded-2xl text-left transition-all duration-300 group hover-lift disabled:opacity-50"
-                  style={{
-                    background: 'rgba(255,255,255,0.85)',
-                    border: `1px solid rgba(0,0,0,0.06)`,
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.background = config.bg;
-                    e.currentTarget.style.border = `1px solid ${config.border}`;
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.85)';
-                    e.currentTarget.style.border = '1px solid rgba(0,0,0,0.06)';
-                  }}
-                >
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all" style={{
-                    background: config.bg,
-                    border: `1px solid ${config.border}`
-                  }}>
-                    <Icon className="w-5 h-5" style={{ color: config.color }} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-black text-sm text-surface-100">{u.name}</p>
-                    <p className="text-xs font-bold uppercase tracking-wider mt-0.5" style={{ color: config.color }}>{config.label}</p>
-                  </div>
-                  <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1 text-surface-400" />
-                </button>
-              );
-            })}
-          </div>
         </div>
 
         {/* Mobile footer */}
