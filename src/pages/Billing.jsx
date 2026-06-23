@@ -1,0 +1,607 @@
+import { useState, useMemo } from 'react';
+import { usePosStore } from '../store/posStore';
+import { useAuthStore } from '../store/authStore';
+import {
+  Printer, CreditCard, Banknote, User, Phone, X, History,
+  Search, Receipt, ShoppingBag, Bike, Coffee, CheckCircle2,
+  Filter
+} from 'lucide-react';
+
+export default function Billing() {
+  const { orders, orderHistory, tables, checkoutOrder, restaurantDetails } = usePosStore();
+  const { user } = useAuthStore();
+  const [viewTab, setViewTab] = useState('active');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [paymentType, setPaymentType] = useState('Cash');
+  const [checkoutName, setCheckoutName] = useState('');
+  const [checkoutPhone, setCheckoutPhone] = useState('');
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({ dateRange: 'all', paymentType: 'all', orderType: 'all' });
+
+  const activeOrders = orders.filter(o => o.status === 'open');
+  const selectedOrder = activeOrders.find(o => o.id === selectedOrderId);
+  const subtotal = selectedOrder ? selectedOrder.subtotal : 0;
+  const taxRate = restaurantDetails?.tax_percent ? (restaurantDetails.tax_percent / 100) : 0.05;
+  const netSubtotal = Math.max(0, subtotal - discountAmount);
+  const calculatedTax = selectedOrder ? netSubtotal * taxRate : 0;
+  const total = selectedOrder ? netSubtotal + calculatedTax : 0;
+
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    try {
+      const isoStr = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T') + '+05:30';
+      return new Date(isoStr).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+    } catch { return 'Invalid Date'; }
+  };
+
+  const isToday = (d) => { const dt = new Date(d.includes('T') ? d : d.replace(' ', 'T') + '+05:30'); const t = new Date(); return dt.getDate() === t.getDate() && dt.getMonth() === t.getMonth() && dt.getFullYear() === t.getFullYear(); };
+  const isYesterday = (d) => { const dt = new Date(d.includes('T') ? d : d.replace(' ', 'T') + '+05:30'); const y = new Date(); y.setDate(y.getDate() - 1); return dt.getDate() === y.getDate() && dt.getMonth() === y.getMonth() && dt.getFullYear() === y.getFullYear(); };
+  const isThisWeek = (d) => { const dt = new Date(d.includes('T') ? d : d.replace(' ', 'T') + '+05:30'); const t = new Date(); const f = new Date(t.setDate(t.getDate() - t.getDay())); return dt >= f; };
+
+  const filteredHistory = useMemo(() => {
+    return orderHistory.filter(o => {
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const match = (o.customer_phone && o.customer_phone.includes(q)) ||
+          (o.customer_name && o.customer_name.toLowerCase().includes(q)) ||
+          (o.id && o.id.toString().includes(q));
+        if (!match) return false;
+      }
+      if (filters.dateRange !== 'all') {
+        if (filters.dateRange === 'today' && !isToday(o.created_at)) return false;
+        if (filters.dateRange === 'yesterday' && !isYesterday(o.created_at)) return false;
+        if (filters.dateRange === 'this_week' && !isThisWeek(o.created_at)) return false;
+      }
+      if (filters.paymentType !== 'all' && o.payment_type !== filters.paymentType) return false;
+      if (filters.orderType !== 'all' && o.order_type !== filters.orderType) return false;
+      return true;
+    });
+  }, [orderHistory, searchQuery, filters]);
+
+  const stats = useMemo(() => {
+    let totalRev = 0, cash = 0, upi = 0, card = 0;
+    filteredHistory.forEach(o => {
+      const t = Number(o.total_amount || 0);
+      totalRev += t;
+      if (o.payment_type === 'Cash') cash += t;
+      else if (o.payment_type === 'UPI') upi += t;
+      else if (o.payment_type === 'Card') card += t;
+    });
+    return { totalOrders: filteredHistory.length, totalRev, cash, upi, card };
+  }, [filteredHistory]);
+
+  const handleCheckoutClick = (type) => { setPaymentType(type); setDiscountAmount(0); setShowModal(true); };
+  const handleConfirmPayment = () => {
+    if (selectedOrderId) {
+      checkoutOrder(selectedOrderId, paymentType, checkoutName || selectedOrder?.customer_name || '', checkoutPhone || selectedOrder?.customer_phone || '', user?.id, discountAmount);
+      setSelectedOrderId(null); setShowModal(false); setCheckoutName(''); setCheckoutPhone(''); setDiscountAmount(0);
+    }
+  };
+  const handleFilterChange = (key, val) => setFilters(prev => ({ ...prev, [key]: val }));
+  const activeFiltersCount = Object.values(filters).filter(v => v !== 'all').length;
+
+  const getOrderIcon = (type) => {
+    if (type === 'takeaway') return <ShoppingBag className="w-4 h-4" style={{ color: '#6d28d9' }} />;
+    if (type === 'delivery') return <Bike className="w-4 h-4" style={{ color: '#047857' }} />;
+    return <Coffee className="w-4 h-4" style={{ color: '#ea580c' }} />;
+  };
+
+  const getTypeColor = (type) => ({
+    dine_in: { bg: 'rgba(249,115,22,0.1)', border: 'rgba(249,115,22,0.2)', color: '#ea580c' },
+    takeaway: { bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.2)', color: '#6d28d9' },
+    delivery: { bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.2)', color: '#047857' },
+  }[type] || { bg: 'rgba(0,0,0,0.03)', border: 'rgba(0,0,0,0.06)', color: 'rgba(15, 23, 42, 0.5)' });
+
+  const panelStyle = {
+    background: 'rgba(255,255,255,0.85)',
+    WebkitBackdropFilter: 'blur(20px)',
+    border: '1px solid rgba(0, 0, 0, 0.08)',
+  };
+
+  return (
+    <div className="flex flex-col lg:flex-row h-full overflow-hidden relative font-sans"
+         style={{ background: '#f8fafc', minHeight: '100vh' }}>
+
+      {/* Ambient glows */}
+      <div className="fixed top-0 right-0 w-[40%] h-[40%] rounded-full pointer-events-none"
+           style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.03) 0%, transparent 70%)', filter: 'blur(80px)' }} />
+
+      {/* ══════════ LEFT PANEL ══════════ */}
+      <div className="w-full lg:w-[400px] flex flex-col shrink-0 lg:h-full max-h-[45vh] lg:max-h-full z-10"
+           style={panelStyle}>
+
+        {/* Tab switcher */}
+        <div className="p-4 shrink-0" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
+          <div className="flex p-1 rounded-xl" style={{ background: 'rgba(0, 0, 0, 0.03)' }}>
+            <button
+              onClick={() => { setViewTab('active'); setSelectedOrderId(null); }}
+              className="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-300"
+              style={viewTab === 'active' ? {
+                background: 'rgba(249,115,22,0.12)', color: '#ea580c',
+                border: '1px solid rgba(249,115,22,0.25)'
+              } : { color: 'rgba(15, 23, 42, 0.5)', border: '1px solid transparent' }}
+            >
+              Active Bills
+              <span className="ml-2 px-1.5 py-0.5 rounded-md text-xs"
+                style={{ background: viewTab === 'active' ? 'rgba(249,115,22,0.12)' : 'rgba(0,0,0,0.05)', color: viewTab === 'active' ? '#ea580c' : 'rgba(15, 23, 42, 0.5)' }}>
+                {activeOrders.length}
+              </span>
+            </button>
+            <button
+              onClick={() => { setViewTab('history'); setSelectedOrderId(null); }}
+              className="flex-1 py-2.5 text-sm font-bold rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+              style={viewTab === 'history' ? {
+                background: 'rgba(5, 150, 105, 0.1)', color: '#047857',
+                border: '1px solid rgba(5, 150, 105, 0.2)'
+              } : { color: 'rgba(15, 23, 42, 0.5)', border: '1px solid transparent' }}
+            >
+              <History className="w-4 h-4" /> History
+            </button>
+          </div>
+        </div>
+
+        {viewTab === 'active' ? (
+          <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+            {activeOrders.map(order => {
+              const isDineIn = order.order_type === 'dine_in';
+              const table = tables.find(t => t.id === order.table_id);
+              const isSelected = selectedOrderId === order.id;
+              const tc = getTypeColor(order.order_type);
+              return (
+                <button
+                  key={order.id}
+                  onClick={() => setSelectedOrderId(order.id)}
+                  className="w-full flex items-center justify-between p-4 rounded-2xl text-left transition-all duration-300 animate-fade-in hover-lift"
+                  style={isSelected ? {
+                    background: 'rgba(249,115,22,0.12)',
+                    border: '1px solid rgba(249,115,22,0.4)',
+                    boxShadow: '0 0 20px rgba(249,115,22,0.06)'
+                  } : {
+                    background: 'rgba(255,255,255,0.85)',
+                    border: '1px solid rgba(0, 0, 0, 0.06)'
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: tc.bg, border: `1px solid ${tc.border}` }}>
+                      {getOrderIcon(order.order_type)}
+                    </div>
+                    <div>
+                      <span className="text-base font-black text-surface-100">
+                        {isDineIn ? `Table ${table?.table_number}` : (order.customer_name || 'Takeaway')}
+                      </span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md"
+                          style={{ background: tc.bg, color: tc.color, border: `1px solid ${tc.border}` }}>
+                          {order.order_type.replace('_', '-')}
+                        </span>
+                        <span className="text-xs font-bold text-surface-500">#{order.id.toString().slice(-4)}</span>
+                      </div>
+                      <div className="text-[10px] font-bold mt-0.5 text-surface-400">
+                        {formatDateTime(order.created_at)}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="font-black text-xl text-surface-100">₹{order.subtotal}</span>
+                    <div className="text-xs font-bold mt-1 px-2 py-0.5 rounded-md"
+                      style={{ background: 'rgba(249,115,22,0.1)', color: '#ea580c', border: '1px solid rgba(249,115,22,0.2)' }}>
+                      {order.items.length} items
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+            {activeOrders.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 gap-3 animate-fade-in">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                     style={{ background: 'rgba(0,0,0,0.03)', border: '1px dashed rgba(0,0,0,0.1)' }}>
+                  <Receipt className="w-8 h-8" style={{ color: 'rgba(15, 23, 42, 0.35)' }} />
+                </div>
+                <p className="font-bold text-sm text-surface-500">No active orders</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col overflow-hidden">
+            {/* Search + Filter */}
+            <div className="px-4 py-3 shrink-0 space-y-3" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'rgba(15, 23, 42, 0.35)' }} />
+                  <input
+                    type="text" placeholder="Phone, name or Bill #"
+                    value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                    className="glass-input w-full pl-9 pr-3 py-2.5 rounded-xl text-sm font-medium"
+                  />
+                </div>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="w-10 h-10 rounded-xl flex items-center justify-center transition-all relative"
+                  style={showFilters || activeFiltersCount > 0 ? {
+                    background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.3)', color: '#ea580c'
+                  } : { background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(0, 0, 0, 0.08)', color: 'rgba(15, 23, 42, 0.5)' }}
+                >
+                  <Filter className="w-4 h-4" />
+                  {activeFiltersCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full" style={{ background: '#f97316' }} />
+                  )}
+                </button>
+              </div>
+
+              {showFilters && (
+                <div className="p-3 rounded-xl space-y-3 animate-fade-in" style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                  {[
+                    { key: 'dateRange', label: 'Period', opts: ['all', 'today', 'yesterday', 'this_week'], color: '#fb923c' },
+                    { key: 'paymentType', label: 'Payment', opts: ['all', 'Cash', 'UPI', 'Card'], color: '#a78bfa' },
+                    { key: 'orderType', label: 'Type', opts: ['all', 'dine_in', 'takeaway', 'delivery'], color: '#34d399' },
+                  ].map(({ key, label, opts, color }) => (
+                    <div key={key}>
+                      <label className="text-[10px] font-black uppercase tracking-widest block mb-1.5" style={{ color: 'rgba(15, 23, 42, 0.55)' }}>{label}</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {opts.map(o => (
+                          <button
+                            key={o} onClick={() => handleFilterChange(key, o)}
+                            className="px-2.5 py-1 rounded-lg text-xs font-bold transition-all"
+                            style={filters[key] === o ? { background: `${color}15`, border: `1px solid ${color}40`, color: `${color === '#fb923c' ? '#ea580c' : color === '#34d399' ? '#047857' : '#6d28d9'}` }
+                              : { background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(0, 0, 0, 0.08)', color: 'rgba(15, 23, 42, 0.5)' }}
+                          >
+                            {o.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Stats row */}
+              <div className="flex gap-2 overflow-x-auto custom-scrollbar">
+                {[
+                  { icon: Receipt, val: `₹${stats.totalRev.toFixed(0)}`, label: 'Revenue', color: '#fb923c' },
+                  { icon: Banknote, val: `₹${stats.cash.toFixed(0)}`, label: 'Cash', color: '#34d399' },
+                  { icon: CreditCard, val: `₹${(stats.upi + stats.card).toFixed(0)}`, label: 'Digital', color: '#a78bfa' },
+                ].map(({ icon: Icon, val, label, color }) => (
+                  <div key={label} className="flex items-center gap-2 px-3 py-2 rounded-xl shrink-0"
+                       style={{ background: `${color}0f`, border: `1px solid ${color}25` }}>
+                    <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: color === '#fb923c' ? '#ea580c' : color === '#34d399' ? '#047857' : '#6d28d9' }} />
+                    <div>
+                      <div className="text-[9px] uppercase tracking-wider font-black" style={{ color: color === '#fb923c' ? '#ea580c' : color === '#34d399' ? '#047857' : '#6d28d9' }}>{label}</div>
+                      <div className="font-black text-sm leading-none text-surface-100">{val}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* History list */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2.5 custom-scrollbar">
+              {filteredHistory.slice(0, 50).map(order => {
+                const isSelected = selectedOrderId === order.id;
+                return (
+                  <button
+                    key={order.id}
+                    onClick={() => setSelectedOrderId(order.id)}
+                    className="w-full flex items-center justify-between p-4 rounded-2xl text-left transition-all duration-300 animate-fade-in hover-lift"
+                    style={isSelected ? {
+                      background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.35)'
+                    } : {
+                      background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(0, 0, 0, 0.06)'
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                        {getOrderIcon(order.order_type || 'dine_in')}
+                      </div>
+                      <div>
+                        <h3 className="font-black text-surface-100 text-sm">Bill #{order.id}</h3>
+                        <p className="text-xs font-bold mt-0.5 text-surface-500">
+                          {formatDateTime(order.created_at)} ·{' '}
+                          <span style={{ color: '#ea580c' }}>{order.payment_type}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-black text-base text-surface-100">₹{(order.total_amount || 0).toFixed(2)}</div>
+                      <div className="text-[10px] font-black uppercase mt-1 px-2 py-0.5 rounded-md inline-block"
+                           style={{ background: 'rgba(5, 150, 105, 0.1)', color: '#047857', border: '1px solid rgba(5, 150, 105, 0.2)' }}>Paid</div>
+                    </div>
+                  </button>
+                );
+              })}
+              {filteredHistory.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <History className="w-12 h-12" style={{ color: 'rgba(15, 23, 42, 0.2)' }} />
+                  <p className="font-bold text-sm text-surface-500">No billing history found.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ══════════ RIGHT PANEL ══════════ */}
+      <div className="flex-1 flex flex-col p-4 lg:p-8 items-center justify-center overflow-hidden h-full z-10">
+        {selectedOrderId && viewTab === 'active' && selectedOrder ? (
+          <div className="w-full max-w-lg flex flex-col h-full lg:max-h-full animate-slide-up rounded-3xl overflow-hidden"
+               style={{ background: 'rgba(255, 255, 255, 0.95)', border: '1px solid rgba(0,0,0,0.08)', backdropFilter: 'blur(30px)' }}>
+
+            {/* Orange gradient top */}
+            <div className="h-1.5 w-full shrink-0" style={{ background: 'linear-gradient(90deg, #f97316, #ea580c, #f97316)' }} />
+
+            {/* Bill Header */}
+            <div className="text-center p-6 shrink-0" style={{ borderBottom: '1px dashed rgba(0, 0, 0, 0.1)' }}>
+              <h2 className="text-3xl font-black gradient-text">{restaurantDetails?.name || 'AppThat POS'}</h2>
+              <p className="text-xs font-bold uppercase tracking-widest mt-1 text-surface-400">Tax Invoice</p>
+
+              <div className="flex justify-between items-center mt-5 pt-4 text-xs font-bold"
+                   style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
+                  style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(15, 23, 42, 0.6)' }}>
+                  {getOrderIcon(selectedOrder.order_type)}
+                  <span className="uppercase tracking-wide">
+                    {selectedOrder.order_type === 'dine_in'
+                      ? `Table ${tables.find(t => t.id === selectedOrder.table_id)?.table_number}`
+                      : selectedOrder.order_type}
+                  </span>
+                </span>
+                <span className="px-3 py-1.5 rounded-xl text-surface-500 bg-surface-750">
+                  {formatDateTime(selectedOrder.created_at)}
+                </span>
+              </div>
+              {selectedOrder.order_type !== 'dine_in' && (selectedOrder.customer_name || selectedOrder.customer_phone) && (
+                <div className="mt-3 p-3 rounded-xl text-left flex items-center gap-3"
+                     style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                  <User className="w-4 h-4 shrink-0" style={{ color: 'rgba(15, 23, 42, 0.45)' }} />
+                  <div>
+                    <p className="font-black text-surface-100 text-sm">{selectedOrder.customer_name || 'Customer'}</p>
+                    {selectedOrder.customer_phone && <p className="text-xs font-medium mt-0.5" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>{selectedOrder.customer_phone}</p>}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Bill Items */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
+              <div className="flex justify-between text-[10px] font-black uppercase tracking-widest pb-2"
+                   style={{ color: 'rgba(15, 23, 42, 0.45)', borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
+                <span>Item</span><span>Total</span>
+              </div>
+              {selectedOrder.items.map(item => (
+                <div key={item.id} className="flex justify-between items-center group">
+                  <div className="flex-1">
+                    <p className="font-black text-surface-100 text-sm group-hover:text-orange-600 transition-colors">{item.name}</p>
+                    <p className="text-xs font-bold mt-0.5" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>{item.quantity} × ₹{item.price}</p>
+                  </div>
+                  <span className="font-black text-surface-100 px-2 py-1 rounded-lg text-sm"
+                    style={{ background: 'rgba(0,0,0,0.04)' }}>₹{item.quantity * item.price}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Totals + Payment */}
+            <div className="shrink-0 p-6" style={{ borderTop: '1px dashed rgba(0, 0, 0, 0.1)' }}>
+              <div className="space-y-2 mb-5">
+                <div className="flex justify-between text-sm font-bold" style={{ color: 'rgba(15, 23, 42, 0.55)' }}>
+                  <span>Subtotal</span><span className="text-surface-100">₹{subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-xs font-bold" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>
+                  <span>Tax ({restaurantDetails?.tax_percent || 5}%)</span><span>₹{calculatedTax.toFixed(2)}</span>
+                </div>
+              </div>
+              <div className="flex justify-between items-center pt-4 mb-5" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
+                <span className="text-lg font-black text-surface-100 uppercase tracking-wide">Total</span>
+                <span className="text-4xl font-black gradient-text">₹{total.toFixed(2)}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {[
+                  { label: 'Cash', type: 'Cash', icon: Banknote, color: '#047857', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.2)' },
+                  { label: 'UPI', type: 'UPI', icon: CreditCard, color: '#6d28d9', bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.2)' },
+                ].map(({ label, type, icon: Icon, color, bg, border }) => (
+                  <button key={type} onClick={() => handleCheckoutClick(type)}
+                    className="flex items-center justify-center gap-2 p-4 rounded-xl font-black transition-all hover-lift active:scale-95"
+                    style={{ background: bg, border: `1px solid ${border}`, color }}>
+                    <Icon className="w-5 h-5" /> {label}
+                  </button>
+                ))}
+                <button onClick={() => handleCheckoutClick('Card')}
+                  className="col-span-2 flex items-center justify-center gap-2 p-4 rounded-xl font-black transition-all hover-lift active:scale-95"
+                  style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', color: '#1d4ed8' }}>
+                  <CreditCard className="w-5 h-5" /> Card Payment
+                </button>
+              </div>
+            </div>
+          </div>
+
+        ) : selectedOrderId && viewTab === 'history' ? (() => {
+          const histOrder = orderHistory.find(o => o.id === selectedOrderId);
+          if (!histOrder) return null;
+          const histTotal = histOrder.total_amount || 0;
+          const isDineIn = histOrder.order_type === 'dine_in';
+          return (
+            <div className="w-full h-full rounded-3xl overflow-hidden flex flex-col max-w-4xl animate-slide-up"
+                 style={{ background: 'rgba(255, 255, 255, 0.95)', border: '1px solid rgba(0, 0, 0, 0.1)', backdropFilter: 'blur(30px)' }}>
+              <div className="h-1.5 w-full shrink-0" style={{ background: 'linear-gradient(90deg, #059669, #10b981)' }} />
+
+              <div className="p-6 flex justify-between items-start shrink-0" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
+                <div>
+                  <div className="flex items-center gap-3 mb-1">
+                    <h2 className="text-2xl font-black text-surface-100">Invoice #{histOrder.id}</h2>
+                    <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider"
+                      style={getTypeColor(histOrder.order_type) ? { background: getTypeColor(histOrder.order_type).bg, color: getTypeColor(histOrder.order_type).color, border: `1px solid ${getTypeColor(histOrder.order_type).border}` } : {}}>
+                      {histOrder.order_type?.replace('_', '-')}
+                    </span>
+                  </div>
+                  <p className="text-sm font-bold" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>
+                    {isDineIn ? `Table ${histOrder.table_number || '-'}` : (histOrder.customer_name || 'Takeaway')} · Settled by {histOrder.waiter_name || 'System'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black"
+                     style={{ background: 'rgba(5, 150, 105, 0.1)', border: '1px solid rgba(5, 150, 105, 0.2)', color: '#047857' }}>
+                  <CheckCircle2 className="w-4 h-4" /> PAID · {histOrder.payment_type}
+                </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6 lg:p-8 space-y-6 custom-scrollbar">
+                {(histOrder.customer_name || histOrder.customer_phone) && (
+                  <div className="flex items-center gap-4 p-4 rounded-2xl"
+                       style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                         style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.2)' }}>
+                      <User className="w-6 h-6" style={{ color: '#ea580c' }} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>Customer</p>
+                      {histOrder.customer_name && <p className="font-black text-surface-100 text-lg">{histOrder.customer_name}</p>}
+                      {histOrder.customer_phone && <p className="text-sm font-bold text-surface-550">{histOrder.customer_phone}</p>}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>Order Items</p>
+                  <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(0,0,0,0.08)' }}>
+                    <table className="w-full text-left">
+                      <thead style={{ background: 'rgba(0,0,0,0.02)', borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                        <tr>
+                          {['Item', 'Qty', 'Price', 'Total'].map((h, i) => (
+                            <th key={h} className={`p-4 font-black text-xs uppercase tracking-wider ${i > 1 ? 'text-right' : ''}`}
+                                style={{ color: 'rgba(15, 23, 42, 0.5)' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(histOrder.items || []).map((item, idx) => (
+                          <tr key={idx} className="transition-colors" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.02)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                            <td className="p-4 font-black text-surface-100">{item.name}</td>
+                            <td className="p-4 text-center font-bold text-surface-550">{item.quantity}</td>
+                            <td className="p-4 text-right font-bold text-surface-550">₹{item.price}</td>
+                            <td className="p-4 text-right font-black text-surface-100">₹{item.quantity * item.price}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <div className="w-full md:w-1/2 p-5 rounded-2xl space-y-3"
+                       style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                    <div className="flex justify-between font-bold text-sm" style={{ color: 'rgba(15, 23, 42, 0.55)' }}>
+                      <span>Subtotal</span><span className="text-surface-100">₹{(histOrder.subtotal || 0).toFixed(2)}</span>
+                    </div>
+                    {histOrder.discount_amount > 0 && (
+                      <div className="flex justify-between font-bold text-sm text-emerald-600">
+                        <span>Discount</span>
+                        <span className="font-semibold">-₹{(histOrder.discount_amount || 0).toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-bold text-sm pb-3"
+                         style={{ color: 'rgba(15, 23, 42, 0.5)', borderBottom: '1px dashed rgba(0,0,0,0.08)' }}>
+                      <span>Taxes</span><span>₹{(histOrder.tax_amount || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-2xl font-black">
+                      <span className="text-surface-100">Grand Total</span>
+                      <span style={{ color: '#ea580c' }}>₹{parseFloat(histTotal).toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-5 flex justify-end" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
+                <button
+                  onClick={() => window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/${histOrder.id}`, '_blank')}
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm transition-all hover-lift"
+                  style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', color: 'rgba(15, 23, 42, 0.65)' }}>
+                  <Printer className="w-4 h-4" /> Print Receipt
+                </button>
+              </div>
+            </div>
+          );
+        })() : (
+          <div className="flex flex-col items-center gap-4 text-center animate-fade-in">
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center"
+                 style={{ background: 'rgba(0,0,0,0.02)', border: '1px dashed rgba(0,0,0,0.08)' }}>
+              <Printer className="w-10 h-10" style={{ color: 'rgba(15, 23, 42, 0.35)' }} />
+            </div>
+            <div>
+              <h2 className="text-xl font-black text-surface-100">Select a bill</h2>
+              <p className="text-sm font-medium mt-1 max-w-xs" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>
+                Click on an active order or history item to view details and process payment.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Checkout Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 backdrop-blur-sm" style={{ background: 'rgba(0,0,0,0.35)' }}
+               onClick={() => setShowModal(false)} />
+          <div className="w-full max-w-md rounded-3xl overflow-hidden animate-slide-up relative z-10"
+               style={{ background: 'rgba(255, 255, 255, 0.95)', border: '1px solid rgba(0, 0, 0, 0.1)', backdropFilter: 'blur(30px)' }}>
+            <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #f97316, #ea580c)' }} />
+            <div className="p-6 flex justify-between items-center" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
+              <h3 className="font-black text-xl text-surface-100">Pay via {paymentType}</h3>
+              <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(15, 23, 42, 0.5)' }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div className="p-4 rounded-2xl flex justify-between items-center"
+                   style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.2)' }}>
+                <span className="font-bold text-sm" style={{ color: 'rgba(15, 23, 42, 0.6)' }}>Total Due</span>
+                <span className="text-3xl font-black gradient-text">₹{total.toFixed(2)}</span>
+              </div>
+
+              {/* Discount */}
+              <div>
+                <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>
+                  Discount (₹) <span style={{ color: 'rgba(15, 23, 42, 0.35)' }}>(Optional)</span>
+                </label>
+                <div className="relative">
+                  <Banknote className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'rgba(15, 23, 42, 0.35)' }} />
+                  <input type="number" min="0" max={subtotal} value={discountAmount || ''}
+                    onChange={(e) => setDiscountAmount(Number(e.target.value))}
+                    className="glass-input w-full pl-11 pr-4 py-3 rounded-xl text-sm font-medium"
+                    placeholder="Enter discount amount" />
+                </div>
+              </div>
+
+              {[
+                { label: 'Customer Name', type: 'text', icon: User, val: checkoutName, set: setCheckoutName, placeholder: 'Rahul Sharma' },
+                { label: 'Mobile Number', type: 'tel', icon: Phone, val: checkoutPhone, set: setCheckoutPhone, placeholder: '9876543210' },
+              ].map(({ label, type, icon: Icon, val, set, placeholder }) => (
+                <div key={label}>
+                  <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>
+                    {label} <span style={{ color: 'rgba(15, 23, 42, 0.35)' }}>(Optional)</span>
+                  </label>
+                  <div className="relative">
+                    <Icon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'rgba(15, 23, 42, 0.35)' }} />
+                    <input type={type} value={val} onChange={e => set(e.target.value)} placeholder={placeholder}
+                      className="glass-input w-full pl-11 pr-4 py-3 rounded-xl text-sm font-medium" />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-5 flex gap-3" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
+              <button onClick={() => setShowModal(false)} className="px-5 py-3 rounded-xl font-bold text-sm transition-all"
+                style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(15, 23, 42, 0.55)' }}>Cancel</button>
+              <button onClick={handleConfirmPayment} className="btn-orange flex-1 py-3 rounded-xl text-sm">
+                <span className="relative z-10">Confirm Payment</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

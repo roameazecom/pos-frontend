@@ -1,0 +1,120 @@
+import { NavLink, useNavigate } from 'react-router-dom';
+import { ChefHat, Coffee, Receipt, Settings, LogOut, ShoppingBag, User } from 'lucide-react';
+import { useAuthStore } from '../store/authStore';
+
+export default function FloatingNav() {
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const allNavigation = [
+    { name: 'Waiter', href: '/waiter', icon: Coffee, roles: ['waiter', 'admin', 'manager'], color: '#fb923c' },
+    { name: 'Kitchen', href: '/kds', icon: ChefHat, roles: ['kitchen_manager', 'admin', 'manager'], color: '#f43f5e' },
+    { name: 'Takeaway', href: '/takeaway', icon: ShoppingBag, roles: ['admin', 'manager', 'waiter'], color: '#a78bfa' },
+    { name: 'Billing', href: '/billing', icon: Receipt, roles: ['admin', 'manager'], color: '#34d399' },
+    { name: 'Admin', href: '/admin', icon: Settings, roles: ['admin', 'manager'], color: '#60a5fa' },
+  ];
+
+  const navigation = allNavigation.filter(item =>
+    user && item.roles.includes(user.role)
+  );
+
+  return (
+    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[100] animate-slide-up">
+      <div className="relative">
+        {/* Glow behind nav */}
+        <div className="absolute inset-0 rounded-full blur-xl opacity-60"
+             style={{ background: 'radial-gradient(ellipse, rgba(249,115,22,0.12) 0%, transparent 70%)' }} />
+
+        <div className="relative flex items-center gap-1 px-3 py-2.5 rounded-full"
+             style={{
+               background: 'rgba(255, 255, 255, 0.9)',
+               backdropFilter: 'blur(30px)',
+               WebkitBackdropFilter: 'blur(30px)',
+               border: '1px solid rgba(0, 0, 0, 0.08)',
+               boxShadow: '0 8px 40px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+             }}>
+          
+          {navigation.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.name}
+                to={item.href}
+                title={item.name}
+                className={({ isActive }) =>
+                  `relative flex flex-col items-center justify-center w-12 h-12 sm:w-13 sm:h-13 rounded-full transition-all duration-300 group ${
+                    isActive ? 'nav-active' : 'text-surface-400 hover:text-surface-200'
+                  }`
+                }
+                style={({ isActive }) => isActive ? {} : {}}
+              >
+                {({ isActive }) => (
+                  <>
+                    {isActive && (
+                      <div className="absolute inset-0 rounded-full animate-pulse-glow" />
+                    )}
+                    <Icon
+                      className={`w-5 h-5 transition-all duration-300 relative z-10 ${
+                        isActive ? '' : 'group-hover:scale-110'
+                      }`}
+                      style={isActive ? { color: item.color, filter: `drop-shadow(0 0 8px ${item.color}80)` } : {}}
+                    />
+                    <span className={`text-[9px] font-bold mt-0.5 transition-all ${
+                      isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'
+                    }`}
+                    style={isActive ? { color: item.color } : {}}>
+                      {item.name}
+                    </span>
+                  </>
+                )}
+              </NavLink>
+            );
+          })}
+
+          {/* Divider */}
+          <div className="w-px h-8 mx-1" style={{ background: 'rgba(0,0,0,0.08)' }} />
+
+          {/* User Avatar */}
+          {user && (
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-black cursor-default relative"
+              title={`${user.name} (${user.role})`}
+              style={{
+                background: 'linear-gradient(135deg, rgba(249,115,22,0.15), rgba(234,88,12,0.08))',
+                border: '1px solid rgba(249,115,22,0.25)',
+                color: '#ea580c',
+              }}
+            >
+              {user.name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />}
+            </div>
+          )}
+
+          {/* Logout */}
+          <button
+            onClick={handleLogout}
+            title="Logout"
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 group"
+            style={{ color: 'rgba(15,23,42,0.4)' }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(239,68,68,0.1)';
+              e.currentTarget.style.color = '#ef4444';
+              e.currentTarget.style.border = '1px solid rgba(239,68,68,0.2)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.color = 'rgba(15,23,42,0.4)';
+              e.currentTarget.style.border = '1px solid transparent';
+            }}
+          >
+            <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
