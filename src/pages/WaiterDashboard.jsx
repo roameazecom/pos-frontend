@@ -121,7 +121,7 @@ export default function WaiterDashboard() {
               : 'text-surface-500 hover:text-surface-800'
           }`}
         >
-          Menu Grid
+          Menu
         </button>
         <button
           onClick={() => setMobileView('cart')}
@@ -131,7 +131,7 @@ export default function WaiterDashboard() {
               : 'text-surface-500 hover:text-surface-800'
           }`}
         >
-          View Order
+          Cart
           {cart.length > 0 && (
             <span className="w-5 h-5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-black flex items-center justify-center">
               {cart.length}
@@ -381,12 +381,50 @@ export default function WaiterDashboard() {
         {/* Cart Content */}
         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar relative">
           {!canOrder && rightTab !== 'history' ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
-                   style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
-                <Coffee className="w-8 h-8" style={{ color: 'rgba(15, 23, 42, 0.3)' }} />
+            <div className="p-4 space-y-4">
+              <p className="text-sm font-bold text-center text-slate-500">Select a Table to View/Active Billing</p>
+              
+              {/* Location tabs inline */}
+              <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
+                {locations.map(loc => (
+                  <button
+                    key={loc.id}
+                    onClick={() => setActiveLocationTab(loc.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                      activeLocationTab === loc.id
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-white text-slate-600 border border-slate-200'
+                    }`}
+                  >
+                    {loc.name}
+                  </button>
+                ))}
               </div>
-              <p className="text-sm font-bold" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>Select a table to start</p>
+
+              {/* Tables grid inline */}
+              <div className="grid grid-cols-3 gap-2">
+                {filteredTables.map(t => {
+                  const isOccupied = t.status === 'occupied';
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => {
+                        setActiveTableId(t.id);
+                        if (t.status === 'occupied') setRightTab('active');
+                        else setRightTab('new');
+                      }}
+                      className="p-3.5 rounded-xl text-center border border-slate-200 bg-white transition-all active:scale-95 shadow-sm"
+                    >
+                      <span className="block text-base font-black text-slate-800">
+                        {t.table_number}
+                      </span>
+                      <span className="text-[9px] uppercase font-bold text-slate-400">
+                        {isOccupied ? '● Busy' : '○ Free'}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           ) : rightTab === 'new' ? (
             cart.length === 0 ? (
