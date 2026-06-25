@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePosStore } from '../store/posStore';
 import { useUiStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
 import {
   Plus, Minus, Trash2, Send, Clock, Flame, CheckCircle2,
   History, Banknote, CreditCard, User, Phone, X, Coffee,
-  Receipt, ShoppingBag, Bike, ChevronDown, ArrowLeft
+  Receipt, ShoppingBag, Bike, ChevronDown, ArrowLeft, IndianRupee
 } from 'lucide-react';
 import WaiterPaymentHistory from '../components/waiter/WaiterPaymentHistory';
 import NotificationPanel from '../components/common/NotificationPanel';
@@ -13,12 +13,27 @@ import NotificationPanel from '../components/common/NotificationPanel';
 export default function WaiterDashboard() {
   const { user } = useAuthStore();
   const {
-    tables, locations, categories, menuItems, orders,
+    tables, locations, categories, menuItems, orders, orderHistory,
     activeTableId, setActiveTableId,
-    cart, addToCart, removeFromCart, updateCartQuantity, clearCart, placeOrder, checkoutOrder
+    cart, addToCart, removeFromCart, updateCartQuantity, clearCart, placeOrder, checkoutOrder,
+    deleteActiveOrderItem, updateActiveOrderItemQuantity
   } = usePosStore();
 
   const { activeLocationTab, setActiveLocationTab, activeCategoryTab, setActiveCategoryTab } = useUiStore();
+
+  useEffect(() => {
+    if (locations.length > 0) {
+      const saved = localStorage.getItem('selectedLocationId');
+      if (!saved) {
+        setActiveLocationTab(locations[0].id);
+      } else {
+        const savedId = parseInt(saved, 10);
+        if (!locations.some(l => l.id === savedId)) {
+          setActiveLocationTab(locations[0].id);
+        }
+      }
+    }
+  }, [locations, setActiveLocationTab]);
 
   const [rightTab, setRightTab] = useState('new');
   const [showHistoryModal, setShowHistoryModal] = useState(false);
@@ -128,127 +143,78 @@ export default function WaiterDashboard() {
       {/* ══════════ LEFT PANEL ══════════ */}
       <div className={`flex-1 flex flex-col min-w-0 lg:h-full z-10 ${mobileView === 'menu' ? 'flex' : 'hidden lg:flex'}`}>
 
-        {/* Header: Order Type + Tables */}
+        {/* Header: Locations + Tables */}
         <div className="sticky top-0 z-20 shrink-0 p-4 lg:p-5 space-y-4"
              style={panelStyle}>
 
-          {/* Order Type Switcher */}
-          <div className="flex gap-2">
-            {ORDER_TYPES.map(({ id, label, icon: Icon, color }) => (
-              <button
-                key={id}
-                onClick={() => { setOrderType(id); setRightTab('new'); if (id !== 'dine_in') setActiveTableId(null); }}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-bold transition-all duration-300"
-                style={orderType === id ? {
-                  background: `${color}18`,
-                  border: `1px solid ${color}50`,
-                  color: color,
-                  boxShadow: `0 0 15px ${color}20`
-                } : {
-                  background: 'rgba(255,255,255,0.85)',
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  color: 'rgba(15,23,42,0.5)'
-                }}
-              >
-                <Icon className="w-4 h-4" />
-                {label}
-              </button>
-            ))}
-          </div>
+          <div className="space-y-3">
+            {/* Location tabs */}
+            <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
+              {locations.map(loc => (
+                <button
+                  key={loc.id}
+                  onClick={() => { setActiveLocationTab(loc.id); setActiveTableId(null); setRightTab('new'); }}
+                  className="px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-300 shrink-0"
+                  style={activeLocationTab === loc.id ? {
+                    background: 'linear-gradient(135deg, #f97316, #ea580c)',
+                    color: 'white',
+                    boxShadow: '0 4px 12px rgba(249,115,22,0.35)'
+                  } : {
+                    background: 'rgba(255,255,255,0.85)',
+                    border: '1px solid rgba(0,0,0,0.07)',
+                    color: 'rgba(15,23,42,0.55)'
+                  }}
+                >
+                  {loc.name}
+                </button>
+              ))}
+            </div>
 
-          {/* Dine-In: Locations + Tables */}
-          {orderType === 'dine_in' ? (
-            <div className="space-y-3">
-              {/* Location tabs */}
-              <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
-                {locations.map(loc => (
+            {/* Table grid */}
+            <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2.5">
+              {filteredTables.map(t => {
+                const isSelected = activeTableId === t.id;
+                const isOccupied = t.status === 'occupied';
+                return (
                   <button
-                    key={loc.id}
-                    onClick={() => { setActiveLocationTab(loc.id); setActiveTableId(null); setRightTab('new'); }}
-                    className="px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-300 shrink-0"
-                    style={activeLocationTab === loc.id ? {
-                      background: 'linear-gradient(135deg, #f97316, #ea580c)',
-                      color: 'white',
-                      boxShadow: '0 4px 12px rgba(249,115,22,0.35)'
+                    key={t.id}
+                    onClick={() => {
+                      setActiveTableId(t.id);
+                      if (t.status === 'occupied') setRightTab('active');
+                      else setRightTab('new');
+                    }}
+                    className="relative p-3 rounded-xl text-center transition-all duration-300 hover-lift"
+                    style={isSelected ? {
+                      background: 'rgba(249,115,22,0.12)',
+                      border: '2px solid rgba(249,115,22,0.55)',
+                      boxShadow: '0 0 20px rgba(249,115,22,0.12)'
+                    } : isOccupied ? {
+                      background: 'rgba(251,191,36,0.08)',
+                      border: '1px solid rgba(251,191,36,0.25)'
                     } : {
                       background: 'rgba(255,255,255,0.85)',
-                      border: '1px solid rgba(0,0,0,0.07)',
-                      color: 'rgba(15,23,42,0.55)'
+                      border: '1px solid rgba(0,0,0,0.06)'
                     }}
                   >
-                    {loc.name}
+                    <span className="block text-lg font-black"
+                      style={{ color: isSelected ? '#ea580c' : isOccupied ? '#b45309' : 'rgba(15,23,42,0.8)' }}>
+                      {t.table_number}
+                    </span>
+                    <span className="text-[9px] uppercase tracking-wider font-bold"
+                      style={{ color: isOccupied ? '#b45309' : 'rgba(15,23,42,0.4)' }}>
+                      {t.status === 'occupied' ? '● Busy' : '○ Free'}
+                    </span>
+                    {isSelected && (
+                      <div className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center animate-pulse-glow"
+                           style={{ background: '#f97316' }}>
+                         <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    )}
                   </button>
-                ))}
-              </div>
-
-              {/* Table grid */}
-              <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2.5">
-                {filteredTables.map(t => {
-                  const isSelected = activeTableId === t.id;
-                  const isOccupied = t.status === 'occupied';
-                  return (
-                    <button
-                      key={t.id}
-                      onClick={() => {
-                        setActiveTableId(t.id);
-                        if (t.status === 'occupied') setRightTab('active');
-                        else setRightTab('new');
-                      }}
-                      className="relative p-3 rounded-xl text-center transition-all duration-300 hover-lift"
-                      style={isSelected ? {
-                        background: 'rgba(249,115,22,0.12)',
-                        border: '2px solid rgba(249,115,22,0.55)',
-                        boxShadow: '0 0 20px rgba(249,115,22,0.12)'
-                      } : isOccupied ? {
-                        background: 'rgba(251,191,36,0.08)',
-                        border: '1px solid rgba(251,191,36,0.25)'
-                      } : {
-                        background: 'rgba(255,255,255,0.85)',
-                        border: '1px solid rgba(0,0,0,0.06)'
-                      }}
-                    >
-                      <span className="block text-lg font-black"
-                        style={{ color: isSelected ? '#ea580c' : isOccupied ? '#b45309' : 'rgba(15,23,42,0.8)' }}>
-                        {t.table_number}
-                      </span>
-                      <span className="text-[9px] uppercase tracking-wider font-bold"
-                        style={{ color: isOccupied ? '#b45309' : 'rgba(15,23,42,0.4)' }}>
-                        {t.status === 'occupied' ? '● Busy' : '○ Free'}
-                      </span>
-                      {isSelected && (
-                        <div className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center animate-pulse-glow"
-                             style={{ background: '#f97316' }}>
-                           <CheckCircle2 className="w-2.5 h-2.5 text-white" />
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                );
+              })}
             </div>
-          ) : (
-            /* Takeaway / Delivery: Customer fields */
-            <div className="p-4 rounded-2xl space-y-3 animate-fade-in" style={{
-              background: 'rgba(255,255,255,0.85)',
-              border: '1px solid rgba(0,0,0,0.06)'
-            }}>
-              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(15,23,42,0.5)' }}>
-                Customer Info (Optional)
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  type="text" placeholder="Customer Name" value={takeawayName}
-                  onChange={(e) => setTakeawayName(e.target.value)}
-                  className="glass-input flex-1 px-4 py-2.5 rounded-xl text-sm font-medium"
-                />
-                <input
-                  type="tel" placeholder="Phone Number" value={takeawayPhone}
-                  onChange={(e) => setTakeawayPhone(e.target.value)}
-                  className="glass-input flex-1 px-4 py-2.5 rounded-xl text-sm font-medium"
-                />
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* Menu Section */}
@@ -384,36 +350,29 @@ export default function WaiterDashboard() {
           </div>
 
           {/* Tabs */}
-          <div className="flex px-5 gap-4" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+          <div className="flex px-5 gap-3" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
             <button
               onClick={() => setRightTab('new')}
-              className={`pb-3 text-sm font-bold transition-all ${rightTab === 'new' ? 'tab-active' : 'tab-inactive'}`}
+              className={`pb-3 text-xs font-black transition-all ${rightTab === 'new' ? 'tab-active' : 'tab-inactive'}`}
             >
-              New{' '}
+              Selected Food{' '}
               {cart.length > 0 && (
-                <span className="ml-1.5 px-1.5 py-0.5 rounded-md text-xs"
+                <span className="ml-1 px-1.5 py-0.5 rounded-md text-[10px]"
                   style={{ background: 'rgba(249,115,22,0.12)', color: '#ea580c' }}>
                   {cart.length}
                 </span>
               )}
             </button>
-            {orderType === 'dine_in' && (
-              <button
-                onClick={() => setRightTab('active')}
-                className={`pb-3 text-sm font-bold transition-all ${rightTab === 'active' ? 'tab-active' : 'tab-inactive'}`}
-              >
-                Active Bill
-              </button>
-            )}
-            <div className="flex-1" />
             <button
-              onClick={() => setShowHistoryModal(true)}
-              className="pb-3 text-sm font-bold flex items-center gap-1.5 transition-colors"
-              style={{ color: 'rgba(15, 23, 42, 0.45)' }}
-              onMouseEnter={e => e.currentTarget.style.color = '#ea580c'}
-              onMouseLeave={e => e.currentTarget.style.color = 'rgba(15, 23, 42, 0.45)'}
+              onClick={() => setRightTab('active')}
+              className={`pb-3 text-xs font-black transition-all ${rightTab === 'active' ? 'tab-active' : 'tab-inactive'}`}
             >
-              <History className="w-4 h-4" />
+              Active Billing
+            </button>
+            <button
+              onClick={() => setRightTab('history')}
+              className={`pb-3 text-xs font-black transition-all ${rightTab === 'history' ? 'tab-active' : 'tab-inactive'}`}
+            >
               History
             </button>
           </div>
@@ -421,7 +380,7 @@ export default function WaiterDashboard() {
 
         {/* Cart Content */}
         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar relative">
-          {!canOrder ? (
+          {!canOrder && rightTab !== 'history' ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
                    style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
@@ -482,7 +441,7 @@ export default function WaiterDashboard() {
                 ))}
               </div>
             )
-          ) : (
+          ) : rightTab === 'active' ? (
             /* Active Bill Tab */
             !activeOrder || activeOrder.items.length === 0 ? (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 animate-fade-in">
@@ -493,30 +452,103 @@ export default function WaiterDashboard() {
                 <p className="text-sm font-bold" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>No active items</p>
               </div>
             ) : (
-              <div className="space-y-2.5 animate-fade-in pb-4">
+              <div className="space-y-3 animate-fade-in pb-4">
                 {activeOrder.items.map((item, index) => (
-                  <div key={item.id || index} className="p-4 rounded-2xl flex items-center justify-between transition-all"
+                  <div key={item.id || index} className="p-4 rounded-2xl flex flex-col gap-3 transition-all"
                        style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
-                    <div className="flex-1">
-                      <h4 className="font-bold text-surface-100 text-sm">{item.name}</h4>
-                      <p className="text-xs mt-1 font-bold" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>
-                        {item.quantity} × ₹{item.price}
-                      </p>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0 pr-2">
+                        <h4 className="font-bold text-surface-100 text-sm break-words leading-tight">{item.name}</h4>
+                        <span className="text-xs font-black mt-1 inline-block px-2 py-0.5 rounded-md"
+                           style={{ background: 'rgba(249,115,22,0.1)', color: '#ea580c' }}>
+                          ₹{item.price}
+                        </span>
+                      </div>
+                      <div className="flex flex-col items-end shrink-0">
+                        <span className="font-black text-surface-100 text-base">₹{item.quantity * item.price}</span>
+                        <span className={`flex items-center gap-1 text-[9px] uppercase font-black px-2 py-0.5 rounded-md mt-1.5
+                          ${item.status === 'pending' ? 'badge-pending' : item.status === 'cooking' ? 'badge-cooking' : 'badge-ready'}`}>
+                          {item.status === 'pending' && <Clock className="w-2 h-2" />}
+                          {item.status === 'cooking' && <Flame className="w-2 h-2" />}
+                          {item.status === 'ready' && <CheckCircle2 className="w-2 h-2" />}
+                          {item.status}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1.5">
-                      <span className="font-black text-surface-100 text-base">₹{item.quantity * item.price}</span>
-                      <span className={`flex items-center gap-1 text-[10px] uppercase font-black px-2 py-0.5 rounded-md
-                        ${item.status === 'pending' ? 'badge-pending' : item.status === 'cooking' ? 'badge-cooking' : 'badge-ready'}`}>
-                        {item.status === 'pending' && <Clock className="w-2.5 h-2.5" />}
-                        {item.status === 'cooking' && <Flame className="w-2.5 h-2.5" />}
-                        {item.status === 'ready' && <CheckCircle2 className="w-2.5 h-2.5" />}
-                        {item.status}
-                      </span>
+
+                    {/* Waiter Edit/Delete Controls for Sent KOT item */}
+                    <div className="flex items-center justify-between pt-2 border-t border-dashed border-slate-200/80">
+                      <div className="flex items-center gap-2 rounded-xl p-1 bg-white border border-slate-200">
+                        <button
+                          onClick={() => {
+                            if (item.quantity > 1) {
+                              updateActiveOrderItemQuantity(activeOrder.id, item.id, item.quantity - 1);
+                            } else {
+                              deleteActiveOrderItem(activeOrder.id, item.id);
+                            }
+                          }}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600"
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="font-black text-surface-100 text-sm min-w-[20px] text-center">{item.quantity}</span>
+                        <button
+                          onClick={() => updateActiveOrderItemQuantity(activeOrder.id, item.id, item.quantity + 1)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all bg-orange-50 hover:bg-orange-100 text-orange-600"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => deleteActiveOrderItem(activeOrder.id, item.id)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all text-slate-400 hover:bg-red-50 hover:text-red-500"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             )
+          ) : (
+            /* History Tab (Waiter Payment / Table History) */
+            (() => {
+              const myOrders = orderHistory.filter(o => o.user_id === user?.id);
+              const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+              const todayOrders = myOrders.filter(o => {
+                 const isoStr = o.created_at.includes('T') ? o.created_at : o.created_at.replace(' ', 'T') + '+05:30';
+                 return new Date(isoStr).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) === today;
+              });
+
+              return todayOrders.length === 0 ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 animate-fade-in">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                       style={{ background: 'rgba(0,0,0,0.02)', border: '1px dashed rgba(0,0,0,0.1)' }}>
+                    <Receipt className="w-8 h-8" style={{ color: 'rgba(15, 23, 42, 0.3)' }} />
+                  </div>
+                  <p className="text-sm font-bold" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>No history today</p>
+                </div>
+              ) : (
+                <div className="space-y-2.5 animate-fade-in pb-4">
+                  {todayOrders.map(order => (
+                    <div key={order.id} className="p-3.5 rounded-2xl flex items-center justify-between border border-slate-100 bg-white shadow-sm transition-all hover:border-orange-200">
+                      <div>
+                        <h4 className="font-bold text-surface-100 text-sm">
+                          {order.order_type === 'dine_in' ? `Table ${order.table_number || '-'}` : 'Walk-In'}
+                        </h4>
+                        <div className="text-[10px] text-slate-400 mt-0.5">
+                          {new Date(order.created_at.includes('T') ? order.created_at : order.created_at.replace(' ', 'T') + '+05:30').toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })} • {order.payment_type}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-black text-surface-100 text-sm">₹{((order.subtotal || 0) + (order.tax_amount || 0)).toFixed(0)}</div>
+                        <div className="text-[9px] text-slate-400">#{order.id}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()
           )}
         </div>
 
@@ -543,14 +575,12 @@ export default function WaiterDashboard() {
                   disabled={cart.length === 0}
                   className="btn-orange flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm disabled:opacity-40"
                 >
-                  <span className="relative z-10">
-                    {orderType === 'dine_in' ? 'Send to Kitchen' : `Place ${orderType === 'takeaway' ? 'Takeaway' : 'Delivery'}`}
-                  </span>
+                  <span className="relative z-10">Send to Kitchen</span>
                   <Send className="w-4 h-4 relative z-10" />
                 </button>
               </div>
             </>
-          ) : (
+          ) : rightTab === 'active' ? (
             <>
               <div className="flex justify-between items-center mb-4">
                 <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>Total Due</span>
@@ -581,6 +611,32 @@ export default function WaiterDashboard() {
                 </div>
               )}
             </>
+          ) : (
+            /* History Tab Footer */
+            (() => {
+              const myOrders = orderHistory.filter(o => o.user_id === user?.id);
+              const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+              const todayOrders = myOrders.filter(o => {
+                 const isoStr = o.created_at.includes('T') ? o.created_at : o.created_at.replace(' ', 'T') + '+05:30';
+                 return new Date(isoStr).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) === today;
+              });
+              const totalToday = todayOrders.reduce((sum, o) => sum + (Number(o.subtotal || 0) + Number(o.tax_amount || 0)), 0);
+
+              return (
+                <div className="flex flex-col gap-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>Today's Collection</span>
+                    <span className="text-xl font-black text-orange-600">₹{totalToday.toFixed(0)}</span>
+                  </div>
+                  <button
+                    onClick={() => setShowHistoryModal(true)}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm text-white bg-slate-900 transition-all hover:bg-slate-800"
+                  >
+                    <History className="w-4 h-4" /> Detailed Stats Summary
+                  </button>
+                </div>
+              );
+            })()
           )}
         </div>
       </div>

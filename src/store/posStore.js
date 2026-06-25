@@ -201,6 +201,26 @@ export const usePosStore = create((set, get) => ({
     }
   },
 
+  deleteActiveOrderItem: async (orderId, itemId) => {
+    try {
+      await axios.delete(`${API_URL}/orders/${orderId}/items/${itemId}`);
+      toast.success('Item deleted from KOT');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to delete item from KOT');
+    }
+  },
+
+  updateActiveOrderItemQuantity: async (orderId, itemId, quantity) => {
+    try {
+      await axios.put(`${API_URL}/orders/${orderId}/items/${itemId}/quantity`, { quantity });
+      toast.success('Quantity updated');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update quantity');
+    }
+  },
+
   // Admin Configuration CRUD
   addCategory: async (category) => {
     try {
