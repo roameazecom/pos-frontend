@@ -100,7 +100,7 @@ export default function WaiterDashboard() {
       {cart.length > 0 && mobileView === 'menu' && (
         <button
           onClick={() => { setMobileView('cart'); setRightTab('new'); }}
-          className="fixed bottom-20 right-4 z-40 flex items-center gap-2 px-4 py-3 rounded-full text-white font-black text-xs shadow-lg animate-pulse-glow lg:hidden"
+          className="fixed bottom-36 right-4 z-40 flex items-center gap-2 px-4 py-3 rounded-full text-white font-black text-xs shadow-lg animate-pulse-glow lg:hidden"
           style={{
             background: 'linear-gradient(135deg, #f97316, #ea580c)',
             boxShadow: '0 8px 24px rgba(249, 115, 22, 0.4)',
@@ -112,7 +112,7 @@ export default function WaiterDashboard() {
       )}
 
       {/* Mobile Floating View Switcher at bottom */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-surface-900 border border-surface-700/80 shadow-lg rounded-2xl p-1.5 flex gap-2 lg:hidden">
+      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[110] bg-surface-900 border border-surface-700/80 shadow-lg rounded-2xl p-1.5 flex gap-2 lg:hidden">
         <button
           onClick={() => setMobileView('menu')}
           className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
