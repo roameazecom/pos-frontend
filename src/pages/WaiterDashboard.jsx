@@ -19,7 +19,7 @@ export default function WaiterDashboard() {
     deleteActiveOrderItem, updateActiveOrderItemQuantity
   } = usePosStore();
 
-  const { activeLocationTab, setActiveLocationTab, activeCategoryTab, setActiveCategoryTab } = useUiStore();
+  const { activeLocationTab, setActiveLocationTab, activeCategoryTab, setActiveCategoryTab, mobileView, setMobileView } = useUiStore();
 
   useEffect(() => {
     if (locations.length > 0) {
@@ -46,8 +46,6 @@ export default function WaiterDashboard() {
   const [checkoutPhone, setCheckoutPhone] = useState('');
 
   const [menuSearch, setMenuSearch] = useState('');
-
-  const [mobileView, setMobileView] = useState('menu'); // 'menu' | 'cart'
 
   const filteredTables = tables.filter(t => t.location_id === activeLocationTab);
   const activeTable = tables.find(t => t.id === activeTableId);
@@ -111,34 +109,7 @@ export default function WaiterDashboard() {
         </button>
       )}
 
-      {/* Mobile Floating View Switcher at bottom */}
-      <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[110] bg-surface-900 border border-surface-700/80 shadow-lg rounded-2xl p-1.5 flex gap-2 lg:hidden">
-        <button
-          onClick={() => setMobileView('menu')}
-          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all ${
-            mobileView === 'menu'
-              ? 'bg-brand-600 text-white shadow-sm'
-              : 'text-surface-500 hover:text-surface-800'
-          }`}
-        >
-          Menu
-        </button>
-        <button
-          onClick={() => setMobileView('cart')}
-          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-            mobileView === 'cart'
-              ? 'bg-brand-600 text-white shadow-sm'
-              : 'text-surface-500 hover:text-surface-800'
-          }`}
-        >
-          Cart
-          {cart.length > 0 && (
-            <span className="w-5 h-5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-black flex items-center justify-center">
-              {cart.length}
-            </span>
-          )}
-        </button>
-      </div>
+
 
       {/* ══════════ LEFT PANEL ══════════ */}
       <div className={`flex-1 flex flex-col min-w-0 lg:h-full z-10 ${mobileView === 'menu' ? 'flex' : 'hidden lg:flex'}`}>

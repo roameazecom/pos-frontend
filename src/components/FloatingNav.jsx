@@ -1,10 +1,13 @@
-import { NavLink, useNavigate } from 'react-router-dom';
-import { ChefHat, Coffee, Receipt, Settings, LogOut, ShoppingBag, User } from 'lucide-react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { ChefHat, Coffee, Receipt, Settings, LogOut, ShoppingBag, User, ShoppingCart } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import { useUiStore } from '../store/uiStore';
 
 export default function FloatingNav() {
   const { user, logout } = useAuthStore();
+  const { mobileView, setMobileView } = useUiStore();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -12,7 +15,8 @@ export default function FloatingNav() {
   };
 
   const allNavigation = [
-    { name: 'Menu', href: '/waiter', icon: Coffee, roles: ['waiter', 'admin', 'manager'], color: '#fb923c' },
+    { name: 'Menu', href: '/waiter', icon: Coffee, roles: ['waiter', 'admin', 'manager'], color: '#fb923c', onClickView: 'menu' },
+    { name: 'Cart', href: '/waiter', icon: ShoppingCart, roles: ['waiter', 'admin', 'manager'], color: '#fb923c', onClickView: 'cart' },
     { name: 'Kitchen', href: '/kds', icon: ChefHat, roles: ['kitchen_manager', 'admin', 'manager'], color: '#f43f5e' },
     { name: 'Takeaway', href: '/takeaway', icon: ShoppingBag, roles: ['admin', 'manager'], color: '#a78bfa' },
     { name: 'Billing', href: '/billing', icon: Receipt, roles: ['admin', 'manager'], color: '#34d399' },
@@ -41,33 +45,41 @@ export default function FloatingNav() {
           
           {navigation.map((item) => {
             const Icon = item.icon;
+            const isLinkActive = item.onClickView
+              ? pathname === '/waiter' && mobileView === item.onClickView
+              : pathname === item.href;
+
             return (
               <NavLink
                 key={item.name}
                 to={item.href}
                 title={item.name}
-                className={({ isActive }) =>
+                onClick={() => {
+                  if (item.onClickView) {
+                    setMobileView(item.onClickView);
+                  }
+                }}
+                className={() =>
                   `relative flex flex-col items-center justify-center w-12 h-12 sm:w-13 sm:h-13 rounded-full transition-all duration-300 group ${
-                    isActive ? 'nav-active' : 'text-surface-400 hover:text-surface-200'
+                    isLinkActive ? 'nav-active' : 'text-surface-400 hover:text-surface-200'
                   }`
                 }
-                style={({ isActive }) => isActive ? {} : {}}
               >
-                {({ isActive }) => (
+                {() => (
                   <>
-                    {isActive && (
+                    {isLinkActive && (
                       <div className="absolute inset-0 rounded-full animate-pulse-glow" />
                     )}
                     <Icon
                       className={`w-5 h-5 transition-all duration-300 relative z-10 ${
-                        isActive ? '' : 'group-hover:scale-110'
+                        isLinkActive ? '' : 'group-hover:scale-110'
                       }`}
-                      style={isActive ? { color: item.color, filter: `drop-shadow(0 0 8px ${item.color}80)` } : {}}
+                      style={isLinkActive ? { color: item.color, filter: `drop-shadow(0 0 8px ${item.color}80)` } : {}}
                     />
                     <span className={`text-[9px] font-bold mt-0.5 transition-all ${
-                      isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'
+                      isLinkActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-60'
                     }`}
-                    style={isActive ? { color: item.color } : {}}>
+                    style={isLinkActive ? { color: item.color } : {}}>
                       {item.name}
                     </span>
                   </>

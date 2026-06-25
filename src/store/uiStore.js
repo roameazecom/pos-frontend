@@ -12,5 +12,8 @@ export const useUiStore = create((set) => ({
   },
   
   activeCategoryTab: 1,
-  setActiveCategoryTab: (id) => set({ activeCategoryTab: id })
+  setActiveCategoryTab: (id) => set({ activeCategoryTab: id }),
+  
+  mobileView: 'menu',
+  setMobileView: (view) => set({ mobileView: view })
 }));
