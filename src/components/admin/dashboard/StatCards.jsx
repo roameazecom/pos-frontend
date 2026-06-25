@@ -1,14 +1,19 @@
-import { TrendingUp, Utensils, ShoppingBag, Truck } from 'lucide-react';
+import { TrendingUp, Utensils, ShoppingBag, Truck, Wallet } from 'lucide-react';
 import { usePosStore } from '../../../store/posStore';
 
 export default function StatCards({ date }) {
-  const { orderHistory } = usePosStore();
+  const { orderHistory, expenses } = usePosStore();
 
   const paidOrders = orderHistory.filter(o => {
     if (o.status !== 'paid') return false;
     const isoStr = o.created_at.includes('T') ? o.created_at : o.created_at.replace(' ', 'T') + '+05:30';
     const orderDate = new Date(isoStr).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
     return orderDate === date;
+  });
+
+  const todayExpenses = expenses.filter(e => {
+    const expDateStr = new Date(e.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    return expDateStr === date;
   });
   
   let totalSales = 0;
@@ -28,6 +33,8 @@ export default function StatCards({ date }) {
     }
   });
 
+  const totalExpenseAmt = todayExpenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+
   const stats = [
     {
       label: 'Total Sales',
@@ -35,6 +42,13 @@ export default function StatCards({ date }) {
       orders: `${paidOrders.length} Orders`,
       icon: <TrendingUp className="w-5 h-5 text-rose-500" />,
       iconBg: 'bg-rose-500/30',
+    },
+    {
+      label: 'Day Expenses',
+      amount: `₹ ${totalExpenseAmt.toFixed(2)}`,
+      orders: `${todayExpenses.length} Logs`,
+      icon: <Wallet className="w-5 h-5 text-emerald-500" />,
+      iconBg: 'bg-emerald-500/20',
     },
     {
       label: 'Dine In',
@@ -60,7 +74,7 @@ export default function StatCards({ date }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 lg:gap-6">
       {stats.map((stat, idx) => (
         <div key={idx} className="bg-surface-900/80 backdrop-blur-md border border-surface-700 rounded-3xl p-6 shadow-sm hover:shadow-glass hover:-translate-y-1 transition-all duration-300 group">
           <div className="flex justify-between items-start mb-6">

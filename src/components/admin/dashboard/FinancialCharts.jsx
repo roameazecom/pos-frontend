@@ -4,8 +4,12 @@ import { RefreshCw } from 'lucide-react';
 import { usePosStore } from '../../../store/posStore';
 
 export default function FinancialCharts({ date }) {
-  const { orderHistory } = usePosStore();
+  const { orderHistory, expenses, fetchExpensesData } = usePosStore();
   const [localDate, setLocalDate] = useState(date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }));
+
+  useEffect(() => {
+    fetchExpensesData();
+  }, [fetchExpensesData]);
 
   useEffect(() => {
     if (date) setLocalDate(date);
@@ -16,6 +20,11 @@ export default function FinancialCharts({ date }) {
     if (o.status !== 'paid') return false;
     const isoStr = o.created_at.includes('T') ? o.created_at : o.created_at.replace(' ', 'T') + '+05:30';
     return new Date(isoStr).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) === targetDate;
+  });
+
+  const todayExpenses = expenses.filter(e => {
+    const expDateStr = new Date(e.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    return expDateStr === targetDate;
   });
 
   const paymentTotals = todayOrders.reduce((acc, order) => {
@@ -30,14 +39,35 @@ export default function FinancialCharts({ date }) {
   const cardPct = paymentTotals.total > 0 ? (paymentTotals.Card / paymentTotals.total) * 100 : 0;
   const upiPct = paymentTotals.total > 0 ? (paymentTotals.UPI / paymentTotals.total) * 100 : 0;
 
-  // Simple static data for expenses since we don't have expenses in DB yet
+  // Group today's expenses by hour intervals
+  const getHourInterval = (dateObj) => {
+    const hour = dateObj.getHours();
+    if (hour < 11) return '10 AM';
+    if (hour < 13) return '12 PM';
+    if (hour < 15) return '2 PM';
+    if (hour < 17) return '4 PM';
+    if (hour < 19) return '6 PM';
+    return '8 PM';
+  };
+
   const expenseData = [
     { name: '10 AM', value: 0 },
     { name: '12 PM', value: 0 },
     { name: '2 PM', value: 0 },
     { name: '4 PM', value: 0 },
     { name: '6 PM', value: 0 },
+    { name: '8 PM', value: 0 },
   ];
+
+  todayExpenses.forEach(exp => {
+    const amt = parseFloat(exp.amount) || 0;
+    const dateObj = exp.created_at ? new Date(exp.created_at) : new Date(exp.date);
+    const interval = getHourInterval(dateObj);
+    const item = expenseData.find(d => d.name === interval);
+    if (item) {
+      item.value += amt;
+    }
+  });
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6">
       {/* Payment Bifurcation */}
@@ -51,7 +81,10 @@ export default function FinancialCharts({ date }) {
               onChange={(e) => setLocalDate(e.target.value)}
               className="border border-slate-300 rounded-md text-sm p-1.5 focus:outline-none" 
             />
-            <button className="p-1.5 border border-slate-300 rounded-md text-surface-400 hover:bg-surface-900">
+            <button 
+              onClick={() => usePosStore.getState().fetchOrderHistory()} 
+              className="p-1.5 border border-slate-300 rounded-md text-surface-400 hover:bg-surface-900 transition-colors"
+            >
               <RefreshCw className="w-4 h-4" />
             </button>
           </div>
@@ -107,7 +140,10 @@ export default function FinancialCharts({ date }) {
               onChange={(e) => setLocalDate(e.target.value)}
               className="border border-slate-300 rounded-md text-sm p-1.5 focus:outline-none" 
             />
-            <button className="p-1.5 border border-slate-300 rounded-md text-surface-400 hover:bg-surface-900">
+            <button 
+              onClick={() => fetchExpensesData()} 
+              className="p-1.5 border border-slate-300 rounded-md text-surface-400 hover:bg-surface-900 transition-colors"
+            >
               <RefreshCw className="w-4 h-4" />
             </button>
           </div>
@@ -118,8 +154,8 @@ export default function FinancialCharts({ date }) {
               <LineChart data={expenseData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12}} ticks={[0, 10]} tickFormatter={(val) => val === 0 ? '0k' : `${val}k`} />
-                <Tooltip />
+                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12}} tickFormatter={(val) => `₹${val}`} />
+                <Tooltip formatter={(value) => [`₹${value}`, 'Expenses']} />
                 <Line type="monotone" dataKey="value" stroke="#3B82F6" strokeWidth={2} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
               </LineChart>
             </ResponsiveContainer>

@@ -22,6 +22,9 @@ export const usePosStore = create((set, get) => ({
   expenses: [],
   vehicles: [],
   trips: [],
+  inventoryItems: [],
+  vendorPayments: [],
+  staffAdvances: [],
 
   // UI state for Waiter App
   activeTableId: null,
@@ -75,8 +78,10 @@ export const usePosStore = create((set, get) => ({
         orders: orderRes.data,
         restaurantDetails: restRes.data
       });
-      // also fetch history
+      // also fetch history, expenses, and inventory data
       get().fetchOrderHistory();
+      get().fetchExpensesData();
+      get().fetchInventoryData();
     } catch (err) {
       console.error('Failed to fetch data', err);
       toast.error('Failed to load POS data');
@@ -359,6 +364,101 @@ export const usePosStore = create((set, get) => ({
       get().fetchExpensesData();
       toast.success('Trip log deleted');
     } catch (err) { console.error(err); toast.error('Failed to delete trip log'); }
+  },
+
+  fetchInventoryData: async () => {
+    try {
+      const [invRes, vpRes, saRes] = await Promise.all([
+        axios.get(`${API_URL}/inventory/items`),
+        axios.get(`${API_URL}/inventory/vendor-payments`),
+        axios.get(`${API_URL}/inventory/staff-advances`)
+      ]);
+      set({
+        inventoryItems: invRes.data,
+        vendorPayments: vpRes.data,
+        staffAdvances: saRes.data
+      });
+    } catch (err) {
+      console.error('Failed to fetch inventory/advances data', err);
+    }
+  },
+
+  addInventoryItem: async (item) => {
+    try {
+      await axios.post(`${API_URL}/inventory/items`, item);
+      get().fetchInventoryData();
+      toast.success('Inventory item added');
+    } catch (err) { console.error(err); toast.error('Failed to add inventory item'); }
+  },
+  updateInventoryItem: async (id, item) => {
+    try {
+      await axios.put(`${API_URL}/inventory/items/${id}`, item);
+      get().fetchInventoryData();
+      toast.success('Inventory item updated');
+    } catch (err) { console.error(err); toast.error('Failed to update inventory item'); }
+  },
+  deleteInventoryItem: async (id) => {
+    try {
+      await axios.delete(`${API_URL}/inventory/items/${id}`);
+      get().fetchInventoryData();
+      toast.success('Inventory item deleted');
+    } catch (err) { console.error(err); toast.error('Failed to delete inventory item'); }
+  },
+  logInventoryUsage: async (id, logData) => {
+    try {
+      const res = await axios.post(`${API_URL}/inventory/items/${id}/log`, logData);
+      get().fetchInventoryData();
+      if (logData.type === 'consumption') {
+        toast.success(`Used ${logData.quantity} of stock`);
+      } else {
+        toast.success('Stock level adjusted successfully');
+      }
+      return res.data;
+    } catch (err) { console.error(err); toast.error('Failed to log stock change'); }
+  },
+
+  addVendorPayment: async (vp) => {
+    try {
+      await axios.post(`${API_URL}/inventory/vendor-payments`, vp);
+      get().fetchInventoryData();
+      toast.success('Vendor payment added');
+    } catch (err) { console.error(err); toast.error('Failed to add vendor payment'); }
+  },
+  updateVendorPayment: async (id, vp) => {
+    try {
+      await axios.put(`${API_URL}/inventory/vendor-payments/${id}`, vp);
+      get().fetchInventoryData();
+      toast.success('Vendor payment updated');
+    } catch (err) { console.error(err); toast.error('Failed to update vendor payment'); }
+  },
+  deleteVendorPayment: async (id) => {
+    try {
+      await axios.delete(`${API_URL}/inventory/vendor-payments/${id}`);
+      get().fetchInventoryData();
+      toast.success('Vendor payment deleted');
+    } catch (err) { console.error(err); toast.error('Failed to delete vendor payment'); }
+  },
+
+  addStaffAdvance: async (sa) => {
+    try {
+      await axios.post(`${API_URL}/inventory/staff-advances`, sa);
+      get().fetchInventoryData();
+      toast.success('Staff advance logged');
+    } catch (err) { console.error(err); toast.error('Failed to log staff advance'); }
+  },
+  updateStaffAdvance: async (id, sa) => {
+    try {
+      await axios.put(`${API_URL}/inventory/staff-advances/${id}`, sa);
+      get().fetchInventoryData();
+      toast.success('Staff advance updated');
+    } catch (err) { console.error(err); toast.error('Failed to update staff advance'); }
+  },
+  deleteStaffAdvance: async (id) => {
+    try {
+      await axios.delete(`${API_URL}/inventory/staff-advances/${id}`);
+      get().fetchInventoryData();
+      toast.success('Staff advance deleted');
+    } catch (err) { console.error(err); toast.error('Failed to delete staff advance'); }
   },
   
   // Notice: For brevity, updates and deletes would be implemented similarly using axios.put and axios.delete.

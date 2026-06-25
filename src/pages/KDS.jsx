@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { usePosStore } from '../store/posStore';
-import { Clock, CheckCircle2, ChefHat, History, Flame, Check, Search, ShoppingBag, Bike } from 'lucide-react';
+import { Clock, CheckCircle2, ChefHat, History, Flame, Check, Search, ShoppingBag, Bike, Package, X } from 'lucide-react';
 import NotificationPanel from '../components/common/NotificationPanel';
 
 export default function KDS() {
-  const { orders, orderHistory, updateItemStatus, updateKotStatus, tables } = usePosStore();
+  const { orders, orderHistory, updateItemStatus, updateKotStatus, tables, inventoryItems, logInventoryUsage } = usePosStore();
   const [activeTab, setActiveTab] = useState('active');
   const [currentTime, setCurrentTime] = useState(Date.now());
   const [historySearch, setHistorySearch] = useState('');
+  const [kitchenSearch, setKitchenSearch] = useState('');
+  const [loggingItemId, setLoggingItemId] = useState(null);
+  const [useQty, setUseQty] = useState('');
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(Date.now()), 60000);
@@ -108,7 +111,7 @@ export default function KDS() {
             >
               <Flame className="w-4 h-4" /> Active
             </button>
-            <button
+             <button
               onClick={() => setActiveTab('history')}
               className="flex items-center gap-2 px-4 py-2 rounded-lg font-black text-sm transition-all duration-300"
               style={activeTab === 'history' ? {
@@ -118,6 +121,17 @@ export default function KDS() {
               } : { color: 'rgba(15, 23, 42, 0.5)', border: '1px solid transparent' }}
             >
               <History className="w-4 h-4" /> History
+            </button>
+            <button
+              onClick={() => setActiveTab('inventory')}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg font-black text-sm transition-all duration-300"
+              style={activeTab === 'inventory' ? {
+                background: 'rgba(96,165,250,0.15)',
+                border: '1px solid rgba(96,165,250,0.3)',
+                color: '#1d4ed8'
+              } : { color: 'rgba(15, 23, 42, 0.5)', border: '1px solid transparent' }}
+            >
+              <Package className="w-4 h-4" /> Stock Usage
             </button>
           </div>
 
@@ -280,6 +294,125 @@ export default function KDS() {
                 </p>
               </div>
             )}
+          </div>
+        ) : activeTab === 'inventory' ? (
+          /* Kitchen Inventory Usage Logs */
+          <div className="flex-1 flex flex-col min-h-0 gap-4 h-full">
+            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between shrink-0 p-3 rounded-2xl" style={panelStyle}>
+              <div className="relative flex-1 w-full">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'rgba(15,23,42,0.35)' }} />
+                <input
+                  type="text"
+                  placeholder="Search raw material to record usage (e.g. Paneer, Gajar, Doodh)..."
+                  value={kitchenSearch}
+                  onChange={(e) => setKitchenSearch(e.target.value)}
+                  className="glass-input w-full pl-11 pr-4 py-2.5 rounded-xl text-sm font-medium"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-6">
+                {inventoryItems
+                  .filter(item => item.name.toLowerCase().includes(kitchenSearch.toLowerCase()))
+                  .map(item => {
+                    const qty = parseFloat(item.quantity);
+                    const min = parseFloat(item.min_threshold);
+                    const red = parseFloat(item.red_threshold);
+                    
+                    let badgeColor = 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20';
+                    let dotColor = 'bg-emerald-500';
+                    if (qty <= red) {
+                      badgeColor = 'bg-red-500/10 text-red-500 border-red-500/20';
+                      dotColor = 'bg-red-500 animate-pulse';
+                    } else if (qty <= min) {
+                      badgeColor = 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+                      dotColor = 'bg-amber-500';
+                    }
+
+                    return (
+                      <div 
+                        key={item.id}
+                        className="bg-white rounded-2xl border border-slate-100 p-4 shadow-sm flex flex-col justify-between hover-lift transition-all"
+                      >
+                        <div>
+                          <div className="flex justify-between items-start mb-2">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                              {item.category}
+                            </span>
+                            <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-black uppercase tracking-wider ${badgeColor}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
+                              {qty <= red ? 'Critical' : qty <= min ? 'Low' : 'Healthy'}
+                            </span>
+                          </div>
+                          <h4 className="text-base font-extrabold text-slate-900 mb-1">{item.name}</h4>
+                          <div className="flex items-baseline gap-1 mt-2">
+                            <span className="text-2xl font-black text-slate-900">{qty.toFixed(2)}</span>
+                            <span className="text-xs font-bold text-slate-400">{item.unit}</span>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-slate-50">
+                          {loggingItemId === item.id ? (
+                            <form 
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                if (!useQty) return;
+                                logInventoryUsage(item.id, {
+                                  type: 'consumption',
+                                  quantity: parseFloat(useQty),
+                                  logged_by: 'Kitchen KDS',
+                                  notes: 'Used in kitchen cooking'
+                                });
+                                setLoggingItemId(null);
+                                setUseQty('');
+                              }}
+                              className="flex gap-2"
+                            >
+                              <input
+                                type="number"
+                                step="0.01"
+                                required
+                                autoFocus
+                                placeholder={`Qty (${item.unit})`}
+                                value={useQty}
+                                onChange={(e) => setUseQty(e.target.value)}
+                                className="flex-1 min-w-0 border border-slate-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-rose-500"
+                              />
+                              <button 
+                                type="submit" 
+                                className="bg-rose-500 hover:bg-rose-600 text-white font-black px-3 py-1 rounded-lg text-xs"
+                              >
+                                Log
+                              </button>
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  setLoggingItemId(null);
+                                  setUseQty('');
+                                }}
+                                className="border border-slate-300 hover:bg-slate-50 text-slate-500 font-bold px-2 py-1 rounded-lg text-xs"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </form>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setLoggingItemId(item.id);
+                                setUseQty('');
+                              }}
+                              className="w-full flex items-center justify-center gap-1.5 py-1.5 border border-slate-200 rounded-lg text-xs font-black text-slate-700 hover:bg-slate-50 transition-colors"
+                            >
+                              <Check className="w-3.5 h-3.5 text-rose-500" /> Log Kitchen Usage
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
           </div>
         ) : (
           /* History Table */
