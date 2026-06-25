@@ -18,6 +18,10 @@ export const usePosStore = create((set, get) => ({
   menuItems: [],
   categories: [],
   locations: [],
+  staff: [],
+  expenses: [],
+  vehicles: [],
+  trips: [],
 
   // UI state for Waiter App
   activeTableId: null,
@@ -248,6 +252,113 @@ export const usePosStore = create((set, get) => ({
       const res = await axios.post(`${API_URL}/config/tables`, table);
       set((state) => ({ tables: [...state.tables, res.data] }));
     } catch (err) { console.error(err); }
+  },
+
+  fetchExpensesData: async () => {
+    try {
+      const [staffRes, expRes, vehRes, tripRes] = await Promise.all([
+        axios.get(`${API_URL}/expenses/staff`),
+        axios.get(`${API_URL}/expenses`),
+        axios.get(`${API_URL}/expenses/vehicles`),
+        axios.get(`${API_URL}/expenses/trips`)
+      ]);
+      set({
+        staff: staffRes.data,
+        expenses: expRes.data,
+        vehicles: vehRes.data,
+        trips: tripRes.data
+      });
+    } catch (err) {
+      console.error('Failed to fetch expenses/staff data', err);
+    }
+  },
+
+  addStaff: async (staffMember) => {
+    try {
+      await axios.post(`${API_URL}/expenses/staff`, staffMember);
+      get().fetchExpensesData();
+      toast.success('Staff member added');
+    } catch (err) { console.error(err); toast.error('Failed to add staff'); }
+  },
+  updateStaff: async (id, staffMember) => {
+    try {
+      await axios.put(`${API_URL}/expenses/staff/${id}`, staffMember);
+      get().fetchExpensesData();
+      toast.success('Staff member updated');
+    } catch (err) { console.error(err); toast.error('Failed to update staff'); }
+  },
+  deleteStaff: async (id) => {
+    try {
+      await axios.delete(`${API_URL}/expenses/staff/${id}`);
+      get().fetchExpensesData();
+      toast.success('Staff member deleted');
+    } catch (err) { console.error(err); toast.error('Failed to delete staff'); }
+  },
+
+  addExpense: async (expense) => {
+    try {
+      await axios.post(`${API_URL}/expenses`, expense);
+      get().fetchExpensesData();
+      toast.success('Expense log saved');
+    } catch (err) { console.error(err); toast.error('Failed to save expense'); }
+  },
+  updateExpense: async (id, expense) => {
+    try {
+      await axios.put(`${API_URL}/expenses/${id}`, expense);
+      get().fetchExpensesData();
+      toast.success('Expense log updated');
+    } catch (err) { console.error(err); toast.error('Failed to update expense'); }
+  },
+  deleteExpense: async (id) => {
+    try {
+      await axios.delete(`${API_URL}/expenses/${id}`);
+      get().fetchExpensesData();
+      toast.success('Expense log deleted');
+    } catch (err) { console.error(err); toast.error('Failed to delete expense'); }
+  },
+
+  addVehicle: async (vehicle) => {
+    try {
+      await axios.post(`${API_URL}/expenses/vehicles`, vehicle);
+      get().fetchExpensesData();
+      toast.success('Vehicle registered');
+    } catch (err) { console.error(err); toast.error('Failed to register vehicle'); }
+  },
+  updateVehicle: async (id, vehicle) => {
+    try {
+      await axios.put(`${API_URL}/expenses/vehicles/${id}`, vehicle);
+      get().fetchExpensesData();
+      toast.success('Vehicle updated');
+    } catch (err) { console.error(err); toast.error('Failed to update vehicle'); }
+  },
+  deleteVehicle: async (id) => {
+    try {
+      await axios.delete(`${API_URL}/expenses/vehicles/${id}`);
+      get().fetchExpensesData();
+      toast.success('Vehicle deleted');
+    } catch (err) { console.error(err); toast.error('Failed to delete vehicle'); }
+  },
+
+  addTrip: async (trip) => {
+    try {
+      await axios.post(`${API_URL}/expenses/trips`, trip);
+      get().fetchExpensesData();
+      toast.success('Trip log saved');
+    } catch (err) { console.error(err); toast.error('Failed to save trip log'); }
+  },
+  updateTrip: async (id, trip) => {
+    try {
+      await axios.put(`${API_URL}/expenses/trips/${id}`, trip);
+      get().fetchExpensesData();
+      toast.success('Trip log updated');
+    } catch (err) { console.error(err); toast.error('Failed to update trip log'); }
+  },
+  deleteTrip: async (id) => {
+    try {
+      await axios.delete(`${API_URL}/expenses/trips/${id}`);
+      get().fetchExpensesData();
+      toast.success('Trip log deleted');
+    } catch (err) { console.error(err); toast.error('Failed to delete trip log'); }
   },
   
   // Notice: For brevity, updates and deletes would be implemented similarly using axios.put and axios.delete.

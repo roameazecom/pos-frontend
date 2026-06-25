@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Home, LineChart, Utensils, LayoutDashboard, Receipt, Users, Download, Store } from 'lucide-react';
+import { Home, LineChart, Utensils, LayoutDashboard, Receipt, Users, Download, Store, Wallet } from 'lucide-react';
 import AdminDashboard from '../components/admin/dashboard/AdminDashboard';
 import LogsContainer from '../components/admin/logs/LogsContainer';
 import MenuConfiguration from '../components/admin/menu/MenuConfiguration';
 import TableConfiguration from '../components/admin/tables/TableConfiguration';
 import UserManagement from '../components/admin/users/UserManagement';
 import RestaurantSettings from '../components/admin/settings/RestaurantSettings';
+import ExpensesStaffManagement from '../components/admin/expenses/ExpensesStaffManagement';
 
 import { useAuthStore } from '../store/authStore';
 
@@ -18,6 +19,7 @@ export default function Admin() {
     { id: 'logs', label: 'Orders & KOTs', icon: <Receipt className="w-4 h-4 mr-2" /> },
     { id: 'menu', label: 'Menu Configuration', icon: <Utensils className="w-4 h-4 mr-2" /> },
     { id: 'tables', label: 'Table & Areas', icon: <LayoutDashboard className="w-4 h-4 mr-2" /> },
+    { id: 'expenses', label: 'Expenses & Staff', icon: <Wallet className="w-4 h-4 mr-2" /> },
     { id: 'users', label: 'User Management', icon: <Users className="w-4 h-4 mr-2" /> },
     { id: 'restaurant', label: 'Restaurant Details', icon: <Store className="w-4 h-4 mr-2" /> }
   ];
@@ -39,6 +41,8 @@ export default function Admin() {
         return <MenuConfiguration />;
       case 'tables':
         return <TableConfiguration />;
+      case 'expenses':
+        return <ExpensesStaffManagement />;
       case 'users':
         return <UserManagement />;
       case 'restaurant':
