@@ -7,10 +7,13 @@ import TableConfiguration from '../components/admin/tables/TableConfiguration';
 import UserManagement from '../components/admin/users/UserManagement';
 import RestaurantSettings from '../components/admin/settings/RestaurantSettings';
 
+import { useAuthStore } from '../store/authStore';
+
 export default function Admin() {
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('dashboard');
 
-  const tabs = [
+  const allTabs = [
     { id: 'dashboard', label: 'Dashboard & Reports', icon: <LineChart className="w-4 h-4 mr-2" /> },
     { id: 'logs', label: 'Orders & KOTs', icon: <Receipt className="w-4 h-4 mr-2" /> },
     { id: 'menu', label: 'Menu Configuration', icon: <Utensils className="w-4 h-4 mr-2" /> },
@@ -18,6 +21,13 @@ export default function Admin() {
     { id: 'users', label: 'User Management', icon: <Users className="w-4 h-4 mr-2" /> },
     { id: 'restaurant', label: 'Restaurant Details', icon: <Store className="w-4 h-4 mr-2" /> }
   ];
+
+  const tabs = allTabs.filter(tab => {
+    if (user?.role === 'manager') {
+      return tab.id !== 'users' && tab.id !== 'restaurant';
+    }
+    return true;
+  });
 
   const renderContent = () => {
     switch (activeTab) {
