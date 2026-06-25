@@ -4,6 +4,7 @@ import { usePosStore } from '../../../store/posStore';
 
 export default function RunningStatusViews() {
   const [activeTab, setActiveTab] = useState('orders');
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const { orders, tables } = usePosStore();
 
   const [currentTime, setCurrentTime] = useState(Date.now());
@@ -147,21 +148,25 @@ export default function RunningStatusViews() {
                 const diffMins = Math.floor((currentTime - orderTime) / 60000);
                 const isOvertime = diffMins > 45; // Just a visual cue
                 return (
-                <div key={order.id} className="min-w-[160px] flex-shrink-0 flex flex-col items-center group">
-                  <div className={`w-full border rounded-3xl h-32 flex flex-col items-center justify-center mb-2 shadow-sm transition-transform group-hover:-translate-y-2 ${isOvertime ? 'bg-red-50 border-red-200 shadow-red-100' : 'bg-surface-900 border-surface-700'}`}>
+                <button
+                  key={order.id}
+                  onClick={() => setSelectedOrder(order)}
+                  className="min-w-[160px] flex-shrink-0 flex flex-col items-center group text-left cursor-pointer focus:outline-none"
+                >
+                  <div className={`w-full border rounded-3xl h-32 flex flex-col items-center justify-center mb-2 shadow-sm transition-transform group-hover:-translate-y-2 ${isOvertime ? 'bg-red-50/10 border-red-500/30' : 'bg-surface-900 border-surface-700 hover:border-brand-500/50'}`}>
                     <span className="text-xs font-bold text-surface-400 uppercase tracking-widest mb-1">{order.order_type === 'dine_in' ? 'Table' : order.order_type === 'takeaway' ? 'Pickup' : 'Delivery'}</span>
-                    <span className={`text-3xl font-black ${isOvertime ? 'text-red-600' : 'text-surface-100'}`}>
+                    <span className={`text-3xl font-black ${isOvertime ? 'text-red-500' : 'text-surface-100'}`}>
                       {order.order_type === 'dine_in' ? (table?.table_number || '?') : `#${order.id}`}
                     </span>
                   </div>
                   <div className="bg-surface-900 text-white rounded-full px-4 py-1.5 text-sm font-bold shadow-md relative -top-6">
-                    ₹ {(order.subtotal || 0).toFixed(2)}
+                    ₹ {(order.subtotal || 0).toFixed(0)}
                   </div>
                   <div className="text-center -mt-3">
                     <span className={`text-lg font-black block ${isOvertime ? 'text-red-500' : 'text-brand-600'}`}>{diffMins} <span className="text-sm font-bold">Min</span></span>
                     <span className="text-[10px] font-bold text-surface-400 uppercase tracking-widest">Time Lapsed</span>
                   </div>
-                </div>
+                </button>
               )})}
               {activeOrders.length === 0 && (
                 <div className="w-full text-center text-surface-400 p-8 font-medium bg-surface-950 rounded-2xl border border-dashed border-surface-700">
@@ -172,6 +177,65 @@ export default function RunningStatusViews() {
           </div>
         )}
       </div>
+
+      {/* Table details modal */}
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+          <div className="bg-surface-900 rounded-3xl border border-surface-700 shadow-glass w-full max-w-lg p-6 relative overflow-hidden animate-slide-up">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center pb-4 border-b border-surface-700">
+              <div>
+                <h3 className="text-lg font-black text-surface-100 uppercase tracking-wide">
+                  {selectedOrder.order_type === 'dine_in' ? `Table ${tables.find(t => t.id === selectedOrder.table_id)?.table_number || '?'}` : 'Quick Bill'} Order Details
+                </h3>
+                <p className="text-xs text-surface-400 mt-1">Order ID: #{selectedOrder.id} • Waiter: {selectedOrder.waiter_name || 'System'}</p>
+              </div>
+              <button
+                onClick={() => setSelectedOrder(null)}
+                className="w-8 h-8 rounded-xl bg-surface-950 hover:bg-surface-800 text-slate-400 hover:text-white flex items-center justify-center transition-all"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Items list */}
+            <div className="py-4 max-h-[300px] overflow-y-auto custom-scrollbar space-y-3">
+              {selectedOrder.items && selectedOrder.items.map((item, idx) => (
+                <div key={item.id || idx} className="flex justify-between items-center p-3 rounded-2xl bg-surface-950 border border-surface-750">
+                  <div>
+                    <h4 className="font-bold text-surface-100 text-sm">{item.name}</h4>
+                    <p className="text-xs text-surface-400 mt-1">KOT: {item.kot_id} • Status: <span className="font-semibold text-brand-500 uppercase text-[10px]">{item.status}</span></p>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-surface-100 text-sm">₹ {item.quantity * item.price}</div>
+                    <div className="text-xs text-surface-400">{item.quantity} × ₹ {item.price}</div>
+                  </div>
+                </div>
+              ))}
+              {(!selectedOrder.items || selectedOrder.items.length === 0) && (
+                <p className="text-center text-xs text-slate-500 py-4">No items found in this order.</p>
+              )}
+            </div>
+
+            {/* Total / Summary */}
+            <div className="pt-4 border-t border-surface-700 space-y-2">
+              <div className="flex justify-between text-xs text-surface-400 font-bold uppercase tracking-wider">
+                <span>Subtotal</span>
+                <span>₹ {selectedOrder.subtotal?.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-surface-400 font-bold uppercase tracking-wider">
+                <span>Tax (5%)</span>
+                <span>₹ {(selectedOrder.subtotal * 0.05).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-base font-black text-brand-600 pt-2 border-t border-dashed border-surface-750">
+                <span>Total Amount</span>
+                <span>₹ {(selectedOrder.subtotal * 1.05).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
