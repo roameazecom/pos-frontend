@@ -12,7 +12,7 @@ export default function FloatingNav() {
   };
 
   const allNavigation = [
-    { name: 'Waiter', href: '/waiter', icon: Coffee, roles: ['waiter', 'admin', 'manager'], color: '#fb923c' },
+    { name: 'Menu', href: '/waiter', icon: Coffee, roles: ['waiter', 'admin', 'manager'], color: '#fb923c' },
     { name: 'Kitchen', href: '/kds', icon: ChefHat, roles: ['kitchen_manager', 'admin', 'manager'], color: '#f43f5e' },
     { name: 'Takeaway', href: '/takeaway', icon: ShoppingBag, roles: ['admin', 'manager', 'waiter'], color: '#a78bfa' },
     { name: 'Billing', href: '/billing', icon: Receipt, roles: ['admin', 'manager'], color: '#34d399' },

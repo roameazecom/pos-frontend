@@ -101,7 +101,7 @@ export default function Login() {
         {/* Feature pills */}
         <div className="relative z-10 space-y-3">
           {[
-            { icon: Coffee, label: 'Waiter Dashboard', desc: 'Take orders from tables instantly' },
+            { icon: Coffee, label: 'Menu Dashboard', desc: 'Take orders from tables instantly' },
             { icon: ChefHat, label: 'Kitchen Display', desc: 'Real-time KOT management' },
             { icon: ShoppingBag, label: 'Quick Billing', desc: 'Takeaway & delivery orders' },
           ].map((feat) => {
