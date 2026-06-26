@@ -5,7 +5,7 @@ import FinancialCharts from './FinancialCharts';
 import RunningStatusViews from './RunningStatusViews';
 
 export default function AdminDashboard() {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }));
 
   return (
     <div className="flex flex-col space-y-6 overflow-y-auto pb-8 p-4 lg:p-6 bg-surface-950">
