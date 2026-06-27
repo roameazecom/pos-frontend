@@ -65,9 +65,8 @@ export default function QuickBill() {
       setCustomerName('');
       setCustomerPhone('');
       setDiscountAmount(0);
-      // Short delay to show success before opening PDF
       setTimeout(() => {
-        window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/${orderId}`, '_blank');
+        window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/thermal/${orderId}`, '_blank');
         setSuccessOrderId(null);
       }, 1200);
     }

@@ -80,6 +80,10 @@ export default function Billing() {
   const handleConfirmPayment = () => {
     if (selectedOrderId) {
       checkoutOrder(selectedOrderId, paymentType, checkoutName || selectedOrder?.customer_name || '', checkoutPhone || selectedOrder?.customer_phone || '', user?.id, discountAmount);
+      
+      // Auto-print thermal POS receipt in new tab
+      window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/thermal/${selectedOrderId}`, '_blank');
+      
       setSelectedOrderId(null); setShowModal(false); setCheckoutName(''); setCheckoutPhone(''); setDiscountAmount(0);
     }
   };
@@ -526,12 +530,18 @@ export default function Billing() {
                 </div>
               </div>
 
-              <div className="p-5 flex justify-end" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
+              <div className="p-5 flex justify-end gap-3.5" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
                 <button
                   onClick={() => window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/${histOrder.id}`, '_blank')}
-                  className="flex items-center gap-2 px-6 py-3 rounded-xl font-black text-sm transition-all hover-lift"
-                  style={{ background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', color: 'rgba(15, 23, 42, 0.65)' }}>
-                  <Printer className="w-4 h-4" /> Print Receipt
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 transition-all shadow-sm"
+                >
+                  <Printer className="w-4 h-4 text-slate-500" /> A4 Invoice
+                </button>
+                <button
+                  onClick={() => window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/thermal/${histOrder.id}`, '_blank')}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs btn-orange shadow-md transition-all active:scale-95"
+                >
+                  <Printer className="w-4 h-4 text-white" /> Print Thermal (80mm)
                 </button>
               </div>
             </div>
