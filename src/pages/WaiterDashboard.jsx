@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import WaiterPaymentHistory from '../components/waiter/WaiterPaymentHistory';
 import NotificationPanel from '../components/common/NotificationPanel';
+import ManagerAuthModal from '../components/common/ManagerAuthModal';
 
 export default function WaiterDashboard() {
   const { user } = useAuthStore();
@@ -44,6 +45,8 @@ export default function WaiterDashboard() {
   const [paymentType, setPaymentType] = useState('Cash');
   const [checkoutName, setCheckoutName] = useState('');
   const [checkoutPhone, setCheckoutPhone] = useState('');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [itemToCancel, setItemToCancel] = useState(null);
 
   const [menuSearch, setMenuSearch] = useState('');
 
@@ -493,7 +496,8 @@ export default function WaiterDashboard() {
                             if (item.quantity > 1) {
                               updateActiveOrderItemQuantity(activeOrder.id, item.id, item.quantity - 1);
                             } else {
-                              deleteActiveOrderItem(activeOrder.id, item.id);
+                              setItemToCancel({ orderId: activeOrder.id, itemId: item.id, name: item.name });
+                              setIsAuthModalOpen(true);
                             }
                           }}
                           className="w-7 h-7 rounded-lg flex items-center justify-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600"
@@ -509,7 +513,10 @@ export default function WaiterDashboard() {
                         </button>
                       </div>
                       <button
-                        onClick={() => deleteActiveOrderItem(activeOrder.id, item.id)}
+                        onClick={() => {
+                          setItemToCancel({ orderId: activeOrder.id, itemId: item.id, name: item.name });
+                          setIsAuthModalOpen(true);
+                        }}
                         className="w-8 h-8 rounded-xl flex items-center justify-center transition-all text-slate-400 hover:bg-red-50 hover:text-red-500"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -708,6 +715,17 @@ export default function WaiterDashboard() {
             </div>
           </div>
         </div>
+      )}
+      {isAuthModalOpen && (
+        <ManagerAuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          itemName={itemToCancel?.name || ''}
+          role={user?.role}
+          onConfirm={(reason) => {
+            deleteActiveOrderItem(itemToCancel.orderId, itemToCancel.itemId, reason, user?.name || 'Waiter');
+          }}
+        />
       )}
     </div>
   );

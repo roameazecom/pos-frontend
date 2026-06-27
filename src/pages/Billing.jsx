@@ -4,11 +4,12 @@ import { useAuthStore } from '../store/authStore';
 import {
   Printer, CreditCard, Banknote, User, Phone, X, History,
   Search, Receipt, ShoppingBag, Bike, Coffee, CheckCircle2,
-  Filter
+  Filter, Trash2
 } from 'lucide-react';
+import ManagerAuthModal from '../components/common/ManagerAuthModal';
 
 export default function Billing() {
-  const { orders, orderHistory, tables, checkoutOrder, restaurantDetails } = usePosStore();
+  const { orders, orderHistory, tables, checkoutOrder, restaurantDetails, deleteActiveOrderItem } = usePosStore();
   const { user } = useAuthStore();
   const [viewTab, setViewTab] = useState('active');
   const [searchQuery, setSearchQuery] = useState('');
@@ -20,6 +21,8 @@ export default function Billing() {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ dateRange: 'all', paymentType: 'all', orderType: 'all' });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [itemToCancel, setItemToCancel] = useState(null);
 
   const activeOrders = orders.filter(o => o.status === 'open');
   const selectedOrder = activeOrders.find(o => o.id === selectedOrderId);
@@ -370,13 +373,24 @@ export default function Billing() {
                 <span>Item</span><span>Total</span>
               </div>
               {selectedOrder.items.map(item => (
-                <div key={item.id} className="flex justify-between items-center group">
+                <div key={item.id} className="flex justify-between items-center group gap-3">
                   <div className="flex-1">
                     <p className="font-black text-surface-100 text-sm group-hover:text-orange-600 transition-colors">{item.name}</p>
                     <p className="text-xs font-bold mt-0.5" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>{item.quantity} × ₹{item.price}</p>
                   </div>
-                  <span className="font-black text-surface-100 px-2 py-1 rounded-lg text-sm"
-                    style={{ background: 'rgba(0,0,0,0.04)' }}>₹{item.quantity * item.price}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black text-surface-100 px-2 py-1 rounded-lg text-sm"
+                      style={{ background: 'rgba(0,0,0,0.04)' }}>₹{item.quantity * item.price}</span>
+                    <button
+                      onClick={() => {
+                        setItemToCancel({ orderId: selectedOrder.id, itemId: item.id, name: item.name });
+                        setIsAuthModalOpen(true);
+                      }}
+                      className="p-1 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -601,6 +615,17 @@ export default function Billing() {
             </div>
           </div>
         </div>
+      )}
+      {isAuthModalOpen && (
+        <ManagerAuthModal
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          itemName={itemToCancel?.name || ''}
+          role={user?.role}
+          onConfirm={(reason) => {
+            deleteActiveOrderItem(itemToCancel.orderId, itemToCancel.itemId, reason, user?.name || 'Cashier');
+          }}
+        />
       )}
     </div>
   );

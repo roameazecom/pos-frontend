@@ -25,6 +25,7 @@ export const usePosStore = create((set, get) => ({
   inventoryItems: [],
   vendorPayments: [],
   staffAdvances: [],
+  cancellationLogs: [],
 
   // UI state for Waiter App
   activeTableId: null,
@@ -82,6 +83,7 @@ export const usePosStore = create((set, get) => ({
       get().fetchOrderHistory();
       get().fetchExpensesData();
       get().fetchInventoryData();
+      get().fetchCancellationLogs();
     } catch (err) {
       console.error('Failed to fetch data', err);
       toast.error('Failed to load POS data');
@@ -94,6 +96,15 @@ export const usePosStore = create((set, get) => ({
       set({ orderHistory: res.data });
     } catch (err) {
       console.error('Failed to fetch order history', err);
+    }
+  },
+
+  fetchCancellationLogs: async () => {
+    try {
+      const res = await axios.get(`${API_URL}/orders/cancellations/logs`);
+      set({ cancellationLogs: res.data });
+    } catch (err) {
+      console.error('Failed to fetch cancellation logs', err);
     }
   },
 
@@ -210,9 +221,11 @@ export const usePosStore = create((set, get) => ({
     }
   },
 
-  deleteActiveOrderItem: async (orderId, itemId) => {
+  deleteActiveOrderItem: async (orderId, itemId, reason = 'Not specified', cancelledByName = 'Staff') => {
     try {
-      await axios.delete(`${API_URL}/orders/${orderId}/items/${itemId}`);
+      await axios.delete(`${API_URL}/orders/${orderId}/items/${itemId}`, {
+        data: { reason, cancelled_by_name: cancelledByName }
+      });
       toast.success('Item deleted from KOT');
     } catch (err) {
       console.error(err);

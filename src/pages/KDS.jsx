@@ -41,7 +41,7 @@ export default function KDS() {
         kotId, items: data.items, timestamp: data.timestamp,
         waiterName: order.waiter_name || 'Admin', customerName: order.customer_name
       };
-      if (order.status === 'open' && !isHistory) activeTickets.push(ticket);
+      if (order.status !== 'cancelled' && !isHistory) activeTickets.push(ticket);
       else if (isHistory && data.items.length > 0) historyTickets.push(ticket);
     });
   });
@@ -179,7 +179,7 @@ export default function KDS() {
 
               return (
                 <div
-                  key={ticket.kotId}
+                  key={`${ticket.orderId}-${ticket.kotId}`}
                   className="rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover-lift"
                   style={{
                     background: warn ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.9)',
@@ -194,22 +194,27 @@ export default function KDS() {
                   {/* Ticket Header */}
                   <div className="p-4 flex justify-between items-start"
                        style={{ borderBottom: `1px solid ${warn ? 'rgba(239,68,68,0.15)' : 'rgba(0,0,0,0.08)'}` }}>
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <span className="text-[10px] font-black uppercase tracking-widest text-surface-400">
                         {ticket.kotId}
                       </span>
                       <div className="flex items-center gap-2 mt-1">
-                        {isTakeaway && <ShoppingBag className="w-4 h-4" style={{ color: '#a78bfa' }} />}
-                        {isDelivery && <Bike className="w-4 h-4" style={{ color: '#34d399' }} />}
-                        <span className="text-xl font-black text-surface-100">{ticket.tableNumber}</span>
+                        {isTakeaway && <ShoppingBag className="w-4 h-4 text-purple-600 shrink-0" />}
+                        {isDelivery && <Bike className="w-4 h-4 text-emerald-600 shrink-0" />}
+                        <span className="text-xl font-black text-surface-100 truncate">{ticket.tableNumber}</span>
                       </div>
-                      {ticket.customerName && (
-                        <p className="text-xs font-bold mt-1 text-surface-400">
-                          {ticket.customerName}
+                      <div className="flex flex-col mt-1 gap-0.5">
+                        <p className="text-[11px] font-bold text-orange-600">
+                          Waiter: <span className="font-extrabold">{ticket.waiterName}</span>
                         </p>
-                      )}
+                        {ticket.customerName && (
+                          <p className="text-xs font-bold text-surface-400 truncate">
+                            {ticket.customerName}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black"
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black shrink-0"
                          style={warn
                            ? { background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#dc2626' }
                            : { background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', color: 'rgba(15, 23, 42, 0.6)' }}>
@@ -219,7 +224,7 @@ export default function KDS() {
                   </div>
 
                   {/* Items */}
-                  <div className="p-4 space-y-2.5 flex-1">
+                  <div className="p-4 space-y-2.5 flex-1 min-h-0">
                     {ticket.items.map(item => (
                       <div
                         key={item.id}
@@ -241,15 +246,15 @@ export default function KDS() {
                           border: '1px solid rgba(52,211,153,0.25)',
                         }}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
                             <span className="font-black text-sm w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
                               style={item.status === 'ready' ? { background: '#059669', color: 'white' }
                                    : item.status === 'cooking' ? { background: '#4f46e5', color: 'white' }
                                    : { background: 'rgba(217,119,6,0.15)', color: '#b45309' }}>
                               {item.quantity}
                             </span>
-                            <span className={`font-bold text-sm ${item.status === 'ready' ? 'line-through' : ''}`}
+                            <span className={`font-bold text-sm break-words leading-tight flex-1 min-w-0 ${item.status === 'ready' ? 'line-through' : ''}`}
                               style={{ color: item.status === 'pending' ? 'rgba(15,23,42,0.8)'
                                            : item.status === 'cooking' ? '#4338ca' : '#047857' }}>
                               {item.name}
