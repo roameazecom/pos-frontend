@@ -4,16 +4,28 @@ import { usePosStore } from '../../../store/posStore';
 export default function StatCards({ date }) {
   const { orderHistory, expenses } = usePosStore();
 
+  const getLocalDateString = (dateInput) => {
+    if (!dateInput) return '';
+    if (typeof dateInput === 'string') {
+      if (dateInput.match(/^\d{4}-\d{2}-\d{2}/)) {
+        return dateInput.substring(0, 10);
+      }
+    }
+    try {
+      return new Date(dateInput).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    } catch (err) {
+      return '';
+    }
+  };
+
   const paidOrders = orderHistory.filter(o => {
     if (o.status !== 'paid') return false;
     const isoStr = o.created_at.includes('T') ? o.created_at : o.created_at.replace(' ', 'T') + '+05:30';
-    const orderDate = new Date(isoStr).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-    return orderDate === date;
+    return getLocalDateString(isoStr) === date;
   });
 
   const todayExpenses = expenses.filter(e => {
-    const expDateStr = new Date(e.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-    return expDateStr === date;
+    return getLocalDateString(e.date) === date;
   });
   
   let totalSales = 0;

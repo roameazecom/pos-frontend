@@ -16,15 +16,28 @@ export default function FinancialCharts({ date }) {
   }, [date]);
 
   const targetDate = localDate;
+  const getLocalDateString = (dateInput) => {
+    if (!dateInput) return '';
+    if (typeof dateInput === 'string') {
+      if (dateInput.match(/^\d{4}-\d{2}-\d{2}/)) {
+        return dateInput.substring(0, 10);
+      }
+    }
+    try {
+      return new Date(dateInput).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+    } catch (err) {
+      return '';
+    }
+  };
+
   const todayOrders = orderHistory.filter(o => {
     if (o.status !== 'paid') return false;
     const isoStr = o.created_at.includes('T') ? o.created_at : o.created_at.replace(' ', 'T') + '+05:30';
-    return new Date(isoStr).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) === targetDate;
+    return getLocalDateString(isoStr) === targetDate;
   });
 
   const todayExpenses = expenses.filter(e => {
-    const expDateStr = new Date(e.date).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-    return expDateStr === targetDate;
+    return getLocalDateString(e.date) === targetDate;
   });
 
   const paymentTotals = todayOrders.reduce((acc, order) => {
@@ -39,9 +52,15 @@ export default function FinancialCharts({ date }) {
   const cardPct = paymentTotals.total > 0 ? (paymentTotals.Card / paymentTotals.total) * 100 : 0;
   const upiPct = paymentTotals.total > 0 ? (paymentTotals.UPI / paymentTotals.total) * 100 : 0;
 
-  // Group today's expenses by hour intervals
-  const getHourInterval = (dateObj) => {
-    const hour = dateObj.getHours();
+  // Group today's expenses by hour intervals in Kolkata timezone
+  const getHourInterval = (exp) => {
+    let hour = 12; // default
+    if (exp.created_at) {
+      const isoStr = exp.created_at.includes('T') ? exp.created_at : exp.created_at.replace(' ', 'T') + '+05:30';
+      hour = new Date(isoStr).getHours();
+    } else if (exp.date) {
+      hour = new Date(exp.date).getHours();
+    }
     if (hour < 11) return '10 AM';
     if (hour < 13) return '12 PM';
     if (hour < 15) return '2 PM';
@@ -61,8 +80,7 @@ export default function FinancialCharts({ date }) {
 
   todayExpenses.forEach(exp => {
     const amt = parseFloat(exp.amount) || 0;
-    const dateObj = exp.created_at ? new Date(exp.created_at) : new Date(exp.date);
-    const interval = getHourInterval(dateObj);
+    const interval = getHourInterval(exp);
     const item = expenseData.find(d => d.name === interval);
     if (item) {
       item.value += amt;

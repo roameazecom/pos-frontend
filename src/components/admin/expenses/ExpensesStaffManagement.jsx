@@ -57,6 +57,13 @@ export default function ExpensesStaffManagement() {
     category: EXPENSE_CATEGORIES[0], vendor_name: DEFAULT_VENDORS[0], 
     amount: '', payment_mode: 'Cash', paid_by: '', date: new Date().toISOString().split('T')[0], comment: ''
   });
+  // Expense Filters
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
+  const [filterCategory, setFilterCategory] = useState('All');
+  const [filterPaymentMode, setFilterPaymentMode] = useState('All');
+  const [filterPaidBy, setFilterPaidBy] = useState('All');
+  const [filterSearchQuery, setFilterSearchQuery] = useState('');
 
   // Vehicle Form
   const [editingVehicleId, setEditingVehicleId] = useState(null);
@@ -384,204 +391,318 @@ export default function ExpensesStaffManagement() {
         )}
 
         {/* ==================== 2. EXPENSES TAB ==================== */}
-        {subTab === 'expenses' && (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-            
-            {/* Form */}
-            <div className="glass-panel p-6 rounded-3xl border border-slate-700/50 space-y-4">
-              <h3 className="text-base font-black text-slate-100 flex items-center gap-2">
-                <Plus className="w-5 h-5 text-orange-500" />
-                {editingExpenseId ? 'Edit Outflow Record' : 'Record Outflow/Expense'}
-              </h3>
-              <form onSubmit={handleExpenseSubmit} className="space-y-3.5">
-                <div className="grid grid-cols-2 gap-3">
+        {/* ==================== 2. EXPENSES TAB ==================== */}
+        {subTab === 'expenses' && (() => {
+          const filteredExpenses = expenses.filter(e => {
+            if (filterStartDate && e.date < filterStartDate) return false;
+            if (filterEndDate && e.date > filterEndDate) return false;
+            if (filterCategory !== 'All' && e.category !== filterCategory) return false;
+            if (filterPaymentMode !== 'All' && e.payment_mode !== filterPaymentMode) return false;
+            if (filterPaidBy !== 'All' && e.paid_by !== filterPaidBy) return false;
+            if (filterSearchQuery) {
+              const q = filterSearchQuery.toLowerCase();
+              const vendor = (e.vendor_name || '').toLowerCase();
+              const comment = (e.comment || '').toLowerCase();
+              if (!vendor.includes(q) && !comment.includes(q)) return false;
+            }
+            return true;
+          });
+
+          const totalFilteredSum = filteredExpenses.reduce((sum, e) => sum + parseFloat(e.amount || 0), 0);
+
+          return (
+            <div className="space-y-6">
+              {/* Filter Panel */}
+              <div className="glass-panel p-5 rounded-3xl border border-slate-700/50 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+                  <div className="text-sm font-black text-slate-100 uppercase tracking-wider flex items-center gap-2">
+                    <Wallet className="w-5 h-5 text-orange-500" /> Filter & Analyze Expenses
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs font-bold text-slate-400 bg-slate-900/60 px-3 py-1 rounded-lg border border-slate-800">
+                      Logs: {filteredExpenses.length}
+                    </span>
+                    <span className="text-xs font-black text-white bg-orange-600 px-3 py-1 rounded-lg shadow-sm">
+                      Total: ₹{totalFilteredSum.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Category</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Start Date</label>
+                    <input
+                      type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)}
+                      className="glass-input w-full px-3 py-2 rounded-xl text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">End Date</label>
+                    <input
+                      type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)}
+                      className="glass-input w-full px-3 py-2 rounded-xl text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Category</label>
                     <select
-                      value={expenseForm.category}
-                      onChange={e => setExpenseForm({ ...expenseForm, category: e.target.value })}
-                      className="glass-input w-full px-3 py-2.5 rounded-xl text-sm"
+                      value={filterCategory} onChange={e => setFilterCategory(e.target.value)}
+                      className="glass-input w-full px-3 py-2 rounded-xl text-xs"
                     >
+                      <option value="All">All Categories</option>
                       {EXPENSE_CATEGORIES.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Vendor/Payee</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Payment Mode</label>
                     <select
-                      value={expenseForm.vendor_name}
-                      onChange={e => setExpenseForm({ ...expenseForm, vendor_name: e.target.value })}
-                      className="glass-input w-full px-3 py-2.5 rounded-xl text-sm"
+                      value={filterPaymentMode} onChange={e => setFilterPaymentMode(e.target.value)}
+                      className="glass-input w-full px-3 py-2 rounded-xl text-xs"
                     >
-                      {DEFAULT_VENDORS.map(v => (
-                        <option key={v} value={v}>{v}</option>
-                      ))}
-                      <option value="Custom">Custom Payee</option>
-                    </select>
-                  </div>
-                </div>
-
-                {expenseForm.vendor_name === 'Custom' && (
-                  <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Custom Payee Name</label>
-                    <input
-                      type="text" placeholder="Enter custom name"
-                      onChange={e => setExpenseForm({ ...expenseForm, vendor_name: e.target.value })}
-                      className="glass-input w-full px-4 py-2.5 rounded-xl text-sm"
-                    />
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Amount (₹)</label>
-                    <input
-                      type="number" required placeholder="500" value={expenseForm.amount}
-                      onChange={e => setExpenseForm({ ...expenseForm, amount: e.target.value })}
-                      className="glass-input w-full px-4 py-2.5 rounded-xl text-sm font-black"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Payment Mode</label>
-                    <select
-                      value={expenseForm.payment_mode}
-                      onChange={e => setExpenseForm({ ...expenseForm, payment_mode: e.target.value })}
-                      className="glass-input w-full px-3 py-2.5 rounded-xl text-sm"
-                    >
+                      <option value="All">All Modes</option>
                       <option value="Cash">Cash</option>
                       <option value="UPI">UPI</option>
                       <option value="Card">Card</option>
                     </select>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Date</label>
-                    <input
-                      type="date" required value={expenseForm.date}
-                      onChange={e => setExpenseForm({ ...expenseForm, date: e.target.value })}
-                      className="glass-input w-full px-4 py-2.5 rounded-xl text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Paid By (Staff)</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Paid By (Staff)</label>
                     <select
-                      value={expenseForm.paid_by}
-                      onChange={e => setExpenseForm({ ...expenseForm, paid_by: e.target.value })}
-                      className="glass-input w-full px-3 py-2.5 rounded-xl text-sm"
+                      value={filterPaidBy} onChange={e => setFilterPaidBy(e.target.value)}
+                      className="glass-input w-full px-3 py-2 rounded-xl text-xs"
                     >
-                      <option value="">-- Select Staff --</option>
+                      <option value="All">All Staff</option>
                       {staff.map(s => (
-                        <option key={s.id} value={s.name}>{s.name} ({s.role})</option>
+                        <option key={s.id} value={s.name}>{s.name}</option>
                       ))}
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Keyword Search</label>
+                    <input
+                      type="text" placeholder="Vendor / comments..." value={filterSearchQuery} onChange={e => setFilterSearchQuery(e.target.value)}
+                      className="glass-input w-full px-3 py-2 rounded-xl text-xs"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Comments</label>
-                  <textarea
-                    placeholder="Bill invoice ref etc..." value={expenseForm.comment} rows={2}
-                    onChange={e => setExpenseForm({ ...expenseForm, comment: e.target.value })}
-                    className="glass-input w-full px-4 py-2.5 rounded-xl text-sm"
-                  />
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button type="submit" className="btn-orange flex-1 py-2.5 rounded-xl text-sm">
-                    {editingExpenseId ? 'Update Record' : 'Record Outflow'}
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    onClick={() => {
+                      setFilterStartDate('');
+                      setFilterEndDate('');
+                      setFilterCategory('All');
+                      setFilterPaymentMode('All');
+                      setFilterPaidBy('All');
+                      setFilterSearchQuery('');
+                    }}
+                    className="px-4 py-2 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-xl text-xs border border-slate-750 font-bold transition-all"
+                  >
+                    Reset Filters
                   </button>
-                  {editingExpenseId && (
-                    <button
-                      type="button" onClick={() => {
-                        setEditingExpenseId(null);
-                        setExpenseForm({
-                          category: EXPENSE_CATEGORIES[0], vendor_name: DEFAULT_VENDORS[0], 
-                          amount: '', payment_mode: 'Cash', paid_by: '', date: new Date().toISOString().split('T')[0], comment: ''
-                        });
-                      }}
-                      className="px-4 py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-xl text-sm border border-slate-700"
-                    >
-                      Cancel
-                    </button>
-                  )}
                 </div>
-              </form>
-            </div>
+              </div>
 
-            {/* List */}
-            <div className="xl:col-span-2 glass-panel p-6 rounded-3xl border border-slate-700/50 overflow-hidden flex flex-col">
-              <h3 className="text-base font-black text-slate-100 mb-4 flex items-center gap-2">
-                <Wallet className="w-5 h-5 text-orange-500" />
-                Expenses & Outflows Log
-              </h3>
-              <div className="overflow-x-auto custom-scrollbar">
-                <table className="w-full text-left text-xs border-collapse">
-                  <thead>
-                    <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider">
-                      <th className="py-3 px-4">Date</th>
-                      <th className="py-3 px-4">Category</th>
-                      <th className="py-3 px-4">Vendor</th>
-                      <th className="py-3 px-4">Amount</th>
-                      <th className="py-3 px-4">Mode</th>
-                      <th className="py-3 px-4">Paid By</th>
-                      <th className="py-3 px-4 text-center">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60 text-slate-300 font-medium">
-                    {expenses.map(e => (
-                      <tr key={e.id} className="hover:bg-slate-900/30 transition-colors">
-                        <td className="py-3 px-4">{e.date}</td>
-                        <td className="py-3 px-4">
-                          <span className="bg-slate-800 px-2.5 py-1 rounded-lg text-slate-300 border border-slate-700">{e.category}</span>
-                        </td>
-                        <td className="py-3 px-4 font-bold text-slate-100">{e.vendor_name}</td>
-                        <td className="py-3 px-4 text-red-400 font-black">₹ {parseFloat(e.amount).toFixed(0)}</td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] uppercase border ${
-                            e.payment_mode === 'UPI' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
-                            e.payment_mode === 'Card' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
-                            'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                          }`}>
-                            {e.payment_mode}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-slate-400">{e.paid_by || 'N/A'}</td>
-                        <td className="py-3 px-4 text-center flex items-center justify-center gap-2">
-                          <button
-                            onClick={() => {
-                              setEditingExpenseId(e.id);
-                              setExpenseForm({
-                                category: e.category, vendor_name: e.vendor_name, amount: e.amount,
-                                payment_mode: e.payment_mode, paid_by: e.paid_by || '', date: e.date, comment: e.comment || ''
-                              });
-                            }}
-                            className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition-colors border border-slate-700"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => { if(confirm('Delete expense?')) deleteExpense(e.id); }}
-                            className="p-1.5 bg-red-950 hover:bg-red-900 text-red-500 rounded-lg transition-colors border border-red-900/30"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                    {expenses.length === 0 && (
-                      <tr>
-                        <td colSpan={7} className="text-center py-6 text-slate-500 font-bold">No outflow logs recorded.</td>
-                      </tr>
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+                {/* Form */}
+                <div className="glass-panel p-6 rounded-3xl border border-slate-700/50 space-y-4">
+                  <h3 className="text-base font-black text-slate-100 flex items-center gap-2">
+                    <Plus className="w-5 h-5 text-orange-500" />
+                    {editingExpenseId ? 'Edit Outflow Record' : 'Record Outflow/Expense'}
+                  </h3>
+                  <form onSubmit={handleExpenseSubmit} className="space-y-3.5">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Category</label>
+                        <select
+                          value={expenseForm.category}
+                          onChange={e => setExpenseForm({ ...expenseForm, category: e.target.value })}
+                          className="glass-input w-full px-3 py-2.5 rounded-xl text-sm"
+                        >
+                          {EXPENSE_CATEGORIES.map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Vendor/Payee</label>
+                        <select
+                          value={expenseForm.vendor_name}
+                          onChange={e => setExpenseForm({ ...expenseForm, vendor_name: e.target.value })}
+                          className="glass-input w-full px-3 py-2.5 rounded-xl text-sm"
+                        >
+                          {DEFAULT_VENDORS.map(v => (
+                            <option key={v} value={v}>{v}</option>
+                          ))}
+                          <option value="Custom">Custom Payee</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {expenseForm.vendor_name === 'Custom' && (
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Custom Payee Name</label>
+                        <input
+                          type="text" placeholder="Enter custom name"
+                          onChange={e => setExpenseForm({ ...expenseForm, vendor_name: e.target.value })}
+                          className="glass-input w-full px-4 py-2.5 rounded-xl text-sm"
+                        />
+                      </div>
                     )}
-                  </tbody>
-                </table>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Amount (₹)</label>
+                        <input
+                          type="number" required placeholder="500" value={expenseForm.amount}
+                          onChange={e => setExpenseForm({ ...expenseForm, amount: e.target.value })}
+                          className="glass-input w-full px-4 py-2.5 rounded-xl text-sm font-black"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Payment Mode</label>
+                        <select
+                          value={expenseForm.payment_mode}
+                          onChange={e => setExpenseForm({ ...expenseForm, payment_mode: e.target.value })}
+                          className="glass-input w-full px-3 py-2.5 rounded-xl text-sm"
+                        >
+                          <option value="Cash">Cash</option>
+                          <option value="UPI">UPI</option>
+                          <option value="Card">Card</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Date</label>
+                        <input
+                          type="date" required value={expenseForm.date}
+                          onChange={e => setExpenseForm({ ...expenseForm, date: e.target.value })}
+                          className="glass-input w-full px-4 py-2.5 rounded-xl text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Paid By (Staff)</label>
+                        <select
+                          value={expenseForm.paid_by}
+                          onChange={e => setExpenseForm({ ...expenseForm, paid_by: e.target.value })}
+                          className="glass-input w-full px-3 py-2.5 rounded-xl text-sm"
+                        >
+                          <option value="">-- Select Staff --</option>
+                          {staff.map(s => (
+                            <option key={s.id} value={s.name}>{s.name} ({s.role})</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Comments</label>
+                      <textarea
+                        placeholder="Bill invoice ref etc..." value={expenseForm.comment} rows={2}
+                        onChange={e => setExpenseForm({ ...expenseForm, comment: e.target.value })}
+                        className="glass-input w-full px-4 py-2.5 rounded-xl text-sm"
+                      />
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <button type="submit" className="btn-orange flex-1 py-2.5 rounded-xl text-sm">
+                        {editingExpenseId ? 'Update Record' : 'Record Outflow'}
+                      </button>
+                      {editingExpenseId && (
+                        <button
+                          type="button" onClick={() => {
+                            setEditingExpenseId(null);
+                            setExpenseForm({
+                              category: EXPENSE_CATEGORIES[0], vendor_name: DEFAULT_VENDORS[0], 
+                              amount: '', payment_mode: 'Cash', paid_by: '', date: new Date().toISOString().split('T')[0], comment: ''
+                            });
+                          }}
+                          className="px-4 py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-xl text-sm border border-slate-700"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </form>
+                </div>
+
+                {/* List */}
+                <div className="xl:col-span-2 glass-panel p-6 rounded-3xl border border-slate-700/50 overflow-hidden flex flex-col">
+                  <h3 className="text-base font-black text-slate-100 mb-4 flex items-center gap-2">
+                    <Wallet className="w-5 h-5 text-orange-500" />
+                    Expenses & Outflows Log
+                  </h3>
+                  <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider">
+                          <th className="py-3 px-4">Date</th>
+                          <th className="py-3 px-4">Category</th>
+                          <th className="py-3 px-4">Vendor</th>
+                          <th className="py-3 px-4">Amount</th>
+                          <th className="py-3 px-4">Mode</th>
+                          <th className="py-3 px-4">Paid By</th>
+                          <th className="py-3 px-4 text-center">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60 text-slate-300 font-medium">
+                        {filteredExpenses.map(e => (
+                          <tr key={e.id} className="hover:bg-slate-900/30 transition-colors">
+                            <td className="py-3 px-4">{e.date}</td>
+                            <td className="py-3 px-4">
+                              <span className="bg-slate-800 px-2.5 py-1 rounded-lg text-slate-300 border border-slate-700">{e.category}</span>
+                            </td>
+                            <td className="py-3 px-4 font-bold text-slate-100">{e.vendor_name}</td>
+                            <td className="py-3 px-4 text-red-400 font-black">₹ {parseFloat(e.amount).toFixed(0)}</td>
+                            <td className="py-3 px-4">
+                              <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] uppercase border ${
+                                e.payment_mode === 'UPI' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
+                                e.payment_mode === 'Card' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' :
+                                'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
+                              }`}>
+                                {e.payment_mode}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-slate-400">{e.paid_by || 'N/A'}</td>
+                            <td className="py-3 px-4 text-center flex items-center justify-center gap-2">
+                              <button
+                                onClick={() => {
+                                  setEditingExpenseId(e.id);
+                                  setExpenseForm({
+                                    category: e.category, vendor_name: e.vendor_name, amount: e.amount,
+                                    payment_mode: e.payment_mode, paid_by: e.paid_by || '', date: e.date, comment: e.comment || ''
+                                  });
+                                }}
+                                className="p-1.5 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded-lg transition-colors border border-slate-700"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => { if(confirm('Delete expense?')) deleteExpense(e.id); }}
+                                className="p-1.5 bg-red-950 hover:bg-red-900 text-red-500 rounded-lg transition-colors border border-red-900/30"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {filteredExpenses.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="text-center py-6 text-slate-500 font-bold">No outflow logs match your search filters.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ==================== 3. VEHICLES TAB ==================== */}
         {subTab === 'vehicles' && (
