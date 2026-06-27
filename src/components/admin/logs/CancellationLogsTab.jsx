@@ -65,7 +65,8 @@ export default function CancellationLogsTab() {
             {filteredLogs.map((log) => (
               <tr key={log.id} className="hover:bg-slate-50 transition-colors">
                 <td className="p-4 font-bold text-slate-600">
-                  {new Date(log.created_at).toLocaleString('en-IN', {
+                  {new Date(log.created_at.includes('T') ? log.created_at : log.created_at.replace(' ', 'T') + '+05:30').toLocaleString('en-IN', {
+                    timeZone: 'Asia/Kolkata',
                     day: '2-digit',
                     month: 'short',
                     hour: '2-digit',

@@ -483,7 +483,8 @@ export default function CustomerDashboard() {
                         <div>
                           <p className="text-xs font-bold text-slate-800">Order #{order.id}</p>
                           <p className="text-[10px] text-slate-400 font-medium">
-                            {new Date(order.created_at).toLocaleDateString('en-IN', {
+                            {new Date(order.created_at.includes('T') ? order.created_at : order.created_at.replace(' ', 'T') + '+05:30').toLocaleDateString('en-IN', {
+                              timeZone: 'Asia/Kolkata',
                               day: '2-digit', month: 'short', year: 'numeric',
                               hour: '2-digit', minute: '2-digit', hour12: true
                             })}
