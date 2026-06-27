@@ -1,23 +1,68 @@
 import { useEffect, useState } from 'react';
 import { usePosStore } from '../../../store/posStore';
-import { Trash2, Search, Calendar, FileText } from 'lucide-react';
+import { Trash2, Search, Filter } from 'lucide-react';
 
 export default function CancellationLogsTab() {
   const { cancellationLogs, fetchCancellationLogs } = usePosStore();
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateFilter, setDateFilter] = useState('all');
+  const [reasonFilter, setReasonFilter] = useState('all');
+  const [staffFilter, setStaffFilter] = useState('all');
 
   useEffect(() => {
     fetchCancellationLogs();
   }, [fetchCancellationLogs]);
 
+  // Helper date matching functions
+  const isToday = (d) => {
+    const dt = new Date(d.includes('T') ? d : d.replace(' ', 'T') + '+05:30');
+    const t = new Date();
+    return dt.getDate() === t.getDate() && dt.getMonth() === t.getMonth() && dt.getFullYear() === t.getFullYear();
+  };
+
+  const isYesterday = (d) => {
+    const dt = new Date(d.includes('T') ? d : d.replace(' ', 'T') + '+05:30');
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    return dt.getDate() === y.getDate() && dt.getMonth() === y.getMonth() && dt.getFullYear() === y.getFullYear();
+  };
+
+  const isThisWeek = (d) => {
+    const dt = new Date(d.includes('T') ? d : d.replace(' ', 'T') + '+05:30');
+    const t = new Date();
+    const f = new Date(t.setDate(t.getDate() - t.getDay()));
+    return dt >= f;
+  };
+
+  // Dynamic filter values
+  const uniqueStaff = Array.from(new Set((cancellationLogs || []).map(log => log.cancelled_by_name).filter(Boolean)));
+  const uniqueReasons = Array.from(new Set((cancellationLogs || []).map(log => log.reason).filter(Boolean)));
+
   const filteredLogs = (cancellationLogs || []).filter(log => {
-    const q = searchTerm.toLowerCase();
-    return (
-      log.item_name.toLowerCase().includes(q) ||
-      log.reason.toLowerCase().includes(q) ||
-      log.cancelled_by_name.toLowerCase().includes(q) ||
-      log.order_id.toString().includes(q)
-    );
+    // 1. Search term match
+    if (searchTerm) {
+      const q = searchTerm.toLowerCase();
+      const match = log.item_name.toLowerCase().includes(q) ||
+        log.reason.toLowerCase().includes(q) ||
+        log.cancelled_by_name.toLowerCase().includes(q) ||
+        log.order_id.toString().includes(q);
+      if (!match) return false;
+    }
+
+    // 2. Date match
+    if (dateFilter !== 'all') {
+      if (dateFilter === 'today' && !isToday(log.created_at)) return false;
+      if (dateFilter === 'yesterday' && !isYesterday(log.created_at)) return false;
+      if (dateFilter === 'this_week' && !isThisWeek(log.created_at)) return false;
+    }
+
+    // 3. Reason match
+    if (reasonFilter !== 'all' && log.reason !== reasonFilter) return false;
+
+    // 4. Staff match
+    if (staffFilter !== 'all' && log.cancelled_by_name !== staffFilter) return false;
+
+    return true;
   });
 
   return (
@@ -45,6 +90,71 @@ export default function CancellationLogsTab() {
             className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-xl text-xs font-bold focus:outline-none focus:border-red-500 bg-white text-slate-800"
           />
         </div>
+      </div>
+
+      {/* Filters Bar */}
+      <div className="p-4 bg-slate-50/50 border-b border-slate-100 flex flex-wrap gap-4 items-center">
+        <div className="flex items-center gap-1.5 text-slate-500 text-xs font-black uppercase tracking-wider">
+          <Filter className="w-3.5 h-3.5" />
+          Filters:
+        </div>
+
+        {/* Date Filter */}
+        <div className="flex flex-col">
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold bg-white text-slate-800 focus:outline-none focus:border-red-550"
+          >
+            <option value="all">All Dates</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="this_week">This Week</option>
+          </select>
+        </div>
+
+        {/* Reason Filter */}
+        <div className="flex flex-col">
+          <select
+            value={reasonFilter}
+            onChange={(e) => setReasonFilter(e.target.value)}
+            className="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold bg-white text-slate-800 focus:outline-none focus:border-red-550 max-w-[180px] truncate"
+          >
+            <option value="all">All Reasons</option>
+            {uniqueReasons.map(reason => (
+              <option key={reason} value={reason}>{reason}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Staff Filter */}
+        <div className="flex flex-col">
+          <select
+            value={staffFilter}
+            onChange={(e) => setStaffFilter(e.target.value)}
+            className="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold bg-white text-slate-800 focus:outline-none focus:border-red-550 max-w-[150px] truncate"
+          >
+            <option value="all">All Staff</option>
+            {uniqueStaff.map(staff => (
+              <option key={staff} value={staff}>{staff}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Clear Filters Button */}
+        {(dateFilter !== 'all' || reasonFilter !== 'all' || staffFilter !== 'all' || searchTerm !== '') && (
+          <button
+            onClick={() => {
+              setDateFilter('all');
+              setReasonFilter('all');
+              setStaffFilter('all');
+              setSearchTerm('');
+            }}
+            className="text-xs font-extrabold text-red-500 hover:text-red-650 transition-colors ml-auto"
+          >
+            Reset Filters
+          </button>
+        )}
       </div>
 
       {/* Grid view / table */}
