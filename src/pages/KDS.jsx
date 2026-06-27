@@ -4,7 +4,7 @@ import { Clock, CheckCircle2, ChefHat, History, Flame, Check, Search, ShoppingBa
 import NotificationPanel from '../components/common/NotificationPanel';
 
 export default function KDS() {
-  const { orders, orderHistory, updateItemStatus, updateKotStatus, tables, inventoryItems, logInventoryUsage } = usePosStore();
+  const { orders, orderHistory, updateItemStatus, updateKotStatus, tables, locations, inventoryItems, logInventoryUsage } = usePosStore();
   const [activeTab, setActiveTab] = useState('active');
   const [currentTime, setCurrentTime] = useState(Date.now());
   const [historySearch, setHistorySearch] = useState('');
@@ -23,6 +23,7 @@ export default function KDS() {
 
   allOrdersForKDS.forEach(order => {
     const table = tables.find(t => t.id === order.table_id);
+    const location = table ? locations.find(l => l.id === table.location_id) : null;
     const kots = {};
     order.items.forEach(item => {
       const kotId = item.kot_id || `Legacy-${order.id}`;
@@ -38,6 +39,7 @@ export default function KDS() {
         order.order_type === 'delivery' ? 'Delivery' : `Table ${table?.table_number || '?'}`;
       const ticket = {
         orderId: order.id, orderType: order.order_type, tableNumber: orderTypeDisplay,
+        areaName: location ? location.name : '',
         kotId, items: data.items, timestamp: data.timestamp,
         waiterName: order.waiter_name || 'Admin', customerName: order.customer_name
       };
@@ -200,10 +202,15 @@ export default function KDS() {
                       <span className="text-[10px] font-black uppercase tracking-widest text-surface-400">
                         {ticket.kotId}
                       </span>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center flex-wrap gap-2 mt-1">
                         {isTakeaway && <ShoppingBag className="w-4 h-4 text-purple-600 shrink-0" />}
                         {isDelivery && <Bike className="w-4 h-4 text-emerald-600 shrink-0" />}
                         <span className="text-xl font-black text-surface-100 truncate">{ticket.tableNumber}</span>
+                        {ticket.areaName && (
+                          <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
+                            {ticket.areaName}
+                          </span>
+                        )}
                       </div>
                       <div className="flex flex-col mt-1 gap-0.5">
                         <p className="text-[11px] font-bold text-orange-600">
