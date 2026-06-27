@@ -8,6 +8,7 @@ export default function OrderDataTable() {
   const allOrders = [...(orders || []).filter(o => o.status === 'open'), ...(orderHistory || [])];
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedRowIds, setSelectedRowIds] = useState([]);
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
   
   // Search States
   const [filterOrderId, setFilterOrderId] = useState('');
@@ -131,92 +132,103 @@ export default function OrderDataTable() {
       </div>
 
       {/* Advanced Filters */}
-      <div className="p-5 border-b border-surface-700/60 bg-slate-50 space-y-4">
+      <div className="p-4 border-b border-surface-700/60 bg-slate-50 space-y-3">
         <div className="flex items-center justify-between">
           <div className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-1.5">
             <svg className="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg> Search & Filter Panel
           </div>
-          {filteredOrders.length > 0 && (
-            <span className="text-xs text-slate-500 font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200">
-              Found {filteredOrders.length} records
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {filteredOrders.length > 0 && (
+              <span className="text-xs text-slate-500 font-bold bg-white px-2.5 py-1 rounded-lg border border-slate-200 shadow-sm">
+                Found {filteredOrders.length} records
+              </span>
+            )}
+            <button
+              onClick={() => setIsFiltersExpanded(!isFiltersExpanded)}
+              className="text-xs font-black text-brand-600 hover:text-brand-700 bg-white border border-slate-250 hover:bg-slate-50 px-3 py-1.5 rounded-xl transition-all shadow-sm flex items-center gap-1"
+            >
+              {isFiltersExpanded ? 'Hide Filters ▲' : 'Show Filters ▼'}
+            </button>
+          </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Start Date</label>
-            <input type="datetime-local" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
-          </div>
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">End Date</label>
-            <input type="datetime-local" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
-          </div>
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Order ID</label>
-            <input type="text" placeholder="Search ID" value={filterOrderId} onChange={e => setFilterOrderId(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
-          </div>
-          <div>
-             <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Customer Name</label>
-            <input type="text" placeholder="Name" value={filterCustomerName} onChange={e => setFilterCustomerName(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
-          </div>
-          <div>
-             <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Customer Phone</label>
-            <input type="text" placeholder="Phone" value={filterCustomerPhone} onChange={e => setFilterCustomerPhone(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
-          </div>
-          <div>
-             <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Order Type</label>
-             <select value={filterOrderType} onChange={e => setFilterOrderType(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800">
-               <option value="All">All</option>
-               <option value="Dine In">Dine In</option>
-               <option value="Delivery">Delivery</option>
-               <option value="Takeaway">Takeaway</option>
-             </select>
-          </div>
-          
-          {/* Row 2 */}
-          <div>
-             <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Payment Type</label>
-             <select value={filterPaymentType} onChange={e => setFilterPaymentType(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800">
-               <option value="All">All</option>
-               <option value="Cash">Cash</option>
-               <option value="UPI">UPI</option>
-               <option value="Card">Card</option>
-             </select>
-          </div>
-          <div>
-             <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Order Status</label>
-             <select value={filterOrderStatus} onChange={e => setFilterOrderStatus(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800">
-               <option value="All">All</option>
-               <option value="Paid">Paid</option>
-               <option value="Cancelled">Cancelled</option>
-             </select>
-          </div>
-          <div>
-             <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Other Status</label>
-             <select className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800"><option value="All">All</option></select>
-          </div>
-          <div className="flex space-x-2">
-            <div className="w-1/3">
-              <label className="text-[10px] font-black text-transparent mb-1.5 block">-</label>
-               <select value={filterGrandTotalOp} onChange={e => setFilterGrandTotalOp(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800">
-                 <option value="=">=</option>
-                 <option value=">">&gt;</option>
-                 <option value="<">&lt;</option>
+
+        {isFiltersExpanded && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 animate-fade-in">
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Start Date</label>
+              <input type="datetime-local" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">End Date</label>
+              <input type="datetime-local" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
+            </div>
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Order ID</label>
+              <input type="text" placeholder="Search ID" value={filterOrderId} onChange={e => setFilterOrderId(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
+            </div>
+            <div>
+               <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Customer Name</label>
+              <input type="text" placeholder="Name" value={filterCustomerName} onChange={e => setFilterCustomerName(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
+            </div>
+            <div>
+               <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Customer Phone</label>
+              <input type="text" placeholder="Phone" value={filterCustomerPhone} onChange={e => setFilterCustomerPhone(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
+            </div>
+            <div>
+               <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Order Type</label>
+               <select value={filterOrderType} onChange={e => setFilterOrderType(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800">
+                 <option value="All">All</option>
+                 <option value="Dine In">Dine In</option>
+                 <option value="Delivery">Delivery</option>
+                 <option value="Takeaway">Takeaway</option>
                </select>
             </div>
-            <div className="w-2/3">
-              <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Grand Total</label>
-              <input type="number" placeholder="₹ Amount" value={filterGrandTotalVal} onChange={e => setFilterGrandTotalVal(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
+            
+            {/* Row 2 */}
+            <div>
+               <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Payment Type</label>
+               <select value={filterPaymentType} onChange={e => setFilterPaymentType(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800">
+                 <option value="All">All</option>
+                 <option value="Cash">Cash</option>
+                 <option value="UPI">UPI</option>
+                 <option value="Card">Card</option>
+               </select>
+            </div>
+            <div>
+               <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Order Status</label>
+               <select value={filterOrderStatus} onChange={e => setFilterOrderStatus(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800">
+                 <option value="All">All</option>
+                 <option value="Paid">Paid</option>
+                 <option value="Cancelled">Cancelled</option>
+               </select>
+            </div>
+            <div>
+               <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Other Status</label>
+               <select className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800"><option value="All">All</option></select>
+            </div>
+            <div className="flex space-x-2">
+              <div className="w-1/3">
+                <label className="text-[10px] font-black text-transparent mb-1.5 block">-</label>
+                 <select value={filterGrandTotalOp} onChange={e => setFilterGrandTotalOp(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800">
+                   <option value="=">=</option>
+                   <option value=">">&gt;</option>
+                   <option value="<">&lt;</option>
+                 </select>
+              </div>
+              <div className="w-2/3">
+                <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Grand Total</label>
+                <input type="number" placeholder="₹ Amount" value={filterGrandTotalVal} onChange={e => setFilterGrandTotalVal(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
+              </div>
+            </div>
+            <div>
+               <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">GSTIN Filter</label>
+               <select className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800"><option>All</option></select>
+            </div>
+            <div className="flex items-end">
+               <button onClick={clearFilters} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all w-full border border-slate-200">Reset Filters</button>
             </div>
           </div>
-          <div>
-             <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">GSTIN Filter</label>
-             <select className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800"><option>All</option></select>
-          </div>
-          <div className="flex items-end">
-             <button onClick={clearFilters} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all w-full border border-slate-200">Reset Filters</button>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Table Data */}

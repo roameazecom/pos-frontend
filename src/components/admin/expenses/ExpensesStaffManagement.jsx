@@ -187,7 +187,7 @@ export default function ExpensesStaffManagement() {
               className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all ${
                 subTab === tab.id
                   ? 'bg-brand-600 text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/40'
+                  : 'text-slate-700 hover:text-slate-100 hover:bg-slate-800/40'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -212,7 +212,7 @@ export default function ExpensesStaffManagement() {
               </h3>
               <form onSubmit={handleStaffSubmit} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Staff Name</label>
+                  <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Staff Name</label>
                   <input
                     type="text" required placeholder="VISHAL" value={staffForm.name}
                     onChange={e => setStaffForm({ ...staffForm, name: e.target.value })}
@@ -221,7 +221,7 @@ export default function ExpensesStaffManagement() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Role / Kaam</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Role / Kaam</label>
                     <input
                       type="text" required placeholder="SERVICE" value={staffForm.role}
                       onChange={e => setStaffForm({ ...staffForm, role: e.target.value })}
@@ -229,7 +229,7 @@ export default function ExpensesStaffManagement() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Monthly Salary</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Monthly Salary</label>
                     <input
                       type="number" required placeholder="15000" value={staffForm.monthly_salary}
                       onChange={e => setStaffForm({ ...staffForm, monthly_salary: e.target.value })}
@@ -239,7 +239,7 @@ export default function ExpensesStaffManagement() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Join Date</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Join Date</label>
                     <input
                       type="date" required value={staffForm.join_date}
                       onChange={e => setStaffForm({ ...staffForm, join_date: e.target.value })}
@@ -247,7 +247,7 @@ export default function ExpensesStaffManagement() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Phone Number</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Phone Number</label>
                     <input
                       type="tel" placeholder="9876543210" value={staffForm.phone_number}
                       onChange={e => setStaffForm({ ...staffForm, phone_number: e.target.value })}
@@ -270,7 +270,7 @@ export default function ExpensesStaffManagement() {
 
                 {/* Connected Login User */}
                 <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                     <UserCheck className="w-3.5 h-3.5 text-orange-500" /> Connected POS Login User
                   </label>
                   <select
@@ -286,7 +286,7 @@ export default function ExpensesStaffManagement() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Notes</label>
+                  <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Notes</label>
                   <textarea
                     placeholder="Extra details..." value={staffForm.notes} rows={2}
                     onChange={e => setStaffForm({ ...staffForm, notes: e.target.value })}
@@ -325,7 +325,7 @@ export default function ExpensesStaffManagement() {
               <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider">
+                    <tr className="border-b border-slate-800 text-slate-700 font-bold uppercase tracking-wider">
                       <th className="py-3 px-4">Name</th>
                       <th className="py-3 px-4">Role</th>
                       <th className="py-3 px-4">Salary</th>
@@ -343,7 +343,7 @@ export default function ExpensesStaffManagement() {
                             <span className="ml-1.5 text-[9px] font-black bg-orange-500/10 text-orange-500 border border-orange-500/20 px-2 py-0.5 rounded-full">MGMT</span>
                           ) : null}
                         </td>
-                        <td className="py-3 px-4 text-slate-400">{s.role}</td>
+                        <td className="py-3 px-4 text-slate-700">{s.role}</td>
                         <td className="py-3 px-4 font-black">₹ {parseFloat(s.monthly_salary).toFixed(0)}</td>
                         <td className="py-3 px-4">{s.join_date}</td>
                         <td className="py-3 px-4">
@@ -419,7 +419,7 @@ export default function ExpensesStaffManagement() {
                     <Wallet className="w-5 h-5 text-orange-500" /> Filter & Analyze Expenses
                   </div>
                   <div className="flex items-center gap-2.5">
-                    <span className="text-xs font-bold text-slate-400 bg-slate-900/60 px-3 py-1 rounded-lg border border-slate-800">
+                    <span className="text-xs font-bold text-slate-700 bg-slate-900/60 px-3 py-1 rounded-lg border border-slate-800">
                       Logs: {filteredExpenses.length}
                     </span>
                     <span className="text-xs font-black text-white bg-orange-600 px-3 py-1 rounded-lg shadow-sm">
@@ -430,21 +430,21 @@ export default function ExpensesStaffManagement() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Start Date</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">Start Date</label>
                     <input
                       type="date" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)}
                       className="glass-input w-full px-3 py-2 rounded-xl text-xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">End Date</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">End Date</label>
                     <input
                       type="date" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)}
                       className="glass-input w-full px-3 py-2 rounded-xl text-xs"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Category</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">Category</label>
                     <select
                       value={filterCategory} onChange={e => setFilterCategory(e.target.value)}
                       className="glass-input w-full px-3 py-2 rounded-xl text-xs"
@@ -456,7 +456,7 @@ export default function ExpensesStaffManagement() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Payment Mode</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">Payment Mode</label>
                     <select
                       value={filterPaymentMode} onChange={e => setFilterPaymentMode(e.target.value)}
                       className="glass-input w-full px-3 py-2 rounded-xl text-xs"
@@ -468,7 +468,7 @@ export default function ExpensesStaffManagement() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Paid By (Staff)</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">Paid By (Staff)</label>
                     <select
                       value={filterPaidBy} onChange={e => setFilterPaidBy(e.target.value)}
                       className="glass-input w-full px-3 py-2 rounded-xl text-xs"
@@ -480,7 +480,7 @@ export default function ExpensesStaffManagement() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Keyword Search</label>
+                    <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">Keyword Search</label>
                     <input
                       type="text" placeholder="Vendor / comments..." value={filterSearchQuery} onChange={e => setFilterSearchQuery(e.target.value)}
                       className="glass-input w-full px-3 py-2 rounded-xl text-xs"
@@ -515,7 +515,7 @@ export default function ExpensesStaffManagement() {
                   <form onSubmit={handleExpenseSubmit} className="space-y-3.5">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Category</label>
+                        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Category</label>
                         <select
                           value={expenseForm.category}
                           onChange={e => setExpenseForm({ ...expenseForm, category: e.target.value })}
@@ -527,7 +527,7 @@ export default function ExpensesStaffManagement() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Vendor/Payee</label>
+                        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Vendor/Payee</label>
                         <select
                           value={expenseForm.vendor_name}
                           onChange={e => setExpenseForm({ ...expenseForm, vendor_name: e.target.value })}
@@ -543,7 +543,7 @@ export default function ExpensesStaffManagement() {
 
                     {expenseForm.vendor_name === 'Custom' && (
                       <div>
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Custom Payee Name</label>
+                        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Custom Payee Name</label>
                         <input
                           type="text" placeholder="Enter custom name"
                           onChange={e => setExpenseForm({ ...expenseForm, vendor_name: e.target.value })}
@@ -554,7 +554,7 @@ export default function ExpensesStaffManagement() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Amount (₹)</label>
+                        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Amount (₹)</label>
                         <input
                           type="number" required placeholder="500" value={expenseForm.amount}
                           onChange={e => setExpenseForm({ ...expenseForm, amount: e.target.value })}
@@ -562,7 +562,7 @@ export default function ExpensesStaffManagement() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Payment Mode</label>
+                        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Payment Mode</label>
                         <select
                           value={expenseForm.payment_mode}
                           onChange={e => setExpenseForm({ ...expenseForm, payment_mode: e.target.value })}
@@ -577,7 +577,7 @@ export default function ExpensesStaffManagement() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Date</label>
+                        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Date</label>
                         <input
                           type="date" required value={expenseForm.date}
                           onChange={e => setExpenseForm({ ...expenseForm, date: e.target.value })}
@@ -585,7 +585,7 @@ export default function ExpensesStaffManagement() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Paid By (Staff)</label>
+                        <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Paid By (Staff)</label>
                         <select
                           value={expenseForm.paid_by}
                           onChange={e => setExpenseForm({ ...expenseForm, paid_by: e.target.value })}
@@ -600,7 +600,7 @@ export default function ExpensesStaffManagement() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Comments</label>
+                      <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Comments</label>
                       <textarea
                         placeholder="Bill invoice ref etc..." value={expenseForm.comment} rows={2}
                         onChange={e => setExpenseForm({ ...expenseForm, comment: e.target.value })}
@@ -639,7 +639,7 @@ export default function ExpensesStaffManagement() {
                   <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
-                        <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider">
+                        <tr className="border-b border-slate-800 text-slate-700 font-bold uppercase tracking-wider">
                           <th className="py-3 px-4">Date</th>
                           <th className="py-3 px-4">Category</th>
                           <th className="py-3 px-4">Vendor</th>
@@ -667,7 +667,7 @@ export default function ExpensesStaffManagement() {
                                 {e.payment_mode}
                               </span>
                             </td>
-                            <td className="py-3 px-4 text-slate-400">{e.paid_by || 'N/A'}</td>
+                            <td className="py-3 px-4 text-slate-700">{e.paid_by || 'N/A'}</td>
                             <td className="py-3 px-4 text-center flex items-center justify-center gap-2">
                               <button
                                 onClick={() => {
@@ -716,7 +716,7 @@ export default function ExpensesStaffManagement() {
               </h3>
               <form onSubmit={handleVehicleSubmit} className="space-y-3.5">
                 <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Vehicle Type / Name</label>
+                  <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Vehicle Type / Name</label>
                   <input
                     type="text" required placeholder="Mahindra Bolero / Bike" value={vehicleForm.vehicle_type}
                     onChange={e => setVehicleForm({ ...vehicleForm, vehicle_type: e.target.value })}
@@ -724,7 +724,7 @@ export default function ExpensesStaffManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Vehicle Number</label>
+                  <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Vehicle Number</label>
                   <input
                     type="text" placeholder="HR98 D 3247" value={vehicleForm.vehicle_number}
                     onChange={e => setVehicleForm({ ...vehicleForm, vehicle_number: e.target.value })}
@@ -733,7 +733,7 @@ export default function ExpensesStaffManagement() {
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Fuel Type</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Fuel Type</label>
                     <select
                       value={vehicleForm.fuel_type}
                       onChange={e => setVehicleForm({ ...vehicleForm, fuel_type: e.target.value })}
@@ -744,7 +744,7 @@ export default function ExpensesStaffManagement() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Average (km/l)</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Average (km/l)</label>
                     <input
                       type="number" step="0.1" placeholder="14" value={vehicleForm.average_kml}
                       onChange={e => setVehicleForm({ ...vehicleForm, average_kml: e.target.value })}
@@ -754,7 +754,7 @@ export default function ExpensesStaffManagement() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Notes</label>
+                  <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Notes</label>
                   <textarea
                     placeholder="Vehicle notes..." value={vehicleForm.notes} rows={2}
                     onChange={e => setVehicleForm({ ...vehicleForm, notes: e.target.value })}
@@ -792,7 +792,7 @@ export default function ExpensesStaffManagement() {
               <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider">
+                    <tr className="border-b border-slate-800 text-slate-700 font-bold uppercase tracking-wider">
                       <th className="py-3 px-4">Type / Name</th>
                       <th className="py-3 px-4">Vehicle Number</th>
                       <th className="py-3 px-4">Fuel Type</th>
@@ -805,7 +805,7 @@ export default function ExpensesStaffManagement() {
                     {vehicles.map(v => (
                       <tr key={v.id} className="hover:bg-slate-900/30 transition-colors">
                         <td className="py-3 px-4 font-bold text-slate-100">{v.vehicle_type}</td>
-                        <td className="py-3 px-4 text-slate-400">{v.vehicle_number || 'N/A'}</td>
+                        <td className="py-3 px-4 text-slate-700">{v.vehicle_number || 'N/A'}</td>
                         <td className="py-3 px-4">
                           <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] uppercase border ${
                             v.fuel_type === 'Diesel' ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' :
@@ -815,7 +815,7 @@ export default function ExpensesStaffManagement() {
                           </span>
                         </td>
                         <td className="py-3 px-4 font-black">{v.average_kml ? `${v.average_kml} km/l` : 'N/A'}</td>
-                        <td className="py-3 px-4 text-slate-400 max-w-xs truncate">{v.notes || '-'}</td>
+                        <td className="py-3 px-4 text-slate-700 max-w-xs truncate">{v.notes || '-'}</td>
                         <td className="py-3 px-4 text-center flex items-center justify-center gap-2">
                           <button
                             onClick={() => {
@@ -863,7 +863,7 @@ export default function ExpensesStaffManagement() {
               <form onSubmit={handleTripSubmit} className="space-y-3.5">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Vehicle</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Vehicle</label>
                     <select
                       required value={tripForm.vehicle_id}
                       onChange={e => setTripForm({ ...tripForm, vehicle_id: e.target.value })}
@@ -876,7 +876,7 @@ export default function ExpensesStaffManagement() {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Purpose</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Purpose</label>
                     <select
                       value={tripForm.purpose}
                       onChange={e => setTripForm({ ...tripForm, purpose: e.target.value })}
@@ -891,7 +891,7 @@ export default function ExpensesStaffManagement() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Start Reading (km)</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Start Reading (km)</label>
                     <input
                       type="number" required placeholder="12500" value={tripForm.start_reading}
                       onChange={e => setTripForm({ ...tripForm, start_reading: e.target.value })}
@@ -899,7 +899,7 @@ export default function ExpensesStaffManagement() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">End Reading (km)</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">End Reading (km)</label>
                     <input
                       type="number" required placeholder="12580" value={tripForm.end_reading}
                       onChange={e => setTripForm({ ...tripForm, end_reading: e.target.value })}
@@ -910,7 +910,7 @@ export default function ExpensesStaffManagement() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Fuel Added (Litres)</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Fuel Added (Litres)</label>
                     <input
                       type="number" step="0.01" value={tripForm.fuel_added_litres}
                       onChange={e => setTripForm({ ...tripForm, fuel_added_litres: e.target.value })}
@@ -918,7 +918,7 @@ export default function ExpensesStaffManagement() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Fuel Cost (₹)</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Fuel Cost (₹)</label>
                     <input
                       type="number" step="0.01" value={tripForm.fuel_amount}
                       onChange={e => setTripForm({ ...tripForm, fuel_amount: e.target.value })}
@@ -929,7 +929,7 @@ export default function ExpensesStaffManagement() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Date</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Date</label>
                     <input
                       type="date" required value={tripForm.date}
                       onChange={e => setTripForm({ ...tripForm, date: e.target.value })}
@@ -937,7 +937,7 @@ export default function ExpensesStaffManagement() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Driver Name</label>
+                    <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Driver Name</label>
                     <select
                       value={tripForm.driver_name}
                       onChange={e => setTripForm({ ...tripForm, driver_name: e.target.value })}
@@ -952,7 +952,7 @@ export default function ExpensesStaffManagement() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-black text-slate-400 uppercase tracking-wider mb-1.5">Notes</label>
+                  <label className="block text-xs font-black text-slate-700 uppercase tracking-wider mb-1.5">Notes</label>
                   <textarea
                     placeholder="Route details etc..." value={tripForm.notes} rows={2}
                     onChange={e => setTripForm({ ...tripForm, notes: e.target.value })}
@@ -991,7 +991,7 @@ export default function ExpensesStaffManagement() {
               <div className="overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left text-xs border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-800 text-slate-400 font-bold uppercase tracking-wider">
+                    <tr className="border-b border-slate-800 text-slate-700 font-bold uppercase tracking-wider">
                       <th className="py-3 px-4">Date</th>
                       <th className="py-3 px-4">Vehicle</th>
                       <th className="py-3 px-4">Purpose</th>
@@ -1009,22 +1009,22 @@ export default function ExpensesStaffManagement() {
                         <tr key={t.id} className="hover:bg-slate-900/30 transition-colors">
                           <td className="py-3 px-4">{t.date}</td>
                           <td className="py-3 px-4 font-bold text-slate-100">
-                            {t.vehicle_type} <span className="text-[10px] text-slate-400 font-normal">({t.vehicle_number || 'N/A'})</span>
+                            {t.vehicle_type} <span className="text-[10px] text-slate-700 font-normal">({t.vehicle_number || 'N/A'})</span>
                           </td>
                           <td className="py-3 px-4">
                             <span className="bg-slate-800 px-2 py-0.5 rounded-md border border-slate-700 text-slate-300">{t.purpose}</span>
                           </td>
                           <td className="py-3 px-4 font-black text-orange-500">{totalRun} km</td>
-                          <td className="py-3 px-4 text-slate-400">{t.start_reading} - {t.end_reading}</td>
+                          <td className="py-3 px-4 text-slate-700">{t.start_reading} - {t.end_reading}</td>
                           <td className="py-3 px-4">
                             {t.fuel_added_litres > 0 ? (
                               <span className="flex flex-col text-[10px] text-slate-300">
                                 <span>⛽ {t.fuel_added_litres} L</span>
-                                <span className="font-bold text-slate-400">₹ {t.fuel_amount}</span>
+                                <span className="font-bold text-slate-700">₹ {t.fuel_amount}</span>
                               </span>
                             ) : '-'}
                           </td>
-                          <td className="py-3 px-4 text-slate-400">{t.driver_name || 'N/A'}</td>
+                          <td className="py-3 px-4 text-slate-700">{t.driver_name || 'N/A'}</td>
                           <td className="py-3 px-4 text-center flex items-center justify-center gap-2">
                             <button
                               onClick={() => {
