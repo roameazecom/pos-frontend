@@ -157,9 +157,26 @@ export default function MenuConfiguration() {
                       </td>
                       <td className="p-3 font-medium text-slate-700">{item.price.toFixed(2)}</td>
                       <td className="p-3 text-center">
-                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${item.is_available ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-surface-400'}`}>
-                          {item.is_available ? 'Available' : 'Unavailable'}
-                        </span>
+                        <label className="relative inline-flex items-center cursor-pointer select-none">
+                          <input 
+                            type="checkbox" 
+                            checked={item.is_available}
+                            onChange={() => {
+                              updateMenuItem(item.id, { 
+                                name: item.name,
+                                price: item.price,
+                                type: item.type,
+                                category_id: item.category_id,
+                                is_available: !item.is_available 
+                              });
+                            }}
+                            className="sr-only peer" 
+                          />
+                          <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-350 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
+                          <span className="ml-2 text-xs font-black text-slate-800">
+                            {item.is_available ? 'Available' : 'Unavailable'}
+                          </span>
+                        </label>
                       </td>
                       <td className="p-3">
                         <div className="flex items-center justify-center space-x-2">

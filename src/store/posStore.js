@@ -477,7 +477,30 @@ export const usePosStore = create((set, get) => ({
   // Notice: For brevity, updates and deletes would be implemented similarly using axios.put and axios.delete.
   // The local state should be updated to reflect changes immediately or wait for a fetch.
   updateCategory: () => {}, deleteCategory: () => {},
-  updateMenuItem: () => {}, deleteMenuItem: () => {},
+  updateMenuItem: async (id, item) => {
+    try {
+      const res = await axios.put(`${API_URL}/config/menu-items/${id}`, item);
+      set((state) => ({
+        menuItems: state.menuItems.map(m => m.id === id ? { ...m, ...res.data, is_available: !!res.data.is_available } : m)
+      }));
+      toast.success('Menu item updated');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update menu item');
+    }
+  },
+  deleteMenuItem: async (id) => {
+    try {
+      await axios.delete(`${API_URL}/config/menu-items/${id}`);
+      set((state) => ({
+        menuItems: state.menuItems.filter(m => m.id !== id)
+      }));
+      toast.success('Menu item deleted');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to delete menu item');
+    }
+  },
   updateLocation: () => {}, deleteLocation: () => {},
   updateTable: () => {}, deleteTable: () => {},
   callWaiter: (tableId, tableNumber, locationId) => {
