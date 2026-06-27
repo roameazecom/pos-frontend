@@ -89,34 +89,34 @@ export default function KotLogTable() {
         </button>
       </div>
 
-      <div className="p-5 border-b border-surface-700/60 bg-surface-900/50 space-y-4">
-        <div className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5">
-            <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg> Search & Filter Panel
+      <div className="p-5 border-b border-surface-700/60 bg-slate-50 space-y-4">
+        <div className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-1.5">
+            <svg className="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg> Search & Filter Panel
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Start Date</label>
-            <input type="datetime-local" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white" />
+            <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Start Date</label>
+            <input type="datetime-local" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">End Date</label>
-            <input type="datetime-local" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white" />
+            <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">End Date</label>
+            <input type="datetime-local" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
           </div>
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Kot ID</label>
-            <input type="text" placeholder="Search ID" value={filterKotId} onChange={e => setFilterKotId(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white" />
+            <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Kot ID</label>
+            <input type="text" placeholder="Search ID" value={filterKotId} onChange={e => setFilterKotId(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
           </div>
           <div>
-             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Customer Name</label>
-            <input type="text" placeholder="Name" value={filterCustomerName} onChange={e => setFilterCustomerName(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white" />
+             <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Customer Name</label>
+            <input type="text" placeholder="Name" value={filterCustomerName} onChange={e => setFilterCustomerName(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
           </div>
           <div>
-             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Table No.</label>
-            <input type="text" placeholder="Table Number" value={filterTableNo} onChange={e => setFilterTableNo(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white" />
+             <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">Table No.</label>
+            <input type="text" placeholder="Table Number" value={filterTableNo} onChange={e => setFilterTableNo(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800" />
           </div>
           <div>
-             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">All Order Type</label>
-             <select value={filterOrderType} onChange={e => setFilterOrderType(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white">
+             <label className="text-[10px] font-black uppercase tracking-wider text-slate-700 mb-1.5 block">All Order Type</label>
+             <select value={filterOrderType} onChange={e => setFilterOrderType(e.target.value)} className="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold focus:outline-none focus:border-brand-500 bg-white text-slate-800">
                <option value="All">All</option>
                <option value="Dine In">Dine In</option>
                <option value="Delivery">Delivery</option>
@@ -125,7 +125,7 @@ export default function KotLogTable() {
           </div>
         </div>
         <div className="flex justify-between items-center mt-2 border-t border-surface-700/60 pt-3">
-          <div className="text-xs text-slate-400 font-semibold">
+          <div className="text-xs text-slate-500 font-semibold">
             Found {kotsList.length} KOT records.
           </div>
           <div className="flex gap-2">
