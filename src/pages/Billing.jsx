@@ -32,6 +32,25 @@ export default function Billing() {
   const calculatedTax = selectedOrder ? netSubtotal * taxRate : 0;
   const total = selectedOrder ? netSubtotal + calculatedTax : 0;
 
+  const printReceiptSilently = (url) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    iframe.onload = () => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 5000);
+    };
+  };
+
   const formatDateTime = (dateStr) => {
     if (!dateStr) return 'N/A';
     try {
@@ -81,8 +100,8 @@ export default function Billing() {
     if (selectedOrderId) {
       checkoutOrder(selectedOrderId, paymentType, checkoutName || selectedOrder?.customer_name || '', checkoutPhone || selectedOrder?.customer_phone || '', user?.id, discountAmount);
       
-      // Auto-print thermal POS receipt in new tab
-      window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/thermal/${selectedOrderId}`, '_blank');
+      // Auto-print thermal POS receipt silently
+      printReceiptSilently(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/thermal/${selectedOrderId}`);
       
       setSelectedOrderId(null); setShowModal(false); setCheckoutName(''); setCheckoutPhone(''); setDiscountAmount(0);
     }
@@ -538,7 +557,7 @@ export default function Billing() {
                   <Printer className="w-4 h-4 text-slate-500" /> A4 Invoice
                 </button>
                 <button
-                  onClick={() => window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/thermal/${histOrder.id}`, '_blank')}
+                  onClick={() => printReceiptSilently(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/thermal/${histOrder.id}`)}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs btn-orange shadow-md transition-all active:scale-95"
                 >
                   <Printer className="w-4 h-4 text-white" /> Print Thermal (80mm)

@@ -49,6 +49,25 @@ export default function QuickBill() {
   const total = netSubtotal + calculatedTax;
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+  const printReceiptSilently = (url) => {
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    iframe.onload = () => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 5000);
+    };
+  };
+
   const handleSettleBill = async (paymentType) => {
     if (cart.length === 0) return;
     setIsProcessing(true);
@@ -66,7 +85,7 @@ export default function QuickBill() {
       setCustomerPhone('');
       setDiscountAmount(0);
       setTimeout(() => {
-        window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/thermal/${orderId}`, '_blank');
+        printReceiptSilently(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/thermal/${orderId}`);
         setSuccessOrderId(null);
       }, 1200);
     }
