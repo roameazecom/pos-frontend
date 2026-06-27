@@ -4,6 +4,7 @@ import axios from 'axios';
 import { usePosStore } from '../store/posStore';
 import { Store, User, Phone, KeyRound, Coffee } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { APP_LOGO_BASE64 } from '../constants/logo';
 
 export default function CustomerLogin() {
   const { tables, locations, restaurantDetails, fetchData } = usePosStore();
@@ -73,18 +74,13 @@ export default function CustomerLogin() {
         
         {/* Logo/Restaurant Name */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 rounded-3xl mx-auto flex items-center justify-center mb-4" style={{
-            background: 'linear-gradient(135deg, #f97316, #ea580c)',
+          <div className="w-16 h-16 rounded-3xl mx-auto flex items-center justify-center mb-4 bg-white" style={{
             boxShadow: '0 8px 24px rgba(249,115,22,0.25)'
           }}>
-            {restaurantDetails?.logo_base64 ? (
-              <img src={restaurantDetails.logo_base64} alt="Logo" className="w-full h-full object-cover rounded-3xl" />
-            ) : (
-              <Store className="w-8 h-8 text-white" />
-            )}
+            <img src={restaurantDetails?.logo_base64 || APP_LOGO_BASE64} alt="Logo" className="w-full h-full object-cover rounded-3xl" />
           </div>
           <h2 className="text-2xl font-black text-slate-900">
-            {restaurantDetails?.name || 'Our Restaurant'}
+            {restaurantDetails?.name || 'Happy Pie'}
           </h2>
           <p className="text-slate-500 text-sm mt-1">Please enter details to start ordering</p>
         </div>

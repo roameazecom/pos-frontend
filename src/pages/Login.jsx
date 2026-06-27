@@ -6,6 +6,8 @@ import { KeyRound, Mail, Lock, Store, Coffee, ChefHat, ShoppingBag } from 'lucid
 
 
 
+import { APP_LOGO_BASE64 } from '../constants/logo';
+
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -69,17 +71,12 @@ export default function Login() {
         {/* Top logo */}
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-16">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{
-              background: 'linear-gradient(135deg, #f97316, #ea580c)',
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white" style={{
               boxShadow: '0 0 20px rgba(249,115,22,0.3)'
             }}>
-              {restaurantDetails?.logo_base64 ? (
-                <img src={restaurantDetails.logo_base64} alt="Logo" className="w-full h-full object-cover rounded-xl" />
-              ) : (
-                <Store className="w-5 h-5 text-white" />
-              )}
+              <img src={restaurantDetails?.logo_base64 || APP_LOGO_BASE64} alt="Logo" className="w-full h-full object-cover rounded-xl" />
             </div>
-            <span className="text-surface-100 font-black text-lg">{restaurantDetails?.name || 'AppThat POS'}</span>
+            <span className="text-surface-100 font-black text-lg">{restaurantDetails?.name || 'Happy Pie'}</span>
           </div>
 
           {/* Hero text */}
@@ -141,15 +138,13 @@ export default function Login() {
 
         <div className="w-full max-w-md animate-slide-up relative z-10">
           
-          {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-3 mb-10">
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center" style={{
-              background: 'linear-gradient(135deg, #f97316, #ea580c)',
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white" style={{
               boxShadow: '0 0 25px rgba(249,115,22,0.3)'
             }}>
-              <Store className="w-6 h-6 text-white" />
+              <img src={restaurantDetails?.logo_base64 || APP_LOGO_BASE64} alt="Logo" className="w-full h-full object-cover rounded-2xl" />
             </div>
-            <span className="font-black text-xl text-surface-100">{restaurantDetails?.name || 'AppThat POS'}</span>
+            <span className="font-black text-xl text-surface-100">{restaurantDetails?.name || 'Happy Pie'}</span>
           </div>
 
           <h2 className="text-3xl font-black text-surface-100 mb-2">Welcome back</h2>
