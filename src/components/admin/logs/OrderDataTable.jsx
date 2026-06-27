@@ -103,58 +103,69 @@ export default function OrderDataTable() {
 
   const totalFilteredAmount = filteredOrders.reduce((acc, o) => acc + parseFloat(o.total_amount || 0), 0).toFixed(2);
   return (
-    <div className="flex flex-col flex-1 min-h-0 bg-surface-900 rounded-xl shadow-sm border border-surface-700 overflow-hidden">
+    <div className="flex flex-col flex-1 min-h-0 bg-white rounded-2xl shadow-soft border border-surface-700/50 overflow-hidden">
       {/* Header Tools */}
-      <div className="p-4 border-b border-surface-700 flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
-        <div className="flex items-center space-x-2 bg-blue-500/20 text-blue-600 px-3 py-2 rounded-md font-medium text-sm border border-blue-100">
-          <TrendingUpIcon /> <span>Last 15 Days Orders (View Chart)</span>
+      <div className="p-4 lg:p-5 border-b border-surface-700/60 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-800">
+        <div className="flex items-center space-x-2 bg-brand-100 text-brand-700 px-3.5 py-2 rounded-xl font-bold text-xs border border-brand-200 shadow-sm shrink-0">
+          <TrendingUpIcon /> <span>Last 15 Days Active Orders Summary</span>
         </div>
         
-        <div className="flex space-x-2">
-           <button onClick={handleBulkInvoice} disabled={selectedRowIds.length === 0} className="px-4 py-2 text-rose-500 font-medium text-sm border border-rose-500 rounded hover:bg-rose-500/20 disabled:opacity-50 disabled:cursor-not-allowed">Generate Invoice</button>
-           <div className="px-4 py-2 font-bold text-slate-700 text-sm border border-surface-700 rounded">
-             Grand Total : <span className="text-rose-500">₹ {totalFilteredAmount}</span>
+        <div className="flex flex-wrap items-center gap-2.5">
+           <button 
+             onClick={handleBulkInvoice} 
+             disabled={selectedRowIds.length === 0} 
+             className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs border border-rose-200 rounded-xl transition-all disabled:opacity-40 disabled:cursor-not-allowed shadow-sm flex items-center gap-1.5"
+           >
+             <FileText className="w-3.5 h-3.5" /> Generate Invoices ({selectedRowIds.length})
+           </button>
+           <div className="px-4 py-2.5 font-black text-slate-800 text-xs border border-surface-700 rounded-xl bg-white shadow-sm">
+             Grand Total : <span className="text-brand-600 ml-1">₹{Number(totalFilteredAmount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
            </div>
-           <select className="px-3 py-2 border border-slate-300 rounded text-sm bg-surface-900">
-             <option>Action</option>
-           </select>
-           <button onClick={handleExport} className="flex items-center px-4 py-2 border border-slate-300 rounded text-sm font-medium hover:bg-surface-900">
-             <DownloadCloud className="w-4 h-4 mr-2" /> Export Excel
+           <button 
+             onClick={handleExport} 
+             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-surface-700 hover:border-slate-300 rounded-xl text-xs font-black text-slate-700 hover:text-slate-900 transition-all shadow-sm"
+           >
+             <DownloadCloud className="w-4 h-4 text-slate-500" /> Export Excel
            </button>
         </div>
       </div>
 
       {/* Advanced Filters */}
-      <div className="p-4 border-b border-surface-700 bg-surface-900 space-y-4">
-        <div className="text-sm font-bold flex flex-col">
-           <label className="text-surface-300 mb-1 flex items-center">
-             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg> Search
-           </label>
+      <div className="p-5 border-b border-surface-700/60 bg-surface-900/50 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-1.5">
+            <svg className="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg> Search & Filter Panel
+          </div>
+          {filteredOrders.length > 0 && (
+            <span className="text-xs text-slate-400 font-bold bg-white px-2.5 py-1 rounded-lg border border-surface-700">
+              Found {filteredOrders.length} records
+            </span>
+          )}
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           <div>
-            <label className="text-xs font-semibold text-surface-300 mb-1 block">Start Date</label>
-            <input type="datetime-local" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="w-full border border-slate-300 rounded p-1.5 text-sm" />
+            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Start Date</label>
+            <input type="datetime-local" value={filterStartDate} onChange={e => setFilterStartDate(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white" />
           </div>
           <div>
-            <label className="text-xs font-semibold text-surface-300 mb-1 block">End Date</label>
-            <input type="datetime-local" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="w-full border border-slate-300 rounded p-1.5 text-sm" />
+            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">End Date</label>
+            <input type="datetime-local" value={filterEndDate} onChange={e => setFilterEndDate(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white" />
           </div>
           <div>
-            <label className="text-xs font-semibold text-surface-300 mb-1 block">Order ID</label>
-            <input type="text" value={filterOrderId} onChange={e => setFilterOrderId(e.target.value)} className="w-full border border-slate-300 rounded p-1.5 text-sm" />
+            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Order ID</label>
+            <input type="text" placeholder="Search ID" value={filterOrderId} onChange={e => setFilterOrderId(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white" />
           </div>
           <div>
-             <label className="text-xs font-semibold text-surface-300 mb-1 block">Customer Name</label>
-            <input type="text" value={filterCustomerName} onChange={e => setFilterCustomerName(e.target.value)} className="w-full border border-slate-300 rounded p-1.5 text-sm" />
+             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Customer Name</label>
+            <input type="text" placeholder="Name" value={filterCustomerName} onChange={e => setFilterCustomerName(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white" />
           </div>
           <div>
-             <label className="text-xs font-semibold text-surface-300 mb-1 block">Customer Phone</label>
-            <input type="text" value={filterCustomerPhone} onChange={e => setFilterCustomerPhone(e.target.value)} className="w-full border border-slate-300 rounded p-1.5 text-sm" />
+             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Customer Phone</label>
+            <input type="text" placeholder="Phone" value={filterCustomerPhone} onChange={e => setFilterCustomerPhone(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white" />
           </div>
           <div>
-             <label className="text-xs font-semibold text-surface-300 mb-1 block">All Order Type</label>
-             <select value={filterOrderType} onChange={e => setFilterOrderType(e.target.value)} className="w-full border border-slate-300 rounded p-1.5 text-sm">
+             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Order Type</label>
+             <select value={filterOrderType} onChange={e => setFilterOrderType(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white">
                <option value="All">All</option>
                <option value="Dine In">Dine In</option>
                <option value="Delivery">Delivery</option>
@@ -164,8 +175,8 @@ export default function OrderDataTable() {
           
           {/* Row 2 */}
           <div>
-             <label className="text-xs font-semibold text-surface-300 mb-1 block">All Payment Type</label>
-             <select value={filterPaymentType} onChange={e => setFilterPaymentType(e.target.value)} className="w-full border border-slate-300 rounded p-1.5 text-sm">
+             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Payment Type</label>
+             <select value={filterPaymentType} onChange={e => setFilterPaymentType(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white">
                <option value="All">All</option>
                <option value="Cash">Cash</option>
                <option value="UPI">UPI</option>
@@ -173,105 +184,112 @@ export default function OrderDataTable() {
              </select>
           </div>
           <div>
-             <label className="text-xs font-semibold text-surface-300 mb-1 block">Order Status</label>
-             <select value={filterOrderStatus} onChange={e => setFilterOrderStatus(e.target.value)} className="w-full border border-slate-300 rounded p-1.5 text-sm">
+             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Order Status</label>
+             <select value={filterOrderStatus} onChange={e => setFilterOrderStatus(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white">
                <option value="All">All</option>
                <option value="Paid">Paid</option>
                <option value="Cancelled">Cancelled</option>
              </select>
           </div>
           <div>
-             <label className="text-xs font-semibold text-surface-300 mb-1 block">Other Status</label>
-             <select className="w-full border border-slate-300 rounded p-1.5 text-sm"><option value="All">All</option></select>
+             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Other Status</label>
+             <select className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white"><option value="All">All</option></select>
           </div>
           <div className="flex space-x-2">
             <div className="w-1/3">
-              <label className="text-xs font-semibold text-transparent mb-1 block">-</label>
-               <select value={filterGrandTotalOp} onChange={e => setFilterGrandTotalOp(e.target.value)} className="w-full border border-slate-300 rounded p-1.5 text-sm">
+              <label className="text-[10px] font-bold text-transparent mb-1.5 block">-</label>
+               <select value={filterGrandTotalOp} onChange={e => setFilterGrandTotalOp(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white">
                  <option value="=">=</option>
                  <option value=">">&gt;</option>
                  <option value="<">&lt;</option>
                </select>
             </div>
             <div className="w-2/3">
-              <label className="text-xs font-semibold text-surface-300 mb-1 block">Grand Total</label>
-              <input type="number" value={filterGrandTotalVal} onChange={e => setFilterGrandTotalVal(e.target.value)} className="w-full border border-slate-300 rounded p-1.5 text-sm" />
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Grand Total</label>
+              <input type="number" placeholder="₹ Amount" value={filterGrandTotalVal} onChange={e => setFilterGrandTotalVal(e.target.value)} className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white" />
             </div>
           </div>
           <div>
-             <label className="text-xs font-semibold text-surface-300 mb-1 block">GSTIN</label>
-             <select className="w-full border border-slate-300 rounded p-1.5 text-sm"><option>All</option></select>
+             <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">GSTIN Filter</label>
+             <select className="w-full border border-surface-700 rounded-xl p-2 text-xs font-semibold focus:outline-none focus:border-brand-400 bg-white"><option>All</option></select>
           </div>
-          <div className="flex items-end space-x-2">
-             <button onClick={clearFilters} className="bg-surface-900 border border-slate-300 text-slate-700 font-medium text-sm px-4 py-1.5 rounded hover:bg-surface-900 flex-1">Clear Filters</button>
+          <div className="flex items-end">
+             <button onClick={clearFilters} className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all w-full border border-slate-200">Reset Filters</button>
           </div>
-        </div>
-        
-        <div className="flex justify-between items-center mt-2 border-t border-surface-700 pt-3">
-          <div className="text-xs text-surface-400">
-            Found {filteredOrders.length} records.
-          </div>
-           <button onClick={clearFilters} className="bg-surface-900 border border-slate-300 text-slate-700 font-medium text-xs px-3 py-1 rounded hover:bg-surface-900">Clear All</button>
         </div>
       </div>
 
       {/* Table Data */}
       <div className="flex-1 overflow-auto min-h-0">
-        <table className="w-full text-left border-collapse text-sm whitespace-nowrap">
-          <thead className="bg-surface-900 text-surface-300 sticky top-0 border-b border-surface-700 shadow-sm z-10">
+        <table className="w-full text-left border-collapse text-xs whitespace-nowrap">
+          <thead className="bg-[#f8fafc] text-slate-700 sticky top-0 border-b border-surface-700 shadow-sm z-10">
             <tr>
-              <th className="p-3 font-semibold text-center"><input type="checkbox" checked={selectedRowIds.length === filteredOrders.length && filteredOrders.length > 0} onChange={toggleSelectAll} /></th>
-              <th className="p-3 font-semibold">Bill No.</th>
-              <th className="p-3 font-semibold">Order Type</th>
-              <th className="p-3 font-semibold">Customer</th>
-              <th className="p-3 font-semibold">Billed By</th>
-              <th className="p-3 font-semibold max-w-xs truncate">Items</th>
-              <th className="p-3 font-semibold">My Amount (₹)</th>
-              <th className="p-3 font-semibold">Tax (₹)</th>
-              <th className="p-3 font-semibold">Discount (₹)</th>
-              <th className="p-3 font-semibold">Grand Total (₹)</th>
-              <th className="p-3 font-semibold">Payment</th>
-              <th className="p-3 font-semibold">Status</th>
-              <th className="p-3 font-semibold">Created</th>
-              <th className="p-3 font-semibold">Actions</th>
+              <th className="p-4 font-black text-center w-12"><input type="checkbox" className="rounded border-slate-350 accent-orange-600 w-3.5 h-3.5" checked={selectedRowIds.length === filteredOrders.length && filteredOrders.length > 0} onChange={toggleSelectAll} /></th>
+              <th className="p-4 font-black">Bill No.</th>
+              <th className="p-4 font-black">Order Type</th>
+              <th className="p-4 font-black">Customer Details</th>
+              <th className="p-4 font-black">Billed By</th>
+              <th className="p-4 font-black max-w-xs truncate">Ordered Items</th>
+              <th className="p-4 font-black text-right">Subtotal (₹)</th>
+              <th className="p-4 font-black text-right">Tax (₹)</th>
+              <th className="p-4 font-black text-right">Discount (₹)</th>
+              <th className="p-4 font-black text-right">Grand Total (₹)</th>
+              <th className="p-4 font-black text-center">Payment</th>
+              <th className="p-4 font-black text-center">Status</th>
+              <th className="p-4 font-black">Date & Time</th>
+              <th className="p-4 font-black text-center">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 bg-white">
             {filteredOrders.length === 0 && (
-              <tr><td colSpan="14" className="p-4 text-center text-surface-400">No order history available.</td></tr>
+              <tr><td colSpan="14" className="p-12 text-center text-slate-400 font-medium">No orders matched the search filters.</td></tr>
             )}
-            {filteredOrders.map((order, i) => (
-              <tr key={order.id} className="hover:bg-surface-900 transition-colors">
-                <td className="p-3 text-center"><input type="checkbox" checked={selectedRowIds.includes(order.id)} onChange={() => toggleRowSelect(order.id)} /></td>
-                <td className="p-3 font-medium text-surface-100">{order.id}</td>
-                <td className="p-3 text-slate-700">
-                  <div className="font-semibold">
-                    {order.order_type === 'dine_in' ? `Dine In (${order.table_number})` : 
-                     order.order_type === 'takeaway' ? `Takeaway (Pickup #${order.id})` : 
-                     order.order_type === 'delivery' ? `Delivery (#${order.id})` : 'Dine In'}
+            {filteredOrders.map((order) => (
+              <tr key={order.id} className="hover:bg-slate-50/70 transition-colors group">
+                <td className="p-4 text-center"><input type="checkbox" className="rounded border-slate-350 accent-orange-600 w-3.5 h-3.5" checked={selectedRowIds.includes(order.id)} onChange={() => toggleRowSelect(order.id)} /></td>
+                <td className="p-4 font-extrabold text-slate-900">#{order.id}</td>
+                <td className="p-4">
+                  <div className="font-bold text-slate-800">
+                    {order.order_type === 'dine_in' ? `Dine In` : 
+                     order.order_type === 'takeaway' ? `Takeaway` : 
+                     order.order_type === 'delivery' ? `Delivery` : 'Dine In'}
                   </div>
-                  {order.location_name && <div className="text-xs font-bold text-surface-100">({order.location_name})</div>}
+                  {order.order_type === 'dine_in' && (
+                    <div className="text-[10px] text-orange-600 font-extrabold uppercase mt-0.5">Table {order.table_number}</div>
+                  )}
+                  {order.location_name && <div className="text-[10px] font-bold text-slate-400">({order.location_name})</div>}
                 </td>
-                <td className="p-3 text-surface-300">
-                  <div className="font-medium">{order.customer_name || '-'}</div>
-                  {order.customer_phone && <div className="text-xs text-surface-400">{order.customer_phone}</div>}
+                <td className="p-4">
+                  <div className="font-bold text-slate-800">{order.customer_name || '-'}</div>
+                  {order.customer_phone && <div className="text-[10px] text-slate-400 font-semibold">{order.customer_phone}</div>}
                 </td>
-                <td className="p-3 text-indigo-600 font-medium">{order.waiter_name || '-'}</td>
-                <td className="p-3 text-surface-300 max-w-xs truncate" title={order.items?.map(i => i.name).join(', ')}>
+                <td className="p-4 text-indigo-700 font-bold">{order.waiter_name || '-'}</td>
+                <td className="p-4 text-slate-600 max-w-xs truncate font-medium" title={order.items?.map(i => i.name).join(', ')}>
                   {order.items?.map(i => i.name).join(', ')}
                 </td>
-                <td className="p-3 text-surface-100">{parseFloat(order.subtotal || 0).toFixed(2)}</td>
-                <td className="p-3 text-surface-300">{parseFloat(order.tax_amount || 0).toFixed(2)}</td>
-                <td className="p-3 text-surface-300">{parseFloat(order.discount_amount || 0).toFixed(2)}</td>
-                <td className="p-3 text-surface-100 font-medium">{parseFloat(order.total_amount || 0).toFixed(2)}</td>
-                <td className="p-3 font-medium text-slate-700">{order.payment_type || 'Cash'}</td>
-                <td className={`p-3 font-bold ${order.status === 'paid' ? 'text-emerald-500' : 'text-rose-500'}`}>{order.status.toUpperCase()}</td>
-                <td className="p-3 text-surface-300 text-xs whitespace-pre-line">{formatOrderDate(order.created_at)}</td>
-                <td className="p-3">
-                  <div className="flex items-center space-x-1">
-                    <button onClick={() => handlePrint(order.id)} className="p-1.5 text-slate-400 hover:text-indigo-600 rounded hover:bg-indigo-500/20"><Printer className="w-4 h-4" /></button>
-                    <button className="p-1.5 text-slate-400 hover:text-indigo-600 rounded hover:bg-indigo-500/20"><Edit2 className="w-4 h-4" /></button>
-                    <button onClick={() => setSelectedOrder(order)} className="p-1.5 text-slate-400 hover:text-indigo-600 rounded hover:bg-indigo-500/20"><Eye className="w-4 h-4" /></button>
+                <td className="p-4 text-right font-semibold text-slate-800">₹{parseFloat(order.subtotal || 0).toFixed(0)}</td>
+                <td className="p-4 text-right font-semibold text-slate-400">₹{parseFloat(order.tax_amount || 0).toFixed(0)}</td>
+                <td className="p-4 text-right font-semibold text-rose-500">{parseFloat(order.discount_amount || 0) > 0 ? `₹${parseFloat(order.discount_amount).toFixed(0)}` : '-'}</td>
+                <td className="p-4 text-right font-black text-slate-900 text-sm">₹{parseFloat(order.total_amount || 0).toFixed(0)}</td>
+                <td className="p-4 text-center">
+                  <span className="px-2.5 py-1 bg-slate-100 text-slate-800 text-[10px] font-black rounded-lg border border-slate-200">
+                    {order.payment_type || 'Cash'}
+                  </span>
+                </td>
+                <td className="p-4 text-center">
+                  <span className={`px-2.5 py-1 text-[9px] font-black uppercase tracking-wider rounded-lg border ${
+                    order.status === 'paid' 
+                      ? 'bg-emerald-50 border-emerald-200 text-emerald-700' 
+                      : 'bg-rose-50 border-rose-200 text-rose-700'
+                  }`}>
+                    {order.status}
+                  </span>
+                </td>
+                <td className="p-4 text-slate-500 font-medium text-[11px] leading-snug">{formatOrderDate(order.created_at)}</td>
+                <td className="p-4">
+                  <div className="flex items-center justify-center gap-1.5 opacity-80 group-hover:opacity-100">
+                    <button onClick={() => handlePrint(order.id)} title="Print Receipt" className="p-2 text-slate-500 hover:text-orange-600 rounded-xl hover:bg-orange-50 transition-all border border-transparent hover:border-orange-100"><Printer className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => setSelectedOrder(order)} title="View Details" className="p-2 text-slate-500 hover:text-brand-600 rounded-xl hover:bg-brand-50 transition-all border border-transparent hover:border-brand-100"><Eye className="w-3.5 h-3.5" /></button>
                   </div>
                 </td>
               </tr>
@@ -280,15 +298,10 @@ export default function OrderDataTable() {
         </table>
       </div>
 
-      <div className="p-4 border-t border-surface-700 flex items-center justify-between text-xs text-surface-300 bg-surface-900 rounded-b-xl">
-        <div>Showing {filteredOrders.length} records</div>
+      <div className="p-4 border-t border-surface-700/60 flex items-center justify-between text-xs text-slate-500 bg-surface-800/80 rounded-b-2xl">
+        <div className="font-bold">Showing {filteredOrders.length} orders</div>
         <div className="flex space-x-1">
-          <button className="px-3 py-1 bg-rose-600 text-white rounded font-medium">1</button>
-          <button className="px-3 py-1 border border-surface-700 rounded hover:bg-surface-900">2</button>
-          <button className="px-3 py-1 border border-surface-700 rounded hover:bg-surface-900">3</button>
-          <button className="px-3 py-1 border border-surface-700 rounded hover:bg-surface-900">4</button>
-          <button className="px-3 py-1 border border-surface-700 rounded hover:bg-surface-900">Next</button>
-          <button className="px-3 py-1 border border-surface-700 rounded hover:bg-surface-900">Last</button>
+          <button className="px-3 py-1.5 bg-brand-600 text-white rounded-lg font-black text-xs shadow-sm">1</button>
         </div>
       </div>
       <OrderDetailsModal isOpen={!!selectedOrder} onClose={() => setSelectedOrder(null)} order={selectedOrder} />
@@ -298,6 +311,6 @@ export default function OrderDataTable() {
 
 function TrendingUpIcon() {
   return (
-    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
   );
 }

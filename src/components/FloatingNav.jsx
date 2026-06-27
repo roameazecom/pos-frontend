@@ -18,7 +18,7 @@ export default function FloatingNav() {
     { name: 'Menu', href: '/waiter', icon: Coffee, roles: ['waiter', 'admin', 'manager'], color: '#fb923c', onClickView: 'menu' },
     { name: 'Cart', href: '/waiter', icon: ShoppingCart, roles: ['waiter', 'admin', 'manager'], color: '#fb923c', onClickView: 'cart' },
     { name: 'Kitchen', href: '/kds', icon: ChefHat, roles: ['kitchen_manager', 'admin', 'manager'], color: '#f43f5e' },
-    { name: 'Takeaway', href: '/takeaway', icon: ShoppingBag, roles: ['admin', 'manager'], color: '#a78bfa' },
+    { name: 'Takeaway', href: '/takeaway', icon: ShoppingBag, roles: ['admin', 'manager', 'waiter'], color: '#a78bfa' },
     { name: 'Billing', href: '/billing', icon: Receipt, roles: ['admin', 'manager'], color: '#34d399' },
     { name: 'Admin', href: '/admin', icon: Settings, roles: ['admin', 'manager'], color: '#60a5fa' },
   ];
