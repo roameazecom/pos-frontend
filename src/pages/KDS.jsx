@@ -169,10 +169,12 @@ export default function KDS() {
       )}
 
       {/* KOT Cards Grid */}
+      {/* KOT Cards Grid */}
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === 'active' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 lg:gap-5 items-start overflow-y-auto custom-scrollbar h-full pb-4">
-            {activeTickets.map(ticket => {
+          <div className="h-full overflow-y-auto custom-scrollbar pb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 lg:gap-5 items-start">
+              {activeTickets.map(ticket => {
               const warn = isWarning(ticket.timestamp);
               const isTakeaway = ticket.orderType === 'takeaway';
               const isDelivery = ticket.orderType === 'delivery';
@@ -300,7 +302,8 @@ export default function KDS() {
               </div>
             )}
           </div>
-        ) : activeTab === 'inventory' ? (
+        </div>
+      ) : activeTab === 'inventory' ? (
           /* Kitchen Inventory Usage Logs */
           <div className="flex-1 flex flex-col min-h-0 gap-4 h-full">
             <div className="flex flex-col sm:flex-row gap-3 items-center justify-between shrink-0 p-3 rounded-2xl" style={panelStyle}>
