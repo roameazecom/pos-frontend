@@ -18,7 +18,7 @@ export default function Layout() {
 
       {/* Main Content */}
       <div className="flex flex-col flex-1 w-full overflow-hidden relative z-10">
-        <main className="flex-1 overflow-y-auto pb-28 focus:outline-none scroll-smooth custom-scrollbar relative z-10">
+        <main className="flex-1 overflow-y-auto pb-28 xl:pb-20 focus:outline-none scroll-smooth custom-scrollbar relative z-10">
           <Outlet />
         </main>
       </div>

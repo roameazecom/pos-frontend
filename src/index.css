@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Outfit", "Space Grotesk", sans-serif;
+  --font-sans: "Outfit", "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   /* 🔥 Premium Restaurant Palette - Accent Colors */
   --color-brand-50: #fff7ed;
@@ -42,6 +42,10 @@
   --shadow-soft: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
   --shadow-glow-orange: 0 0 30px rgba(249, 115, 22, 0.15);
   --shadow-glow-sm: 0 0 15px rgba(249, 115, 22, 0.08);
+
+  /* TV / Large Screen Breakpoints */
+  --breakpoint-3xl: 1920px; /* Full HD (1080p TV) */
+  --breakpoint-4xl: 2560px; /* 4K TV */
 
   /* Animations */
   --animate-fade-in: fadeIn 0.35s ease-out;
@@ -98,6 +102,20 @@
 
   :root {
     color-scheme: light;
+    /* Prevent text size adjustment on TV/tablet browsers */
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Smooth touch scrolling on tablet */
+    -webkit-overflow-scrolling: touch;
+    /* Improve tap delay on tablet/TV browsers */
+    touch-action: manipulation;
+  }
+
+  /* D-pad / remote navigation focus ring for Android TV */
+  :focus-visible {
+    outline: 2px solid rgba(249, 115, 22, 0.8);
+    outline-offset: 2px;
+    border-radius: 8px;
   }
 }
 
@@ -347,6 +365,27 @@
 
   .tab-inactive:hover {
     color: rgba(15, 23, 42, 0.8);
+  }
+
+  /* === TV / LARGE SCREEN IMPROVEMENTS === */
+  /* Extra wide table grid on very large screens */
+  @media (min-width: 1536px) {
+    .table-grid-tv {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+  }
+
+  /* Disable hover transform animations on TV (no mouse, causes D-pad issues) */
+  @media (hover: none) and (pointer: coarse) {
+    .hover-lift:hover { transform: none; }
+    .glass-card:hover { transform: none; }
+    .menu-item-card:hover { transform: translateY(-2px) scale(1.005); }
+  }
+
+  /* Ensure full viewport height on Android TV Chrome */
+  .tv-full-height {
+    height: 100dvh;
+    height: 100vh;
   }
 }
 

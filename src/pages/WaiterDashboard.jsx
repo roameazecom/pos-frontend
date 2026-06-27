@@ -142,7 +142,7 @@ export default function WaiterDashboard() {
             </div>
 
             {/* Table grid */}
-            <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-2.5">
+            <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 2xl:grid-cols-10 gap-2.5">
               {filteredTables.map(t => {
                 const isSelected = activeTableId === t.id;
                 const isOccupied = t.status === 'occupied';

@@ -28,7 +28,7 @@ export default function FloatingNav() {
   );
 
   return (
-    <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[100] animate-slide-up">
+    <div className="fixed bottom-5 xl:bottom-6 left-1/2 -translate-x-1/2 z-[100] animate-slide-up">
       <div className="relative">
         {/* Glow behind nav */}
         <div className="absolute inset-0 rounded-full blur-xl opacity-60"
@@ -60,7 +60,7 @@ export default function FloatingNav() {
                   }
                 }}
                 className={() =>
-                  `relative flex flex-col items-center justify-center w-12 h-12 sm:w-13 sm:h-13 rounded-full transition-all duration-300 group ${
+                  `relative flex flex-col items-center justify-center w-12 h-12 xl:w-14 xl:h-14 rounded-full transition-all duration-300 group ${
                     isLinkActive ? 'nav-active' : 'text-surface-400 hover:text-surface-200'
                   }`
                 }
@@ -71,7 +71,7 @@ export default function FloatingNav() {
                       <div className="absolute inset-0 rounded-full animate-pulse-glow" />
                     )}
                     <Icon
-                      className={`w-5 h-5 transition-all duration-300 relative z-10 ${
+                      className={`w-5 h-5 xl:w-6 xl:h-6 transition-all duration-300 relative z-10 ${
                         isLinkActive ? '' : 'group-hover:scale-110'
                       }`}
                       style={isLinkActive ? { color: item.color, filter: `drop-shadow(0 0 8px ${item.color}80)` } : {}}

@@ -171,7 +171,7 @@ export default function KDS() {
       {/* KOT Cards Grid */}
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === 'active' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 lg:gap-5 items-start overflow-y-auto custom-scrollbar h-full pb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 lg:gap-5 items-start overflow-y-auto custom-scrollbar h-full pb-4">
             {activeTickets.map(ticket => {
               const warn = isWarning(ticket.timestamp);
               const isTakeaway = ticket.orderType === 'takeaway';
