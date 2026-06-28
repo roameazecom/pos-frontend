@@ -136,7 +136,7 @@ export default function Billing() {
            style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.03) 0%, transparent 70%)', filter: 'blur(80px)' }} />
 
       {/* ══════════ LEFT PANEL ══════════ */}
-      <div className="w-full lg:w-[400px] flex flex-col shrink-0 lg:h-full max-h-[45vh] lg:max-h-full z-10"
+      <div className="w-full lg:w-[310px] flex flex-col shrink-0 lg:h-full max-h-[45vh] lg:max-h-full z-10"
            style={panelStyle}>
 
         {/* Tab switcher */}
@@ -180,40 +180,40 @@ export default function Billing() {
                 <button
                   key={order.id}
                   onClick={() => setSelectedOrderId(order.id)}
-                  className="w-full flex items-center justify-between p-4 rounded-2xl text-left transition-all duration-300 animate-fade-in hover-lift"
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-all duration-300 animate-fade-in hover-lift"
                   style={isSelected ? {
                     background: 'rgba(249,115,22,0.12)',
                     border: '1px solid rgba(249,115,22,0.4)',
-                    boxShadow: '0 0 20px rgba(249,115,22,0.06)'
+                    boxShadow: '0 0 15px rgba(249,115,22,0.04)'
                   } : {
                     background: 'rgba(255,255,255,0.85)',
                     border: '1px solid rgba(0, 0, 0, 0.06)'
                   }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: tc.bg, border: `1px solid ${tc.border}` }}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: tc.bg, border: `1px solid ${tc.border}` }}>
                       {getOrderIcon(order.order_type)}
                     </div>
-                    <div>
-                      <span className="text-base font-black text-surface-100">
+                    <div className="min-w-0">
+                      <span className="text-xs font-black text-slate-800 truncate block">
                         {isDineIn ? `Table ${table?.table_number}` : (order.customer_name || 'Takeaway')}
                       </span>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md"
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-md"
                           style={{ background: tc.bg, color: tc.color, border: `1px solid ${tc.border}` }}>
                           {order.order_type.replace('_', '-')}
                         </span>
-                        <span className="text-xs font-bold text-surface-500">#{order.id.toString().slice(-4)}</span>
+                        <span className="text-[10px] font-bold text-slate-400">#{order.id}</span>
                       </div>
-                      <div className="text-[10px] font-bold mt-0.5 text-surface-400">
+                      <div className="text-[9px] font-bold mt-0.5 text-slate-400">
                         {formatDateTime(order.created_at)}
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <span className="font-black text-xl text-surface-100">₹{order.subtotal}</span>
-                    <div className="text-xs font-bold mt-1 px-2 py-0.5 rounded-md"
-                      style={{ background: 'rgba(249,115,22,0.1)', color: '#ea580c', border: '1px solid rgba(249,115,22,0.2)' }}>
+                  <div className="text-right shrink-0">
+                    <span className="font-black text-sm text-slate-800">₹{order.subtotal}</span>
+                    <div className="text-[9px] font-bold mt-0.5 px-1.5 py-0.5 rounded-md border"
+                      style={{ background: 'rgba(249,115,22,0.06)', color: '#ea580c', borderColor: 'rgba(249,115,22,0.15)' }}>
                       {order.items.length} items
                     </div>
                   </div>
@@ -303,36 +303,36 @@ export default function Billing() {
             </div>
 
             {/* History list */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2.5 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
               {filteredHistory.slice(0, 50).map(order => {
                 const isSelected = selectedOrderId === order.id;
                 return (
                   <button
                     key={order.id}
                     onClick={() => setSelectedOrderId(order.id)}
-                    className="w-full flex items-center justify-between p-4 rounded-2xl text-left transition-all duration-300 animate-fade-in hover-lift"
+                    className="w-full flex items-center justify-between p-2.5 rounded-xl text-left transition-all duration-300 animate-fade-in hover-lift"
                     style={isSelected ? {
                       background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.35)'
                     } : {
                       background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(0, 0, 0, 0.06)'
                     }}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,0,0,0.04)' }}>
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(0,0,0,0.04)' }}>
                         {getOrderIcon(order.order_type || 'dine_in')}
                       </div>
                       <div>
-                        <h3 className="font-black text-surface-100 text-sm">Bill #{order.id}</h3>
-                        <p className="text-xs font-bold mt-0.5 text-surface-500">
+                        <h3 className="font-black text-slate-800 text-xs">Bill #{order.id}</h3>
+                        <p className="text-[10px] font-bold mt-0.5 text-slate-400">
                           {formatDateTime(order.created_at)} ·{' '}
                           <span style={{ color: '#ea580c' }}>{order.payment_type}</span>
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-black text-base text-surface-100">₹{(order.total_amount || 0).toFixed(2)}</div>
-                      <div className="text-[10px] font-black uppercase mt-1 px-2 py-0.5 rounded-md inline-block"
-                           style={{ background: 'rgba(5, 150, 105, 0.1)', color: '#047857', border: '1px solid rgba(5, 150, 105, 0.2)' }}>Paid</div>
+                    <div className="text-right shrink-0">
+                      <div className="font-black text-sm text-slate-800">₹{(order.total_amount || 0).toFixed(0)}</div>
+                      <div className="text-[8px] font-black uppercase mt-0.5 px-1.5 py-0.5 rounded-md inline-block border"
+                           style={{ background: 'rgba(5, 150, 105, 0.06)', color: '#047857', borderColor: 'rgba(5, 150, 105, 0.15)' }}>Paid</div>
                     </div>
                   </button>
                 );
