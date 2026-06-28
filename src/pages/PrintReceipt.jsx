@@ -1,54 +1,60 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { formatIST } from '../utils/formatIST';
 
-// Resolve API base URL — works on any device on same network
+// Resolve API base URL
 const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
 
 export default function PrintReceipt() {
   const { orderId } = useParams();
+  const [searchParams] = useSearchParams();
   const [order, setOrder] = useState(null);
   const [restaurant, setRestaurant] = useState(null);
   const [error, setError] = useState(null);
 
-  // Load order: localStorage first (instant for iframe on same system), then API fallback
   useEffect(() => {
-    // 1. Try localStorage immediately — set by Billing.jsx before opening iframe
+    // 1. FASTEST: Read from URL query param ?d= (base64 encoded — works on any device)
+    const encoded = searchParams.get('d');
+    if (encoded) {
+      try {
+        const payload = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+        if (payload.order) setOrder(payload.order);
+        if (payload.restaurant) setRestaurant(payload.restaurant);
+        return; // Done instantly — no API, no localStorage needed
+      } catch (e) {
+        console.error('Failed to decode URL data', e);
+      }
+    }
+
+    // 2. FALLBACK: localStorage (same browser)
     try {
       const cached = localStorage.getItem('print_order_' + orderId);
-      if (cached) {
-        setOrder(JSON.parse(cached));
-        return; // Done — no API call needed
-      }
+      if (cached) { setOrder(JSON.parse(cached)); return; }
     } catch (e) {}
 
-    // 2. Fallback: fetch from backend API (for other devices / direct URL access)
+    // 3. LAST RESORT: backend API (slow on Render free tier)
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
+    const timeout = setTimeout(() => controller.abort(), 12000);
     axios.get(`${API_URL}/orders/${orderId}`, { signal: controller.signal })
       .then(res => { clearTimeout(timeout); setOrder(res.data); })
       .catch(err => {
         clearTimeout(timeout);
-        if (err.name !== 'CanceledError' && err.code !== 'ERR_CANCELED') {
-          setError('Could not load order. Please try again.');
-        } else {
-          setError('Server took too long to respond. Try printing again.');
-        }
+        setError(err.code === 'ERR_CANCELED'
+          ? 'Server timeout. Please try printing again.'
+          : 'Could not load order data.');
       });
-
     return () => { clearTimeout(timeout); controller.abort(); };
-  }, [orderId]);
+  }, [orderId, searchParams]);
 
-  // Load restaurant: localStorage first, then API fallback
   useEffect(() => {
+    if (restaurant) return; // Already set from URL data
     try {
       const cached = localStorage.getItem('print_restaurant');
       if (cached) { setRestaurant(JSON.parse(cached)); return; }
     } catch (e) {}
     axios.get(`${API_URL}/restaurant`).then(res => setRestaurant(res.data)).catch(() => {});
-  }, []);
+  }, [restaurant]);
 
   // Auto-print once order data is loaded
   useEffect(() => {

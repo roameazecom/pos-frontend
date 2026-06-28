@@ -33,13 +33,22 @@ export default function Billing() {
   const calculatedTax = selectedOrder ? netSubtotal * taxRate : 0;
   const total = selectedOrder ? netSubtotal + calculatedTax : 0;
 
-  const printReceiptSilently = (url, orderId, orderObj) => {
-    if (orderId && orderObj) {
-      localStorage.setItem('print_order_' + orderId, JSON.stringify(orderObj));
+  // Encode order + restaurant data in URL so any device can print instantly
+  const buildPrintUrl = (orderId, orderObj) => {
+    try {
+      const payload = {
+        order: orderObj,
+        restaurant: restaurantDetails || null,
+      };
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+      return `/print/receipt/${orderId}?d=${encoded}`;
+    } catch (e) {
+      return `/print/receipt/${orderId}`;
     }
-    if (restaurantDetails) {
-      localStorage.setItem('print_restaurant', JSON.stringify(restaurantDetails));
-    }
+  };
+
+  const printReceiptSilently = (orderId, orderObj) => {
+    const url = buildPrintUrl(orderId, orderObj);
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
       || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
@@ -121,7 +130,7 @@ export default function Billing() {
       checkoutOrder(selectedOrderId, paymentType, checkoutName || selectedOrder?.customer_name || '', checkoutPhone || selectedOrder?.customer_phone || '', user?.id, discountAmount);
       
       // Auto-print thermal POS receipt silently
-      printReceiptSilently(`/print/receipt/${selectedOrderId}`, selectedOrderId, selectedOrder);
+      printReceiptSilently(selectedOrderId, selectedOrder);
       
       setSelectedOrderId(null); setShowModal(false); setCheckoutName(''); setCheckoutPhone(''); setDiscountAmount(0);
     }
@@ -594,7 +603,7 @@ export default function Billing() {
                   <Printer className="w-4 h-4 text-slate-500" /> A4 Invoice
                 </button>
                 <button
-                  onClick={() => printReceiptSilently(`/print/receipt/${histOrder.id}`, histOrder.id, histOrder)}
+                  onClick={() => printReceiptSilently(histOrder.id, histOrder)}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs btn-orange shadow-md transition-all active:scale-95"
                 >
                   <Printer className="w-4 h-4 text-white" /> Print Thermal (80mm)

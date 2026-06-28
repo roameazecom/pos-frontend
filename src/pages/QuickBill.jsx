@@ -10,10 +10,7 @@ import {
 
 export default function QuickBill() {
   const { user } = useAuthStore();
-  const {
-    categories, menuItems, restaurantDetails,
-    cart, addToCart, removeFromCart, updateCartQuantity, clearCart, quickBillOrder
-  } = usePosStore();
+  const { restaurantDetails, categories, menuItems, cart, addToCart, removeFromCart, updateCartQuantity, clearCart, quickBillOrder } = usePosStore();
 
   const { activeCategoryTab, setActiveCategoryTab } = useUiStore();
 
@@ -49,10 +46,18 @@ export default function QuickBill() {
   const total = netSubtotal + calculatedTax;
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const printReceiptSilently = (url, orderId, orderObj) => {
-    if (orderId && orderObj) {
-      localStorage.setItem('print_order_' + orderId, JSON.stringify(orderObj));
+  const buildPrintUrl = (orderId, orderObj) => {
+    try {
+      const payload = { order: orderObj, restaurant: restaurantDetails || null };
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+      return `/print/receipt/${orderId}?d=${encoded}`;
+    } catch (e) {
+      return `/print/receipt/${orderId}`;
     }
+  };
+
+  const printReceiptSilently = (orderId, orderObj) => {
+    const url = buildPrintUrl(orderId, orderObj);
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
       || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
@@ -72,9 +77,7 @@ export default function QuickBill() {
       iframe.onload = () => {
         iframe.contentWindow.focus();
         iframe.contentWindow.print();
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 5000);
+        setTimeout(() => { document.body.removeChild(iframe); }, 5000);
       };
     }
   };
@@ -118,7 +121,7 @@ export default function QuickBill() {
       setCustomerPhone('');
       setDiscountAmount(0);
       setTimeout(() => {
-        printReceiptSilently(`/print/receipt/${orderId}`, orderId, mockOrderObj);
+        printReceiptSilently(orderId, mockOrderObj);
         setSuccessOrderId(null);
       }, 1200);
     }
