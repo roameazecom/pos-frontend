@@ -44,10 +44,14 @@ export default function PrintReceipt() {
     axios.get(`${API_URL}/restaurant`).then(res => setRestaurant(res.data)).catch(() => {});
   }, [restaurant]);
 
-  // Auto-print once order data loaded
+  // Auto-print once order data is fully loaded and DOM is updated
   useEffect(() => {
     if (order) {
-      setTimeout(() => window.print(), 600);
+      const timer = setTimeout(() => {
+        window.focus();
+        window.print();
+      }, 700);
+      return () => clearTimeout(timer);
     }
   }, [order]);
 

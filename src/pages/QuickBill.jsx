@@ -72,11 +72,13 @@ export default function QuickBill() {
       iframe.style.border = '0';
       iframe.src = url;
       document.body.appendChild(iframe);
-      iframe.onload = () => {
-        iframe.contentWindow.focus();
-        iframe.contentWindow.print();
-        setTimeout(() => { document.body.removeChild(iframe); }, 5000);
-      };
+      // The iframe itself calls window.print() when data is fully ready.
+      // We just clean up the iframe node from the DOM after 15 seconds.
+      setTimeout(() => {
+        if (iframe && iframe.parentNode) {
+          document.body.removeChild(iframe);
+        }
+      }, 15000);
     }
   };
 
