@@ -9,11 +9,50 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 // Initialize Socket.io
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
-const socket = io(SOCKET_URL);
+const socket = io(SOCKET_URL, {
+  transports: ['websocket', 'polling'],
+  reconnection: true,
+  reconnectionDelay: 1000,
+  reconnectionDelayMax: 5000,
+  reconnectionAttempts: Infinity,
+  autoConnect: true
+});
+
+// Global Audio Context definition
+let globalAudioCtx = null;
 
 export const usePosStore = create((set, get) => ({
   orders: [],
   orderHistory: [],
+  socketConnected: false,
+  audioUnlocked: false,
+  unlockAudio: () => {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      if (!globalAudioCtx) {
+        globalAudioCtx = new AudioContext();
+      }
+      globalAudioCtx.resume().then(() => {
+        set({ audioUnlocked: true });
+        // Play quick test sound
+        const osc = globalAudioCtx.createOscillator();
+        const gain = globalAudioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, globalAudioCtx.currentTime);
+        gain.gain.setValueAtTime(0.2, globalAudioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, globalAudioCtx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(globalAudioCtx.destination);
+        osc.start();
+        osc.stop(globalAudioCtx.currentTime + 0.15);
+      }).catch(err => {
+        console.warn('Unlock failed:', err);
+      });
+    } catch (e) {
+      console.error('Manual audio unlock failed:', e);
+    }
+  },
   tables: [],
   menuItems: [],
   categories: [],
@@ -548,31 +587,80 @@ export const usePosStore = create((set, get) => ({
   }
 }));
 
-// Helper to play synthesized sounds
+// Audio Context management to bypass browser autoplay restrictions
+const unlockAudioContext = () => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    if (!globalAudioCtx) {
+      globalAudioCtx = new AudioContext();
+    }
+    if (globalAudioCtx.state === 'suspended') {
+      globalAudioCtx.resume().then(() => {
+        console.log('AudioContext successfully unlocked!');
+        usePosStore.setState({ audioUnlocked: true });
+        cleanupUnlockListeners();
+      }).catch(err => {
+        console.warn('Failed to unlock AudioContext:', err);
+      });
+    } else {
+      usePosStore.setState({ audioUnlocked: true });
+      cleanupUnlockListeners();
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const cleanupUnlockListeners = () => {
+  window.removeEventListener('click', unlockAudioContext);
+  window.removeEventListener('touchstart', unlockAudioContext);
+  window.removeEventListener('keydown', unlockAudioContext);
+};
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('click', unlockAudioContext);
+  window.addEventListener('touchstart', unlockAudioContext);
+  window.addEventListener('keydown', unlockAudioContext);
+}
+
+// Helper to play synthesized sounds using a single global AudioContext
 const playSound = (type) => {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
-    const ctx = new AudioContext();
+    
+    if (!globalAudioCtx) {
+      globalAudioCtx = new AudioContext();
+    }
+    
+    const ctx = globalAudioCtx;
+    if (ctx.state === 'suspended') {
+      ctx.resume().then(() => {
+        usePosStore.setState({ audioUnlocked: true });
+      }).catch(e => console.warn('Context resume failed:', e));
+    }
     
     if (type === 'new_order') {
-      // Loud double beep for kitchen
+      // Extremely loud, sharp sawtooth buzzes for kitchen (3 times)
       const playBeep = (delay) => {
         setTimeout(() => {
+          if (ctx.state === 'suspended') return;
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(800, ctx.currentTime);
-          gain.gain.setValueAtTime(0.3, ctx.currentTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+          osc.type = 'sawtooth'; // Much louder and buzzer-like
+          osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 note
+          gain.gain.setValueAtTime(0.8, ctx.currentTime); // High volume (80%)
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
           osc.connect(gain);
           gain.connect(ctx.destination);
           osc.start();
-          osc.stop(ctx.currentTime + 0.2);
+          osc.stop(ctx.currentTime + 0.4);
         }, delay);
       };
       playBeep(0);
-      playBeep(250);
+      playBeep(450);
+      playBeep(900);
     } else if (type === 'ready_order') {
       // Pleasant ding for waiter
       const osc = ctx.createOscillator();
@@ -621,15 +709,34 @@ const showSystemNotification = async (title, body) => {
   }
 };
 
-// Real-Time Socket Synchronization
+// Real-Time Socket Connection State and Events
+socket.on('connect', () => {
+  console.log('Socket.io connected successfully! ID:', socket.id);
+  usePosStore.setState({ socketConnected: true });
+  // Always fetch fresh data on connection / reconnection to prevent stale UI
+  usePosStore.getState().fetchData();
+});
+
+socket.on('disconnect', (reason) => {
+  console.warn('Socket.io disconnected! Reason:', reason);
+  usePosStore.setState({ socketConnected: false });
+});
+
 socket.on('order_updated', (data) => {
-  console.log('Socket event received:', data);
+  console.log('Socket event received: order_updated', data);
   const store = usePosStore.getState();
   
-  if (data.action === 'new_kot') {
-    const msg = `New KOT Received for Table ${data.table_id || '?'}`;
+  if (data.action === 'new_kot' || data.action === 'quick_bill') {
+    const isQuick = data.action === 'quick_bill';
+    const msg = isQuick
+      ? 'New Quick Bill Order Received!'
+      : `New KOT Received for Table ${data.table_id || '?'}`;
     store.addNotification(msg, 'info', 'new_order');
     showSystemNotification('New KOT Order', msg);
+    toast.success(isQuick ? '🍲 New Quick Bill Order!' : `🍲 New KOT for Table ${data.table_id || '?'}!`, {
+      icon: '🔔',
+      duration: 6000
+    });
   } else if (data.action === 'item_status' || data.action === 'kot_status') {
     if (data.status === 'ready') {
       const msg = `Order items are Ready to Serve!`;

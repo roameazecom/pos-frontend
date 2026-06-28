@@ -5,7 +5,7 @@ import NotificationPanel from '../components/common/NotificationPanel';
 import { formatIST } from '../utils/formatIST';
 
 export default function KDS() {
-  const { orders, orderHistory, updateItemStatus, updateKotStatus, tables, locations, inventoryItems, logInventoryUsage } = usePosStore();
+  const { orders, orderHistory, updateItemStatus, updateKotStatus, tables, locations, inventoryItems, logInventoryUsage, socketConnected, audioUnlocked, unlockAudio } = usePosStore();
   const [activeTab, setActiveTab] = useState('active');
   const [currentTime, setCurrentTime] = useState(Date.now());
   const [historySearch, setHistorySearch] = useState('');
@@ -94,9 +94,34 @@ export default function KDS() {
               Kitchen Display
               <ChefHat className="w-6 h-6" style={{ color: '#f43f5e', filter: 'drop-shadow(0 0 8px rgba(244,63,94,0.3))' }} />
             </h1>
-            <p className="text-xs font-bold uppercase tracking-widest mt-0.5" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>
-              {activeTickets.length} Active KOTs
-            </p>
+            <div className="flex items-center flex-wrap gap-3 mt-0.5">
+              <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>
+                {activeTickets.length} Active KOTs
+              </p>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'rgba(15, 23, 42, 0.2)' }} />
+              <span className={`inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border ${
+                socketConnected 
+                  ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' 
+                  : 'bg-rose-500/10 text-rose-600 border-rose-500/20 animate-pulse'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${socketConnected ? 'bg-emerald-500' : 'bg-rose-500 animate-ping'}`} />
+                {socketConnected ? 'Live Connection' : 'Offline - Reconnecting'}
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'rgba(15, 23, 42, 0.2)' }} />
+              {!audioUnlocked ? (
+                <button
+                  onClick={unlockAudio}
+                  className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border bg-amber-500 hover:bg-amber-600 text-white border-amber-600 hover:shadow active:scale-95 transition-all cursor-pointer animate-pulse"
+                  title="Web browsers block sounds until you click on the page. Click here to enable kitchen notification sound alerts."
+                >
+                  🔇 Tap to Enable Sound
+                </button>
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border bg-blue-500/10 text-blue-600 border-blue-500/20">
+                  🔊 Sound Active
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -172,145 +197,230 @@ export default function KDS() {
       )}
 
       {/* KOT Cards Grid */}
-      {/* KOT Cards Grid */}
       <div className="flex-1 min-h-0 overflow-hidden">
         {activeTab === 'active' ? (
-          <div className="h-full overflow-y-auto custom-scrollbar pb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 3xl:grid-cols-5 gap-4 lg:gap-5 items-start">
-              {activeTickets.map(ticket => {
-              const warn = isWarning(ticket.timestamp);
-              const isTakeaway = ticket.orderType === 'takeaway';
-              const isDelivery = ticket.orderType === 'delivery';
+          <div className="flex gap-4 lg:gap-5 h-full overflow-hidden">
+            {/* Sidebar with pending/cooking orders checklist */}
+            <aside className="w-80 shrink-0 hidden lg:flex flex-col bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden min-h-0">
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <h3 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-rose-500" /> KOT Checklist
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-600">
+                  {activeTickets.length} Active
+                </span>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-3 space-y-2.5 custom-scrollbar bg-slate-50/30">
+                {activeTickets.map(ticket => {
+                  const warn = isWarning(ticket.timestamp);
+                  
+                  // Calculate statuses of items
+                  const totalItems = ticket.items.length;
+                  const cookingItems = ticket.items.filter(i => i.status === 'cooking').length;
+                  const readyItems = ticket.items.filter(i => i.status === 'ready').length;
+                  const pendingItems = ticket.items.filter(i => i.status === 'pending').length;
+                  
+                  let kotStatusLabel = 'Pending';
+                  let statusBg = 'bg-amber-100 text-amber-700 border-amber-200';
+                  if (readyItems === totalItems) {
+                    kotStatusLabel = 'Ready';
+                    statusBg = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                  } else if (cookingItems > 0 || readyItems > 0) {
+                    kotStatusLabel = 'Cooking';
+                    statusBg = 'bg-indigo-100 text-indigo-700 border-indigo-200';
+                  }
 
-              return (
-                <div
-                  key={`${ticket.orderId}-${ticket.kotId}`}
-                  className="rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover-lift"
-                  style={{
-                    background: warn ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.9)',
-                    border: warn ? '1px solid rgba(239,68,68,0.35)' : '1px solid rgba(0,0,0,0.07)',
-                    boxShadow: warn ? '0 0 30px rgba(239,68,68,0.06)' : '0 4px 20px rgba(15,23,42,0.04)',
-                  }}
-                >
-                  {/* Ticket top accent */}
-                  <div className="h-1 w-full"
-                       style={{ background: warn ? 'linear-gradient(90deg, #ef4444, #dc2626)' : 'linear-gradient(90deg, #f97316, #ea580c)' }} />
-
-                  {/* Ticket Header */}
-                  <div className="p-4 flex justify-between items-start"
-                       style={{ borderBottom: `1px solid ${warn ? 'rgba(239,68,68,0.15)' : 'rgba(0,0,0,0.08)'}` }}>
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-surface-400">
-                        {ticket.kotId}
-                      </span>
-                      <div className="flex items-center flex-wrap gap-2 mt-1">
-                        {isTakeaway && <ShoppingBag className="w-4 h-4 text-purple-600 shrink-0" />}
-                        {isDelivery && <Bike className="w-4 h-4 text-emerald-600 shrink-0" />}
-                        <span className="text-xl font-black text-surface-100 truncate">{ticket.tableNumber}</span>
-                        {ticket.areaName && (
-                          <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
-                            {ticket.areaName}
-                          </span>
-                        )}
+                  return (
+                    <div
+                      key={`sidebar-${ticket.orderId}-${ticket.kotId}`}
+                      onClick={() => {
+                        const element = document.getElementById(`kot-card-${ticket.orderId}-${ticket.kotId}`);
+                        if (element) {
+                          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          element.style.outline = '3px dashed #f43f5e';
+                          element.style.outlineOffset = '4px';
+                          element.style.transition = 'outline 0.15s ease';
+                          setTimeout(() => {
+                            element.style.outline = 'none';
+                          }, 1500);
+                        }
+                      }}
+                      className="p-3 rounded-xl border border-slate-100 hover:border-rose-200 bg-white hover:bg-rose-50/10 cursor-pointer transition-all duration-200 flex flex-col gap-1.5 shadow-sm hover:shadow"
+                    >
+                      <div className="flex justify-between items-start gap-1">
+                        <span className="font-extrabold text-sm text-slate-800 truncate">{ticket.tableNumber}</span>
+                        <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${statusBg}`}>
+                          {kotStatusLabel}
+                        </span>
                       </div>
-                      <div className="flex flex-col mt-1 gap-0.5">
-                        <p className="text-[11px] font-bold text-orange-600">
-                          Waiter: <span className="font-extrabold">{ticket.waiterName}</span>
-                        </p>
-                        {ticket.customerName && (
-                          <p className="text-xs font-bold text-surface-400 truncate">
-                            {ticket.customerName}
-                          </p>
-                        )}
+                      
+                      <div className="flex justify-between items-center text-[10px] text-slate-400 font-bold">
+                        <span className="font-semibold tracking-wide text-slate-500">{ticket.kotId}</span>
+                        <span className={`flex items-center gap-1 ${warn ? 'text-red-500 font-extrabold animate-pulse' : 'text-slate-500'}`}>
+                          <Clock className="w-3 h-3" /> {getElapsedTime(ticket.timestamp)}
+                        </span>
+                      </div>
+                      
+                      <div className="text-[11px] font-bold text-slate-500 bg-slate-50/50 p-1.5 rounded-lg flex items-center justify-between border border-slate-100">
+                        <span>Items: {totalItems}</span>
+                        <span className="text-[10px] text-slate-400 font-medium">
+                          {pendingItems > 0 && `${pendingItems} Pnd `}
+                          {cookingItems > 0 && `${cookingItems} Ck `}
+                          {readyItems > 0 && `${readyItems} Rdy`}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black shrink-0"
-                         style={warn
-                           ? { background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#dc2626' }
-                           : { background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', color: 'rgba(15, 23, 42, 0.6)' }}>
-                      <Clock className="w-3.5 h-3.5" />
-                      {getElapsedTime(ticket.timestamp)}
-                    </div>
+                  );
+                })}
+                {activeTickets.length === 0 && (
+                  <div className="text-center py-8 text-xs font-bold text-slate-400">
+                    No active KOTs
                   </div>
+                )}
+              </div>
+            </aside>
 
-                  {/* Items */}
-                  <div className="p-4 space-y-2.5 flex-1 min-h-0">
-                    {ticket.items.map(item => (
-                      <div
-                        key={item.id}
-                        onClick={() => {
-                          if (item.status === 'pending') updateItemStatus(ticket.orderId, item.id, 'cooking');
-                          else if (item.status === 'cooking') updateItemStatus(ticket.orderId, item.id, 'ready');
-                          else if (item.status === 'ready') updateItemStatus(ticket.orderId, item.id, 'cooking');
-                        }}
-                        className="p-3 rounded-xl cursor-pointer select-none transition-all duration-300"
-                        style={item.status === 'pending' ? {
-                          background: 'rgba(251,191,36,0.08)',
-                          border: '1px solid rgba(251,191,36,0.25)',
-                        } : item.status === 'cooking' ? {
-                          background: 'rgba(99,102,241,0.08)',
-                          border: '1px solid rgba(99,102,241,0.25)',
-                          transform: 'scale(1.01)'
-                        } : {
-                          background: 'rgba(52,211,153,0.08)',
-                          border: '1px solid rgba(52,211,153,0.25)',
-                        }}
-                      >
-                        <div className="flex items-center justify-between gap-2 min-w-0">
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <span className="font-black text-sm w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                              style={item.status === 'ready' ? { background: '#059669', color: 'white' }
-                                   : item.status === 'cooking' ? { background: '#4f46e5', color: 'white' }
-                                   : { background: 'rgba(217,119,6,0.15)', color: '#b45309' }}>
-                              {item.quantity}
-                            </span>
-                            <span className={`font-bold text-sm break-words leading-tight flex-1 min-w-0 ${item.status === 'ready' ? 'line-through' : ''}`}
-                              style={{ color: item.status === 'pending' ? 'rgba(15,23,42,0.8)'
-                                           : item.status === 'cooking' ? '#4338ca' : '#047857' }}>
-                              {item.name}
-                            </span>
-                          </div>
-                          {item.status === 'ready' && <CheckCircle2 className="w-5 h-5 shrink-0" style={{ color: '#059669' }} />}
-                          {item.status === 'cooking' && (
-                            <Flame className="w-4 h-4 shrink-0 animate-pulse" style={{ color: '#4f46e5' }} />
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+            {/* Main Cards Grid */}
+            <div className="flex-1 h-full overflow-y-auto custom-scrollbar pb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 3xl:grid-cols-4 gap-4 lg:gap-5 items-start">
+                {activeTickets.map(ticket => {
+                  const warn = isWarning(ticket.timestamp);
+                  const isTakeaway = ticket.orderType === 'takeaway';
+                  const isDelivery = ticket.orderType === 'delivery';
 
-                  {/* Mark Ready */}
-                  <div className="p-4" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                    <button
-                      onClick={() => updateKotStatus(ticket.orderId, ticket.kotId, 'ready')}
-                      className="w-full py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
+                  return (
+                    <div
+                      id={`kot-card-${ticket.orderId}-${ticket.kotId}`}
+                      key={`${ticket.orderId}-${ticket.kotId}`}
+                      className="rounded-2xl overflow-hidden flex flex-col transition-all duration-300 hover-lift"
                       style={{
-                        background: 'linear-gradient(135deg, #10b981, #059669)',
-                        color: 'white',
-                        boxShadow: '0 4px 15px rgba(16,185,129,0.2)'
+                        background: warn ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.9)',
+                        border: warn ? '1px solid rgba(239,68,68,0.35)' : '1px solid rgba(0,0,0,0.07)',
+                        boxShadow: warn ? '0 0 30px rgba(239,68,68,0.06)' : '0 4px 20px rgba(15,23,42,0.04)',
                       }}
                     >
-                      <Check className="w-4 h-4" /> Mark KOT Ready
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+                      {/* Ticket top accent */}
+                      <div className="h-1 w-full"
+                           style={{ background: warn ? 'linear-gradient(90deg, #ef4444, #dc2626)' : 'linear-gradient(90deg, #f97316, #ea580c)' }} />
 
-            {activeTickets.length === 0 && (
-              <div className="col-span-full flex flex-col items-center justify-center py-24 gap-4 animate-fade-in">
-                <div className="w-24 h-24 rounded-full flex items-center justify-center"
-                     style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
-                  <ChefHat className="w-12 h-12" style={{ color: 'rgba(15, 23, 42, 0.3)' }} />
-                </div>
-                <h2 className="text-2xl font-black text-surface-100">Kitchen is clear!</h2>
-                <p className="text-sm font-bold uppercase tracking-wide text-surface-400">
-                  Waiting for new KOTs...
-                </p>
+                      {/* Ticket Header */}
+                      <div className="p-4 flex justify-between items-start"
+                           style={{ borderBottom: `1px solid ${warn ? 'rgba(239,68,68,0.15)' : 'rgba(0,0,0,0.08)'}` }}>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-surface-400">
+                            {ticket.kotId}
+                          </span>
+                          <div className="flex items-center flex-wrap gap-2 mt-1">
+                            {isTakeaway && <ShoppingBag className="w-4 h-4 text-purple-600 shrink-0" />}
+                            {isDelivery && <Bike className="w-4 h-4 text-emerald-600 shrink-0" />}
+                            <span className="text-xl font-black text-surface-100 truncate">{ticket.tableNumber}</span>
+                            {ticket.areaName && (
+                              <span className="px-2 py-0.5 rounded-lg text-[9px] font-black uppercase bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
+                                {ticket.areaName}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex flex-col mt-1 gap-0.5">
+                            <p className="text-[11px] font-bold text-orange-600">
+                              Waiter: <span className="font-extrabold">{ticket.waiterName}</span>
+                            </p>
+                            {ticket.customerName && (
+                              <p className="text-xs font-bold text-surface-400 truncate">
+                                {ticket.customerName}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black shrink-0"
+                             style={warn
+                               ? { background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#dc2626' }
+                               : { background: 'rgba(0,0,0,0.04)', border: '1px solid rgba(0,0,0,0.08)', color: 'rgba(15, 23, 42, 0.6)' }}>
+                          <Clock className="w-3.5 h-3.5" />
+                          {getElapsedTime(ticket.timestamp)}
+                        </div>
+                      </div>
+
+                      {/* Items */}
+                      <div className="p-4 space-y-2.5 flex-1 min-h-0">
+                        {ticket.items.map(item => (
+                          <div
+                            key={item.id}
+                            onClick={() => {
+                              if (item.status === 'pending') updateItemStatus(ticket.orderId, item.id, 'cooking');
+                              else if (item.status === 'cooking') updateItemStatus(ticket.orderId, item.id, 'ready');
+                              else if (item.status === 'ready') updateItemStatus(ticket.orderId, item.id, 'cooking');
+                            }}
+                            className="p-3 rounded-xl cursor-pointer select-none transition-all duration-300"
+                            style={item.status === 'pending' ? {
+                              background: 'rgba(251,191,36,0.08)',
+                              border: '1px solid rgba(251,191,36,0.25)',
+                            } : item.status === 'cooking' ? {
+                              background: 'rgba(99,102,241,0.08)',
+                              border: '1px solid rgba(99,102,241,0.25)',
+                              transform: 'scale(1.01)'
+                            } : {
+                              background: 'rgba(52,211,153,0.08)',
+                              border: '1px solid rgba(52,211,153,0.25)',
+                            }}
+                          >
+                            <div className="flex items-center justify-between gap-2 min-w-0">
+                              <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <span className="font-black text-sm w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                                  style={item.status === 'ready' ? { background: '#059669', color: 'white' }
+                                       : item.status === 'cooking' ? { background: '#4f46e5', color: 'white' }
+                                       : { background: 'rgba(217,119,6,0.15)', color: '#b45309' }}>
+                                  {item.quantity}
+                                </span>
+                                <span className={`font-bold text-sm break-words leading-tight flex-1 min-w-0 ${item.status === 'ready' ? 'line-through' : ''}`}
+                                  style={{ color: item.status === 'pending' ? 'rgba(15,23,42,0.8)'
+                                               : item.status === 'cooking' ? '#4338ca' : '#047857' }}>
+                                  {item.name}
+                                </span>
+                              </div>
+                              {item.status === 'ready' && <CheckCircle2 className="w-5 h-5 shrink-0" style={{ color: '#059669' }} />}
+                              {item.status === 'cooking' && (
+                                <Flame className="w-4 h-4 shrink-0 animate-pulse" style={{ color: '#4f46e5' }} />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Mark Ready */}
+                      <div className="p-4" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                        <button
+                          onClick={() => updateKotStatus(ticket.orderId, ticket.kotId, 'ready')}
+                          className="w-full py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
+                          style={{
+                            background: 'linear-gradient(135deg, #10b981, #059669)',
+                            color: 'white',
+                            boxShadow: '0 4px 15px rgba(16,185,129,0.2)'
+                          }}
+                        >
+                          <Check className="w-4 h-4" /> Mark KOT Ready
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {activeTickets.length === 0 && (
+                  <div className="col-span-full flex flex-col items-center justify-center py-24 gap-4 animate-fade-in">
+                    <div className="w-24 h-24 rounded-full flex items-center justify-center"
+                         style={{ background: 'rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                      <ChefHat className="w-12 h-12" style={{ color: 'rgba(15, 23, 42, 0.3)' }} />
+                    </div>
+                    <h2 className="text-2xl font-black text-surface-100">Kitchen is clear!</h2>
+                    <p className="text-sm font-bold uppercase tracking-wide text-surface-400">
+                      Waiting for new KOTs...
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        )</div>
       ) : activeTab === 'inventory' ? (
           /* Kitchen Inventory Usage Logs */
           <div className="flex-1 flex flex-col min-h-0 gap-4 h-full">
