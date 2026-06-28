@@ -358,36 +358,29 @@ export default function Billing() {
             <div className="h-1.5 w-full shrink-0" style={{ background: 'linear-gradient(90deg, #f97316, #ea580c, #f97316)' }} />
 
             {/* Bill Header */}
-            <div className="text-center p-6 shrink-0" style={{ borderBottom: '1px dashed rgba(0, 0, 0, 0.1)' }}>
-              <h2 className="text-3xl font-black gradient-text">{restaurantDetails?.name || 'AppThat POS'}</h2>
-              <p className="text-xs font-bold uppercase tracking-widest mt-1 text-surface-400">Tax Invoice</p>
-
-              <div className="flex justify-between items-center mt-5 pt-4 text-xs font-bold"
-                   style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
-                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
-                  style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(15, 23, 42, 0.6)' }}>
-                  {getOrderIcon(selectedOrder.order_type)}
-                  <span className="uppercase tracking-wide">
-                    {selectedOrder.order_type === 'dine_in'
-                      ? `Table ${tables.find(t => t.id === selectedOrder.table_id)?.table_number}`
-                      : selectedOrder.order_type}
-                  </span>
-                </span>
-                <span className="px-3 py-1.5 rounded-xl text-surface-500 bg-surface-750">
-                  {formatDateTime(selectedOrder.created_at)}
-                </span>
+            <div className="p-4 shrink-0 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
+              <div>
+                <h3 className="font-extrabold text-slate-800 text-sm">
+                  {selectedOrder.order_type === 'dine_in'
+                    ? `Dine-In: Table ${tables.find(t => t.id === selectedOrder.table_id)?.table_number}`
+                    : selectedOrder.order_type === 'takeaway' ? 'Takeaway Order' : 'Delivery Order'}
+                </h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Order ID: #{selectedOrder.id}</p>
               </div>
-              {selectedOrder.order_type !== 'dine_in' && (selectedOrder.customer_name || selectedOrder.customer_phone) && (
-                <div className="mt-3 p-3 rounded-xl text-left flex items-center gap-3"
-                     style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
-                  <User className="w-4 h-4 shrink-0" style={{ color: 'rgba(15, 23, 42, 0.45)' }} />
-                  <div>
-                    <p className="font-black text-surface-100 text-sm">{selectedOrder.customer_name || 'Customer'}</p>
-                    {selectedOrder.customer_phone && <p className="text-xs font-medium mt-0.5" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>{selectedOrder.customer_phone}</p>}
-                  </div>
-                </div>
-              )}
+              <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-2.5 py-1 rounded-xl shrink-0">
+                {formatDateTime(selectedOrder.created_at)}
+              </span>
             </div>
+
+            {selectedOrder.order_type !== 'dine_in' && (selectedOrder.customer_name || selectedOrder.customer_phone) && (
+              <div className="mx-6 mt-3 p-3 rounded-xl text-left flex items-center gap-3 bg-slate-50 border border-slate-100">
+                <User className="w-4 h-4 shrink-0 text-slate-400" />
+                <div>
+                  <p className="font-black text-slate-800 text-sm">{selectedOrder.customer_name || 'Customer'}</p>
+                  {selectedOrder.customer_phone && <p className="text-xs font-bold text-slate-400 mt-0.5">{selectedOrder.customer_phone}</p>}
+                </div>
+              </div>
+            )}
 
             {/* Bill Items */}
             <div className="flex-1 overflow-y-auto p-6 space-y-3 custom-scrollbar">
@@ -405,7 +398,7 @@ export default function Billing() {
                     </div>
                     <div className="flex items-center gap-3">
                       {/* Food wise discount input */}
-                      <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+                      <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 shrink-0">
                         <span className="text-[9px] font-black text-slate-400 uppercase">Disc:</span>
                         <input
                           type="number"
@@ -417,7 +410,7 @@ export default function Billing() {
                             const discVal = Number(e.target.value);
                             updateOrderItemDiscount(selectedOrder.id, item.id, discVal);
                           }}
-                          className="w-10 bg-transparent text-xs font-black text-slate-800 focus:outline-none text-right"
+                          className="w-14 bg-transparent text-xs font-black text-slate-800 focus:outline-none text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         />
                       </div>
                       <span className="font-black text-surface-100 px-2 py-1 rounded-lg text-sm bg-slate-100">
