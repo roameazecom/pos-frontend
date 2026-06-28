@@ -420,8 +420,7 @@ export default function KDS() {
               </div>
             </div>
           </div>
-        )</div>
-      ) : activeTab === 'inventory' ? (
+        ) : activeTab === 'inventory' ? (
           /* Kitchen Inventory Usage Logs */
           <div className="flex-1 flex flex-col min-h-0 gap-4 h-full">
             <div className="flex flex-col sm:flex-row gap-3 items-center justify-between shrink-0 p-3 rounded-2xl" style={panelStyle}>
