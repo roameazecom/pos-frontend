@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { usePosStore } from '../store/posStore';
+import axios from 'axios';
 
 export default function PrintReceipt() {
   const { orderId } = useParams();
@@ -13,30 +14,54 @@ export default function PrintReceipt() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Try reading from localStorage first (very fast and reliable for iframes)
-    const storedOrder = localStorage.getItem('print_order_' + orderId);
-    if (storedOrder) {
-      try {
-        setOrder(JSON.parse(storedOrder));
+    async function loadData() {
+      // 1. Try reading from localStorage first (very fast and reliable for iframes)
+      const storedOrder = localStorage.getItem('print_order_' + orderId);
+      if (storedOrder) {
+        try {
+          setOrder(JSON.parse(storedOrder));
+          setLoading(false);
+          return;
+        } catch (err) {
+          console.error('Failed to parse stored order', err);
+        }
+      }
+
+      // 2. Fallback to Zustand store in-memory state
+      const allOrders = [...orders, ...orderHistory];
+      const foundOrder = allOrders.find(o => o.id === parseInt(orderId, 10));
+      if (foundOrder) {
+        setOrder(foundOrder);
         setLoading(false);
         return;
-      } catch (err) {
-        console.error('Failed to parse stored order', err);
       }
-    }
 
-    // 2. Fallback to Zustand state
-    const allOrders = [...orders, ...orderHistory];
-    const foundOrder = allOrders.find(o => o.id === parseInt(orderId, 10));
-    if (foundOrder) {
-      setOrder(foundOrder);
+      // 3. Absolute Failsafe: Fetch directly from Backend API using dynamic location resolution
+      try {
+        const primaryApiUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+        
+        // Fetch order history
+        const historyRes = await axios.get(`${primaryApiUrl}/orders/history`);
+        let target = historyRes.data.find(o => o.id === parseInt(orderId, 10));
+        
+        if (!target) {
+          const activeRes = await axios.get(`${primaryApiUrl}/orders`);
+          target = activeRes.data.find(o => o.id === parseInt(orderId, 10));
+        }
+
+        if (target) {
+          setOrder(target);
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error('Backup fetch failed', err);
+      }
+
       setLoading(false);
-    } else {
-      const timer = setTimeout(() => {
-        setLoading(false);
-      }, 1500);
-      return () => clearTimeout(timer);
     }
+    
+    loadData();
   }, [orderId, orders, orderHistory]);
 
   useEffect(() => {
@@ -49,6 +74,12 @@ export default function PrintReceipt() {
       }
     } else if (restaurantDetails) {
       setRestaurant(restaurantDetails);
+    } else {
+      // Backup fetch restaurant details
+      const primaryApiUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
+      axios.get(`${primaryApiUrl}/restaurant`)
+        .then(res => setRestaurant(res.data))
+        .catch(err => console.error(err));
     }
   }, [restaurantDetails]);
 
@@ -65,11 +96,13 @@ export default function PrintReceipt() {
   }, [loading, order]);
 
   if (loading) {
-    return <div className="p-4 text-xs font-bold text-slate-500 text-center">Loading receipt preview...</div>;
+    // Styled in black text so it prints clearly on thermal receipt printers if triggered
+    return <div className="p-4 text-xs font-bold text-black text-center">Loading receipt preview...</div>;
   }
 
   if (!order) {
-    return <div className="p-4 text-xs font-bold text-red-500 text-center">Order #{orderId} not found in active list or history.</div>;
+    // Styled in black text so it prints clearly on thermal receipt printers if triggered
+    return <div className="p-4 text-xs font-bold text-black text-center">Order #{orderId} not found in active list or history.</div>;
   }
 
   const subtotal = Number(order.subtotal || 0);
