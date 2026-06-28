@@ -201,7 +201,7 @@ export default function KDS() {
         {activeTab === 'active' ? (
           <div className="flex gap-4 lg:gap-5 h-full overflow-hidden">
             {/* Sidebar with pending/cooking orders checklist */}
-            <aside className="w-80 shrink-0 hidden lg:flex flex-col bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden min-h-0">
+            <aside className="w-64 xl:w-80 shrink-0 hidden md:flex flex-col bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden min-h-0">
               <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <h3 className="text-sm font-black text-slate-800 flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-rose-500" /> KOT Checklist
