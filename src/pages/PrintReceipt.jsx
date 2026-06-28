@@ -1,41 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import { usePosStore } from '../store/posStore';
 
 export default function PrintReceipt() {
   const { orderId } = useParams();
+  const orders = usePosStore(state => state.orders);
+  const orderHistory = usePosStore(state => state.orderHistory);
+  const restaurantDetails = usePosStore(state => state.restaurantDetails);
+  
   const [order, setOrder] = useState(null);
-  const [items, setItems] = useState([]);
-  const [restaurant, setRestaurant] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
   useEffect(() => {
-    async function loadData() {
-      try {
-        const [orderRes, historyRes, restRes] = await Promise.all([
-          axios.get(`${API_URL}/orders`),
-          axios.get(`${API_URL}/orders/history`),
-          axios.get(`${API_URL}/restaurant`)
-        ]);
-
-        const allOrders = [...orderRes.data, ...historyRes.data];
-        const currentOrder = allOrders.find(o => o.id === parseInt(orderId, 10));
-        
-        if (currentOrder) {
-          setOrder(currentOrder);
-          setItems(currentOrder.items || []);
-        }
-        setRestaurant(restRes.data);
-      } catch (err) {
-        console.error('Failed to load print receipt data', err);
-      } finally {
+    const allOrders = [...orders, ...orderHistory];
+    const foundOrder = allOrders.find(o => o.id === parseInt(orderId, 10));
+    if (foundOrder) {
+      setOrder(foundOrder);
+      setLoading(false);
+    } else {
+      // If not loaded yet, wait short delay or show error if we've been loading for a while
+      const timer = setTimeout(() => {
         setLoading(false);
-      }
+      }, 1500);
+      return () => clearTimeout(timer);
     }
-    loadData();
-  }, [orderId, API_URL]);
+  }, [orderId, orders, orderHistory]);
 
   useEffect(() => {
     if (!loading && order) {
@@ -54,7 +43,7 @@ export default function PrintReceipt() {
   }
 
   if (!order) {
-    return <div className="p-4 text-xs font-bold text-red-500 text-center">Order not found.</div>;
+    return <div className="p-4 text-xs font-bold text-red-500 text-center">Order #{orderId} not found in active list or history.</div>;
   }
 
   const subtotal = Number(order.subtotal || 0);
@@ -90,10 +79,10 @@ export default function PrintReceipt() {
 
       {/* Header */}
       <div className="text-center space-y-1 mb-2">
-        <h2 className="text-sm font-bold uppercase">{restaurant?.name || 'AppThat Restaurant'}</h2>
-        {restaurant?.address && <p className="text-[10px]">{restaurant.address}</p>}
-        {restaurant?.phone && <p className="text-[10px]">Phone: {restaurant.phone}</p>}
-        {restaurant?.gst && <p className="text-[10px] font-bold">GSTIN: {restaurant.gst}</p>}
+        <h2 className="text-sm font-bold uppercase">{restaurantDetails?.name || 'AppThat Restaurant'}</h2>
+        {restaurantDetails?.address && <p className="text-[10px]">{restaurantDetails.address}</p>}
+        {restaurantDetails?.phone && <p className="text-[10px]">Phone: {restaurantDetails.phone}</p>}
+        {restaurantDetails?.gst && <p className="text-[10px] font-bold">GSTIN: {restaurantDetails.gst}</p>}
       </div>
 
       <div className="border-t border-dashed border-black my-1" />
@@ -119,7 +108,7 @@ export default function PrintReceipt() {
           <span className="w-[20%] text-right">Total</span>
         </div>
         <div className="border-b border-black my-0.5" />
-        {items.map(item => {
+        {(order.items || []).map(item => {
           const itemDiscount = Number(item.discount_amount || 0);
           const rate = Number(item.price || 0);
           const qty = item.quantity;
@@ -158,7 +147,7 @@ export default function PrintReceipt() {
           </div>
         )}
         <div className="flex justify-between">
-          <span className="ml-auto w-24 text-left">Tax ({restaurant?.tax_percent || 5}%):</span>
+          <span className="ml-auto w-24 text-left">Tax ({restaurantDetails?.tax_percent || 5}%):</span>
           <span className="font-bold">₹{tax.toFixed(2)}</span>
         </div>
         <div className="border-b border-black my-0.5" />
