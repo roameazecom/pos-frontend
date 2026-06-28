@@ -18,7 +18,7 @@ export default function WaiterDashboard() {
     tables, locations, categories, menuItems, orders, orderHistory,
     activeTableId, setActiveTableId,
     cart, addToCart, removeFromCart, updateCartQuantity, clearCart, placeOrder, checkoutOrder,
-    deleteActiveOrderItem, updateActiveOrderItemQuantity
+    deleteActiveOrderItem, updateActiveOrderItemQuantity, cancelEntireOrder
   } = usePosStore();
 
   const { activeLocationTab, setActiveLocationTab, activeCategoryTab, setActiveCategoryTab, mobileView, setMobileView } = useUiStore();
@@ -48,6 +48,7 @@ export default function WaiterDashboard() {
   const [checkoutPhone, setCheckoutPhone] = useState('');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [itemToCancel, setItemToCancel] = useState(null);
+  const [showOrderCancelModal, setShowOrderCancelModal] = useState(false);
 
   const [menuSearch, setMenuSearch] = useState('');
 
@@ -630,6 +631,14 @@ export default function WaiterDashboard() {
                   >
                     <CreditCard className="w-4 h-4" /> Card Payment
                   </button>
+
+                  {/* Cancel Entire Order (Manager Authorization Required) */}
+                  <button
+                    onClick={() => setShowOrderCancelModal(true)}
+                    className="col-span-2 flex items-center justify-center gap-2 p-3 mt-1.5 rounded-xl font-black text-xs border border-red-200 text-red-650 hover:bg-red-50 transition-all active:scale-95"
+                  >
+                    Cancel Entire Order
+                  </button>
                 </div>
               )}
             </>
@@ -725,8 +734,22 @@ export default function WaiterDashboard() {
           onClose={() => setIsAuthModalOpen(false)}
           itemName={itemToCancel?.name || ''}
           role={user?.role}
+          requirePin={false} // Food item deletion does NOT require PIN
           onConfirm={(reason) => {
             deleteActiveOrderItem(itemToCancel.orderId, itemToCancel.itemId, reason, user?.name || 'Waiter');
+          }}
+        />
+      )}
+      {showOrderCancelModal && (
+        <ManagerAuthModal
+          isOpen={showOrderCancelModal}
+          onClose={() => setShowOrderCancelModal(false)}
+          itemName={`Order #${activeOrder?.id} (All Items)`}
+          role={user?.role}
+          requirePin={true} // Entire order cancel REQUIRES PIN
+          onConfirm={(reason) => {
+            cancelEntireOrder(activeOrder?.id, reason, user?.name || 'Waiter');
+            setActiveTableId(null);
           }}
         />
       )}

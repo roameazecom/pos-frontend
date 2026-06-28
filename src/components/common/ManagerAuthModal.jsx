@@ -3,7 +3,7 @@ import { X, Lock, MessageSquare } from 'lucide-react';
 import { usePosStore } from '../../store/posStore';
 import toast from 'react-hot-toast';
 
-export default function ManagerAuthModal({ isOpen, onClose, onConfirm, itemName, role }) {
+export default function ManagerAuthModal({ isOpen, onClose, onConfirm, itemName, role, requirePin = false }) {
   const { restaurantDetails } = usePosStore();
   const [pin, setPin] = useState('');
   const [reason, setReason] = useState('Changed Mind');
@@ -16,8 +16,8 @@ export default function ManagerAuthModal({ isOpen, onClose, onConfirm, itemName,
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Verify PIN against restaurant daily PIN (fallback '1234') if not manager/admin
-    if (!isManagerOrAdmin) {
+    // Verify PIN against restaurant daily PIN if required and not manager/admin
+    if (requirePin && !isManagerOrAdmin) {
       const validPin = restaurantDetails?.daily_pin || '1234';
       if (pin !== validPin) {
         toast.error('Invalid Manager Daily PIN!');
@@ -58,7 +58,7 @@ export default function ManagerAuthModal({ isOpen, onClose, onConfirm, itemName,
           <div>
             <h3 className="text-lg font-black text-slate-800 flex items-center gap-2">
               <Lock className="w-5 h-5 text-red-500" />
-              Manager Approval Required
+              {requirePin ? 'Manager Approval Required' : 'Cancel/Delete Item'}
             </h3>
             <p className="text-xs font-bold text-slate-500 mt-1">
               Authorizing deletion of: <span className="text-red-500">{itemName}</span>
@@ -72,7 +72,7 @@ export default function ManagerAuthModal({ isOpen, onClose, onConfirm, itemName,
         {/* Form body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* PIN Input */}
-          {!isManagerOrAdmin && (
+          {requirePin && !isManagerOrAdmin && (
             <div>
               <label className="block text-xs font-black uppercase text-slate-700 tracking-wider mb-1.5">
                 Manager Daily PIN

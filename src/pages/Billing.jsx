@@ -10,7 +10,7 @@ import ManagerAuthModal from '../components/common/ManagerAuthModal';
 import { formatIST, formatDateKeyIST, todayIST } from '../utils/formatIST';
 
 export default function Billing() {
-  const { orders, orderHistory, tables, checkoutOrder, restaurantDetails, deleteActiveOrderItem, updateOrderItemDiscount } = usePosStore();
+  const { orders, orderHistory, tables, checkoutOrder, restaurantDetails, deleteActiveOrderItem, updateOrderItemDiscount, cancelEntireOrder } = usePosStore();
   const { user } = useAuthStore();
   const [viewTab, setViewTab] = useState('active');
   const [searchQuery, setSearchQuery] = useState('');
@@ -24,6 +24,7 @@ export default function Billing() {
   const [filters, setFilters] = useState({ dateRange: 'all', paymentType: 'all', orderType: 'all' });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [itemToCancel, setItemToCancel] = useState(null);
+  const [showOrderCancelModal, setShowOrderCancelModal] = useState(false);
 
   const activeOrders = orders.filter(o => o.status === 'open');
   const selectedOrder = activeOrders.find(o => o.id === selectedOrderId);
@@ -489,6 +490,14 @@ export default function Billing() {
                   style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', color: '#1d4ed8' }}>
                   <CreditCard className="w-5 h-5" /> Card Payment
                 </button>
+                
+                {/* Cancel Entire Order (Manager Authorization Required) */}
+                <button
+                  onClick={() => setShowOrderCancelModal(true)}
+                  className="col-span-2 flex items-center justify-center gap-2 p-3 mt-2 rounded-xl font-black text-xs border border-red-200 text-red-650 hover:bg-red-50 transition-all active:scale-95"
+                >
+                  Cancel Entire Order
+                </button>
               </div>
             </div>
           </div>
@@ -692,8 +701,22 @@ export default function Billing() {
           onClose={() => setIsAuthModalOpen(false)}
           itemName={itemToCancel?.name || ''}
           role={user?.role}
+          requirePin={false} // Food item deletion does NOT require PIN
           onConfirm={(reason) => {
             deleteActiveOrderItem(itemToCancel.orderId, itemToCancel.itemId, reason, user?.name || 'Cashier');
+          }}
+        />
+      )}
+      {showOrderCancelModal && (
+        <ManagerAuthModal
+          isOpen={showOrderCancelModal}
+          onClose={() => setShowOrderCancelModal(false)}
+          itemName={`Order #${selectedOrderId} (All Items)`}
+          role={user?.role}
+          requirePin={true} // Entire order cancel REQUIRES PIN
+          onConfirm={(reason) => {
+            cancelEntireOrder(selectedOrderId, reason, user?.name || 'Cashier');
+            setSelectedOrderId(null);
           }}
         />
       )}

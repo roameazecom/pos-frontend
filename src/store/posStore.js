@@ -233,6 +233,19 @@ export const usePosStore = create((set, get) => ({
     }
   },
 
+  cancelEntireOrder: async (orderId, reason = 'Full Order Cancelled', cancelledByName = 'Manager') => {
+    try {
+      await axios.put(`${API_URL}/orders/${orderId}/cancel`, {
+        reason,
+        cancelled_by_name: cancelledByName
+      });
+      toast.success('Entire order cancelled successfully');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to cancel order');
+    }
+  },
+
   updateActiveOrderItemQuantity: async (orderId, itemId, quantity) => {
     try {
       await axios.put(`${API_URL}/orders/${orderId}/items/${itemId}/quantity`, { quantity });
