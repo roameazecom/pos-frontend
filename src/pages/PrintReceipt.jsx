@@ -1,235 +1,220 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { usePosStore } from '../store/posStore';
 import axios from 'axios';
+
+// Resolve API base URL — works on any device on same network
+const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
 
 export default function PrintReceipt() {
   const { orderId } = useParams();
-  const orders = usePosStore(state => state.orders);
-  const orderHistory = usePosStore(state => state.orderHistory);
-  const restaurantDetails = usePosStore(state => state.restaurantDetails);
-  
   const [order, setOrder] = useState(null);
   const [restaurant, setRestaurant] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
+  // Fetch order directly from backend — no localStorage, no Zustand needed
   useEffect(() => {
-    async function loadData() {
-      // 1. Try reading from localStorage first (very fast and reliable for iframes)
-      const storedOrder = localStorage.getItem('print_order_' + orderId);
-      if (storedOrder) {
-        try {
-          setOrder(JSON.parse(storedOrder));
-          setLoading(false);
-          return;
-        } catch (err) {
-          console.error('Failed to parse stored order', err);
-        }
-      }
+    axios.get(`${API_URL}/orders/${orderId}`)
+      .then(res => setOrder(res.data))
+      .catch(() => {
+        setError('Order not found or server unreachable.');
+      });
+  }, [orderId]);
 
-      // 2. Fallback to Zustand store in-memory state
-      const allOrders = [...orders, ...orderHistory];
-      const foundOrder = allOrders.find(o => o.id === parseInt(orderId, 10));
-      if (foundOrder) {
-        setOrder(foundOrder);
-        setLoading(false);
-        return;
-      }
-
-      // 3. Absolute Failsafe: Fetch directly from Backend API using dynamic location resolution
-      try {
-        const primaryApiUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
-        
-        // Fetch order history
-        const historyRes = await axios.get(`${primaryApiUrl}/orders/history`);
-        let target = historyRes.data.find(o => o.id === parseInt(orderId, 10));
-        
-        if (!target) {
-          const activeRes = await axios.get(`${primaryApiUrl}/orders`);
-          target = activeRes.data.find(o => o.id === parseInt(orderId, 10));
-        }
-
-        if (target) {
-          setOrder(target);
-          setLoading(false);
-          return;
-        }
-      } catch (err) {
-        console.error('Backup fetch failed', err);
-      }
-
-      setLoading(false);
-    }
-    
-    loadData();
-  }, [orderId, orders, orderHistory]);
-
+  // Fetch restaurant details directly from backend
   useEffect(() => {
-    const storedRestaurant = localStorage.getItem('print_restaurant');
-    if (storedRestaurant) {
-      try {
-        setRestaurant(JSON.parse(storedRestaurant));
-      } catch (e) {
-        console.error('Failed to parse stored restaurant details', e);
-      }
-    } else if (restaurantDetails) {
-      setRestaurant(restaurantDetails);
-    } else {
-      // Backup fetch restaurant details
-      const primaryApiUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
-      axios.get(`${primaryApiUrl}/restaurant`)
-        .then(res => setRestaurant(res.data))
-        .catch(err => console.error(err));
-    }
-  }, [restaurantDetails]);
+    axios.get(`${API_URL}/restaurant`)
+      .then(res => setRestaurant(res.data))
+      .catch(() => {});
+  }, []);
 
+  // Auto-print once order data is loaded
   useEffect(() => {
-    if (!loading && order) {
-      // Trigger print ONLY if NOT inside an iframe (parent iframe onload handles printing)
-      const isIframe = window.self !== window.top;
-      if (!isIframe) {
-        setTimeout(() => {
-          window.print();
-        }, 500);
-      }
+    if (order) {
+      setTimeout(() => {
+        window.print();
+      }, 600);
     }
-  }, [loading, order]);
+  }, [order]);
 
-  if (loading) {
-    // Styled in black text so it prints clearly on thermal receipt printers if triggered
-    return <div className="p-4 text-xs font-bold text-black text-center">Loading receipt preview...</div>;
+  if (error) {
+    return (
+      <div style={{ fontFamily: 'monospace', fontSize: '12px', padding: '8px', color: '#000' }}>
+        <p><strong>Error:</strong> {error}</p>
+        <p>Order ID: #{orderId}</p>
+      </div>
+    );
   }
 
   if (!order) {
-    // Styled in black text so it prints clearly on thermal receipt printers if triggered
-    return <div className="p-4 text-xs font-bold text-black text-center">Order #{orderId} not found in active list or history.</div>;
+    return (
+      <div style={{ fontFamily: 'monospace', fontSize: '12px', padding: '8px', color: '#000', textAlign: 'center' }}>
+        Loading receipt...
+      </div>
+    );
   }
 
   const subtotal = Number(order.subtotal || 0);
   const discount = Number(order.discount_amount || 0);
   const tax = Number(order.tax_amount || 0);
-  const total = subtotal - discount + tax;
+  const total = Number(order.total_amount || (subtotal - discount + tax));
+
+  const S = {
+    // Page wrapper — exactly 80mm, pure white background
+    page: {
+      width: '72mm',
+      margin: '0 auto',
+      padding: '4mm 2mm',
+      fontFamily: "'Courier New', Courier, monospace",
+      fontSize: '11px',
+      lineHeight: '1.4',
+      color: '#000',
+      background: '#fff',
+    },
+    center: { textAlign: 'center' },
+    bold: { fontWeight: 'bold' },
+    dash: { borderTop: '1px dashed #000', margin: '4px 0' },
+    solid: { borderTop: '1px solid #000', margin: '4px 0' },
+    row: { display: 'flex', justifyContent: 'space-between', marginBottom: '1px' },
+    colName: { width: '50%', fontWeight: 'bold', wordBreak: 'break-word' },
+    colQty: { width: '10%', textAlign: 'center' },
+    colRate: { width: '20%', textAlign: 'right' },
+    colAmt: { width: '20%', textAlign: 'right', fontWeight: 'bold' },
+    small: { fontSize: '9px' },
+    labelRow: { display: 'flex', justifyContent: 'flex-end', marginBottom: '1px' },
+    label: { width: '90px', textAlign: 'left' },
+    noprint: { marginTop: '12px', textAlign: 'center' },
+  };
 
   return (
-    <div className="print-receipt-container font-mono text-[11px] leading-tight text-black max-w-[280px] mx-auto p-2 bg-white">
-      {/* CSS print overrides */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @media print {
-          body {
-            background: white;
-            color: black;
-            margin: 0;
-            padding: 0;
-            width: 80mm !important;
-          }
-          .no-print { display: none !important; }
-          .print-receipt-container {
-            width: 80mm !important;
-            max-width: 80mm !important;
-            padding: 0 !important;
-            margin: 0 !important;
-          }
-        }
+    <>
+      {/* 80mm Epson TM-T88IV print CSS */}
+      <style>{`
         @page {
           size: 80mm auto;
-          margin: 0mm;
+          margin: 0;
         }
-      `}} />
+        @media print {
+          html, body {
+            width: 80mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .no-print { display: none !important; }
+        }
+        body {
+          margin: 0;
+          padding: 0;
+          background: #fff;
+        }
+      `}</style>
 
-      {/* Header */}
-      <div className="text-center space-y-1 mb-2">
-        <h2 className="text-sm font-bold uppercase">{restaurant?.name || 'AppThat Restaurant'}</h2>
-        {restaurant?.address && <p className="text-[10px]">{restaurant.address}</p>}
-        {restaurant?.phone && <p className="text-[10px]">Phone: {restaurant.phone}</p>}
-        {restaurant?.gst && <p className="text-[10px] font-bold">GSTIN: {restaurant.gst}</p>}
-      </div>
-
-      <div className="border-t border-dashed border-black my-1" />
-
-      {/* Meta details */}
-      <div className="space-y-0.5 text-[10px] mb-2">
-        <p><strong>BILL NO:</strong> #{order.id}</p>
-        <p><strong>Date:</strong> {new Date(order.created_at).toLocaleString('en-IN')}</p>
-        <p><strong>Type:</strong> {order.order_type ? order.order_type.replace('_', ' ').toUpperCase() : 'N/A'}</p>
-        {order.table_number && <p><strong>Table:</strong> {order.table_number}</p>}
-        {order.customer_name && <p><strong>Cust:</strong> {order.customer_name}</p>}
-        {order.waiter_name && <p><strong>Served By:</strong> {order.waiter_name}</p>}
-      </div>
-
-      <div className="border-t border-dashed border-black my-1" />
-
-      {/* Items list */}
-      <div className="space-y-1 mb-2">
-        <div className="flex justify-between font-bold text-[10px] pb-0.5">
-          <span className="w-[50%]">Item Description</span>
-          <span className="w-[10%] text-center">Qty</span>
-          <span className="w-[20%] text-right">Rate</span>
-          <span className="w-[20%] text-right">Total</span>
+      <div style={S.page}>
+        {/* Header */}
+        <div style={S.center}>
+          <div style={{ ...S.bold, fontSize: '13px', letterSpacing: '1px', marginBottom: '2px' }}>
+            {restaurant?.name || 'AppThat Restaurant'}
+          </div>
+          {restaurant?.address && <div style={S.small}>{restaurant.address}</div>}
+          {restaurant?.phone && <div style={S.small}>Ph: {restaurant.phone}</div>}
+          {restaurant?.gst && <div style={{ ...S.small, ...S.bold }}>GSTIN: {restaurant.gst}</div>}
         </div>
-        <div className="border-b border-black my-0.5" />
-        {(order.items || []).map(item => {
-          const itemDiscount = Number(item.discount_amount || 0);
-          const rate = Number(item.price || 0);
-          const qty = item.quantity;
-          const itemTotal = (rate * qty) - itemDiscount;
 
+        <div style={S.dash} />
+
+        {/* Bill Meta */}
+        <div style={{ fontSize: '10px', marginBottom: '4px' }}>
+          <div style={S.row}><span style={S.bold}>BILL NO:</span><span>#{order.id}</span></div>
+          <div style={S.row}><span style={S.bold}>Date:</span><span>{new Date(order.created_at).toLocaleString('en-IN')}</span></div>
+          <div style={S.row}><span style={S.bold}>Type:</span><span>{(order.order_type || 'dine_in').replace('_', ' ').toUpperCase()}</span></div>
+          {order.table_number && <div style={S.row}><span style={S.bold}>Table:</span><span>{order.table_number}</span></div>}
+          {order.customer_name && <div style={S.row}><span style={S.bold}>Cust:</span><span>{order.customer_name}</span></div>}
+          {order.waiter_name && <div style={S.row}><span style={S.bold}>Served By:</span><span>{order.waiter_name}</span></div>}
+        </div>
+
+        <div style={S.dash} />
+
+        {/* Items Header */}
+        <div style={{ ...S.row, ...S.bold, fontSize: '10px', marginBottom: '2px' }}>
+          <span style={S.colName}>Item</span>
+          <span style={S.colQty}>Qty</span>
+          <span style={S.colRate}>Rate</span>
+          <span style={S.colAmt}>Amt</span>
+        </div>
+        <div style={S.solid} />
+
+        {/* Items */}
+        {(order.items || []).map(item => {
+          const rate = Number(item.price || 0);
+          const qty = Number(item.quantity || 1);
+          const itemDiscount = Number(item.discount_amount || 0);
+          const amt = (rate * qty) - itemDiscount;
           return (
-            <div key={item.id} className="space-y-0.5">
-              <div className="flex justify-between items-start">
-                <span className="w-[50%] font-bold">{item.name}</span>
-                <span className="w-[10%] text-center">{qty}</span>
-                <span className="w-[20%] text-right">{rate.toFixed(0)}</span>
-                <span className="w-[20%] text-right font-bold">{itemTotal.toFixed(0)}</span>
+            <div key={item.id} style={{ marginBottom: '3px' }}>
+              <div style={S.row}>
+                <span style={S.colName}>{item.name}</span>
+                <span style={S.colQty}>{qty}</span>
+                <span style={S.colRate}>{rate.toFixed(0)}</span>
+                <span style={S.colAmt}>{amt.toFixed(0)}</span>
               </div>
               {itemDiscount > 0 && (
-                <div className="text-[9px] text-right pr-1 italic text-slate-800">
-                  (Item Disc: -₹{itemDiscount})
+                <div style={{ textAlign: 'right', fontSize: '9px', fontStyle: 'italic' }}>
+                  (Item disc: -₹{itemDiscount.toFixed(2)})
                 </div>
               )}
             </div>
           );
         })}
-      </div>
 
-      <div className="border-t border-dashed border-black my-1" />
+        <div style={S.dash} />
 
-      {/* Totals */}
-      <div className="space-y-1 text-right text-[10px] mb-3">
-        <div className="flex justify-between">
-          <span className="ml-auto w-24 text-left">Subtotal:</span>
-          <span className="font-bold">₹{subtotal.toFixed(2)}</span>
-        </div>
-        {discount > 0 && (
-          <div className="flex justify-between text-red-700">
-            <span className="ml-auto w-24 text-left">Discount:</span>
-            <span className="font-bold">-₹{discount.toFixed(2)}</span>
+        {/* Totals */}
+        <div style={{ fontSize: '10px' }}>
+          <div style={S.labelRow}>
+            <span style={S.label}>Subtotal:</span>
+            <span style={S.bold}>₹{subtotal.toFixed(2)}</span>
           </div>
-        )}
-        <div className="flex justify-between">
-          <span className="ml-auto w-24 text-left">Tax ({restaurant?.tax_percent || 5}%):</span>
-          <span className="font-bold">₹{tax.toFixed(2)}</span>
+          {discount > 0 && (
+            <div style={S.labelRow}>
+              <span style={S.label}>Discount:</span>
+              <span style={S.bold}>-₹{discount.toFixed(2)}</span>
+            </div>
+          )}
+          <div style={S.labelRow}>
+            <span style={S.label}>Tax ({restaurant?.tax_percent || 5}%):</span>
+            <span style={S.bold}>₹{tax.toFixed(2)}</span>
+          </div>
+          <div style={S.solid} />
+          <div style={{ ...S.labelRow, fontSize: '12px', fontWeight: 'bold' }}>
+            <span style={{ ...S.label, fontWeight: 'bold' }}>GRAND TOTAL:</span>
+            <span>₹{total.toFixed(2)}</span>
+          </div>
         </div>
-        <div className="border-b border-black my-0.5" />
-        <div className="flex justify-between text-xs font-bold">
-          <span className="ml-auto w-24 text-left">Grand Total:</span>
-          <span>₹{total.toFixed(2)}</span>
+
+        <div style={S.dash} />
+
+        {/* Footer */}
+        <div style={{ ...S.center, fontSize: '10px', marginTop: '4px' }}>
+          <div style={{ fontStyle: 'italic' }}>Thank you! Please visit again.</div>
+          <div style={{ fontSize: '8px', marginTop: '2px' }}>Powered by AppThat POS</div>
+        </div>
+
+        {/* Manual print button — hidden on print */}
+        <div className="no-print" style={S.noprint}>
+          <button
+            onClick={() => window.print()}
+            style={{
+              background: '#000', color: '#fff', border: 'none',
+              padding: '6px 16px', borderRadius: '6px',
+              fontWeight: 'bold', fontSize: '12px', cursor: 'pointer'
+            }}
+          >
+            🖨 Print Receipt
+          </button>
         </div>
       </div>
-
-      <div className="text-center text-[10px] space-y-0.5 mt-2">
-        <p className="italic">Thank you! Please visit again.</p>
-        <p className="text-[8px] text-slate-500">Powered by AppThat POS</p>
-      </div>
-
-      {/* Helper Print Button for manual click */}
-      <div className="no-print mt-4 flex justify-center">
-        <button
-          onClick={() => window.print()}
-          className="bg-black hover:bg-slate-850 text-white font-bold text-xs px-4 py-2 rounded-lg"
-        >
-          Print Manually
-        </button>
-      </div>
-    </div>
+    </>
   );
 }
