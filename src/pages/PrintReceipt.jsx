@@ -14,13 +14,13 @@ export default function PrintReceipt() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [orderRes, itemsRes, restRes] = await Promise.all([
+        const [orderRes, historyRes, restRes] = await Promise.all([
           axios.get(`${API_URL}/orders`),
-          axios.get(`${API_URL}/orders`), // helper, we will filter below
+          axios.get(`${API_URL}/orders/history`),
           axios.get(`${API_URL}/restaurant`)
         ]);
 
-        const allOrders = orderRes.data;
+        const allOrders = [...orderRes.data, ...historyRes.data];
         const currentOrder = allOrders.find(o => o.id === parseInt(orderId, 10));
         
         if (currentOrder) {
