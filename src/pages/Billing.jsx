@@ -32,7 +32,13 @@ export default function Billing() {
   const calculatedTax = selectedOrder ? netSubtotal * taxRate : 0;
   const total = selectedOrder ? netSubtotal + calculatedTax : 0;
 
-  const printReceiptSilently = (url) => {
+  const printReceiptSilently = (url, orderId, orderObj) => {
+    if (orderId && orderObj) {
+      localStorage.setItem('print_order_' + orderId, JSON.stringify(orderObj));
+    }
+    if (restaurantDetails) {
+      localStorage.setItem('print_restaurant', JSON.stringify(restaurantDetails));
+    }
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
@@ -101,7 +107,7 @@ export default function Billing() {
       checkoutOrder(selectedOrderId, paymentType, checkoutName || selectedOrder?.customer_name || '', checkoutPhone || selectedOrder?.customer_phone || '', user?.id, discountAmount);
       
       // Auto-print thermal POS receipt silently
-      printReceiptSilently(`/print/receipt/${selectedOrderId}`);
+      printReceiptSilently(`/print/receipt/${selectedOrderId}`, selectedOrderId, selectedOrder);
       
       setSelectedOrderId(null); setShowModal(false); setCheckoutName(''); setCheckoutPhone(''); setDiscountAmount(0);
     }
@@ -574,7 +580,7 @@ export default function Billing() {
                   <Printer className="w-4 h-4 text-slate-500" /> A4 Invoice
                 </button>
                 <button
-                  onClick={() => printReceiptSilently(`/print/receipt/${histOrder.id}`)}
+                  onClick={() => printReceiptSilently(`/print/receipt/${histOrder.id}`, histOrder.id, histOrder)}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs btn-orange shadow-md transition-all active:scale-95"
                 >
                   <Printer className="w-4 h-4 text-white" /> Print Thermal (80mm)

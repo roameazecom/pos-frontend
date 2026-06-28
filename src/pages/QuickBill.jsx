@@ -49,7 +49,10 @@ export default function QuickBill() {
   const total = netSubtotal + calculatedTax;
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const printReceiptSilently = (url) => {
+  const printReceiptSilently = (url, orderId, orderObj) => {
+    if (orderId && orderObj) {
+      localStorage.setItem('print_order_' + orderId, JSON.stringify(orderObj));
+    }
     const iframe = document.createElement('iframe');
     iframe.style.position = 'fixed';
     iframe.style.right = '0';
@@ -81,11 +84,33 @@ export default function QuickBill() {
 
     if (orderId) {
       setSuccessOrderId(orderId);
+      
+      // Construct and cache order details in localStorage for instant printer load
+      const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const mockOrderObj = {
+        id: orderId,
+        created_at: new Date().toISOString(),
+        order_type: orderType,
+        payment_type: paymentType,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        discount_amount: computedDiscount,
+        subtotal: cartSubtotal,
+        tax_amount: (cartSubtotal - computedDiscount) * 0.05,
+        items: cart.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          discount_amount: 0
+        }))
+      };
+
       setCustomerName('');
       setCustomerPhone('');
       setDiscountAmount(0);
       setTimeout(() => {
-        printReceiptSilently(`/print/receipt/${orderId}`);
+        printReceiptSilently(`/print/receipt/${orderId}`, orderId, mockOrderObj);
         setSuccessOrderId(null);
       }, 1200);
     }
