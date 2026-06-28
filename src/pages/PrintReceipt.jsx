@@ -39,10 +39,13 @@ export default function PrintReceipt() {
 
   useEffect(() => {
     if (!loading && order) {
-      // Trigger native browser print dialog
-      setTimeout(() => {
-        window.print();
-      }, 500);
+      // Trigger print ONLY if NOT inside an iframe (parent iframe onload handles printing)
+      const isIframe = window.self !== window.top;
+      if (!isIframe) {
+        setTimeout(() => {
+          window.print();
+        }, 500);
+      }
     }
   }, [loading, order]);
 
@@ -69,18 +72,18 @@ export default function PrintReceipt() {
             color: black;
             margin: 0;
             padding: 0;
-            width: 80mm;
+            width: 80mm !important;
           }
           .no-print { display: none !important; }
           .print-receipt-container {
-            width: 100% !important;
-            max-width: 100% !important;
+            width: 80mm !important;
+            max-width: 80mm !important;
             padding: 0 !important;
             margin: 0 !important;
           }
         }
         @page {
-          size: auto;
+          size: 80mm auto;
           margin: 0mm;
         }
       `}} />
