@@ -7,6 +7,7 @@ import {
   Filter, Trash2
 } from 'lucide-react';
 import ManagerAuthModal from '../components/common/ManagerAuthModal';
+import { formatIST, formatDateKeyIST, todayIST } from '../utils/formatIST';
 
 export default function Billing() {
   const { orders, orderHistory, tables, checkoutOrder, restaurantDetails, deleteActiveOrderItem, updateOrderItemDiscount } = usePosStore();
@@ -67,15 +68,20 @@ export default function Billing() {
 
   const formatDateTime = (dateStr) => {
     if (!dateStr) return 'N/A';
-    try {
-      const isoStr = dateStr.includes('T') ? dateStr : dateStr.replace(' ', 'T') + '+05:30';
-      return new Date(isoStr).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
-    } catch { return 'Invalid Date'; }
+    try { return formatIST(dateStr); } catch { return 'Invalid Date'; }
   };
 
-  const isToday = (d) => { const dt = new Date(d.includes('T') ? d : d.replace(' ', 'T') + '+05:30'); const t = new Date(); return dt.getDate() === t.getDate() && dt.getMonth() === t.getMonth() && dt.getFullYear() === t.getFullYear(); };
-  const isYesterday = (d) => { const dt = new Date(d.includes('T') ? d : d.replace(' ', 'T') + '+05:30'); const y = new Date(); y.setDate(y.getDate() - 1); return dt.getDate() === y.getDate() && dt.getMonth() === y.getMonth() && dt.getFullYear() === y.getFullYear(); };
-  const isThisWeek = (d) => { const dt = new Date(d.includes('T') ? d : d.replace(' ', 'T') + '+05:30'); const t = new Date(); const f = new Date(t.setDate(t.getDate() - t.getDay())); return dt >= f; };
+  const isToday = (d) => formatDateKeyIST(d) === todayIST();
+  const isYesterday = (d) => {
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    return formatDateKeyIST(d) === yest.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  };
+  const isThisWeek = (d) => {
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return new Date(d) >= weekAgo;
+  };
 
   const filteredHistory = useMemo(() => {
     return orderHistory.filter(o => {

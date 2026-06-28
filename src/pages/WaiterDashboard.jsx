@@ -10,6 +10,7 @@ import {
 import WaiterPaymentHistory from '../components/waiter/WaiterPaymentHistory';
 import NotificationPanel from '../components/common/NotificationPanel';
 import ManagerAuthModal from '../components/common/ManagerAuthModal';
+import { formatTimeIST, formatDateKeyIST, todayIST } from '../utils/formatIST';
 
 export default function WaiterDashboard() {
   const { user } = useAuthStore();
@@ -538,11 +539,8 @@ export default function WaiterDashboard() {
             /* History Tab (Waiter Payment / Table History) */
             (() => {
               const myOrders = orderHistory.filter(o => o.user_id === user?.id);
-              const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-              const todayOrders = myOrders.filter(o => {
-                 const isoStr = o.created_at.includes('T') ? o.created_at : o.created_at.replace(' ', 'T') + '+05:30';
-                 return new Date(isoStr).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) === today;
-              });
+              const today = todayIST();
+              const todayOrders = myOrders.filter(o => formatDateKeyIST(o.created_at) === today);
 
               return todayOrders.length === 0 ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 animate-fade-in">
@@ -561,7 +559,7 @@ export default function WaiterDashboard() {
                           {order.order_type === 'dine_in' ? `Table ${order.table_number || '-'}` : 'Walk-In'}
                         </h4>
                         <div className="text-[10px] text-slate-400 mt-0.5">
-                          {new Date(order.created_at.includes('T') ? order.created_at : order.created_at.replace(' ', 'T') + '+05:30').toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })} • {order.payment_type}
+                          {formatTimeIST(order.created_at)} • {order.payment_type}
                         </div>
                       </div>
                       <div className="text-right">
@@ -639,11 +637,8 @@ export default function WaiterDashboard() {
             /* History Tab Footer */
             (() => {
               const myOrders = orderHistory.filter(o => o.user_id === user?.id);
-              const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
-              const todayOrders = myOrders.filter(o => {
-                 const isoStr = o.created_at.includes('T') ? o.created_at : o.created_at.replace(' ', 'T') + '+05:30';
-                 return new Date(isoStr).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) === today;
-              });
+              const today = todayIST();
+              const todayOrders = myOrders.filter(o => formatDateKeyIST(o.created_at) === today);
               const totalToday = todayOrders.reduce((sum, o) => sum + (Number(o.subtotal || 0) + Number(o.tax_amount || 0)), 0);
 
               return (

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
+import { formatIST } from '../utils/formatIST';
 
 // Resolve API base URL — works on any device on same network
 const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
@@ -11,28 +12,48 @@ export default function PrintReceipt() {
   const [restaurant, setRestaurant] = useState(null);
   const [error, setError] = useState(null);
 
-  // Fetch order directly from backend — no localStorage, no Zustand needed
+  // Load order: localStorage first (instant for iframe on same system), then API fallback
   useEffect(() => {
-    axios.get(`${API_URL}/orders/${orderId}`)
-      .then(res => setOrder(res.data))
-      .catch(() => {
-        setError('Order not found or server unreachable.');
+    // 1. Try localStorage immediately — set by Billing.jsx before opening iframe
+    try {
+      const cached = localStorage.getItem('print_order_' + orderId);
+      if (cached) {
+        setOrder(JSON.parse(cached));
+        return; // Done — no API call needed
+      }
+    } catch (e) {}
+
+    // 2. Fallback: fetch from backend API (for other devices / direct URL access)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+    axios.get(`${API_URL}/orders/${orderId}`, { signal: controller.signal })
+      .then(res => { clearTimeout(timeout); setOrder(res.data); })
+      .catch(err => {
+        clearTimeout(timeout);
+        if (err.name !== 'CanceledError' && err.code !== 'ERR_CANCELED') {
+          setError('Could not load order. Please try again.');
+        } else {
+          setError('Server took too long to respond. Try printing again.');
+        }
       });
+
+    return () => { clearTimeout(timeout); controller.abort(); };
   }, [orderId]);
 
-  // Fetch restaurant details directly from backend
+  // Load restaurant: localStorage first, then API fallback
   useEffect(() => {
-    axios.get(`${API_URL}/restaurant`)
-      .then(res => setRestaurant(res.data))
-      .catch(() => {});
+    try {
+      const cached = localStorage.getItem('print_restaurant');
+      if (cached) { setRestaurant(JSON.parse(cached)); return; }
+    } catch (e) {}
+    axios.get(`${API_URL}/restaurant`).then(res => setRestaurant(res.data)).catch(() => {});
   }, []);
 
   // Auto-print once order data is loaded
   useEffect(() => {
     if (order) {
-      setTimeout(() => {
-        window.print();
-      }, 600);
+      setTimeout(() => { window.print(); }, 600);
     }
   }, [order]);
 
@@ -127,7 +148,7 @@ export default function PrintReceipt() {
         {/* Bill Meta */}
         <div style={{ fontSize: '10px', marginBottom: '4px' }}>
           <div style={S.row}><span style={S.bold}>BILL NO:</span><span>#{order.id}</span></div>
-          <div style={S.row}><span style={S.bold}>Date:</span><span>{new Date(order.created_at).toLocaleString('en-IN')}</span></div>
+          <div style={S.row}><span style={S.bold}>Date:</span><span>{formatIST(order.created_at)}</span></div>
           <div style={S.row}><span style={S.bold}>Type:</span><span>{(order.order_type || 'dine_in').replace('_', ' ').toUpperCase()}</span></div>
           {order.table_number && <div style={S.row}><span style={S.bold}>Table:</span><span>{order.table_number}</span></div>}
           {order.customer_name && <div style={S.row}><span style={S.bold}>Cust:</span><span>{order.customer_name}</span></div>}
