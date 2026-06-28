@@ -243,12 +243,30 @@ export const usePosStore = create((set, get) => ({
     }
   },
   updateOrderItemDiscount: async (orderId, itemId, discountAmount) => {
+    // 1. Optimistically update local Zustand store state for instant input rendering & total recalculation
+    set((state) => {
+      const updatedOrders = state.orders.map(o => {
+        if (o.id === orderId) {
+          const updatedItems = o.items.map(item => {
+            if (item.id === itemId) {
+              return { ...item, discount_amount: Number(discountAmount) || 0 };
+            }
+            return item;
+          });
+          const newSubtotal = updatedItems.reduce((sum, item) => sum + (Number(item.price) * item.quantity - Number(item.discount_amount || 0)), 0);
+          return { ...o, items: updatedItems, subtotal: newSubtotal };
+        }
+        return o;
+      });
+      return { orders: updatedOrders };
+    });
+
+    // 2. Persist changes to database in the background
     try {
       await axios.put(`${API_URL}/orders/${orderId}/items/${itemId}/discount`, { discount_amount: discountAmount });
-      toast.success('Item discount updated');
     } catch (err) {
       console.error(err);
-      toast.error('Failed to update item discount');
+      toast.error('Failed to sync discount to server');
     }
   },
 
