@@ -162,43 +162,66 @@ export default function PrintReceipt() {
         <div style={S.solid} />
 
         {/* ── Items ── */}
-        {(order.items || []).map(item => {
-          const rate = Number(item.price || 0);
-          const qty  = Number(item.quantity || 1);
-          const disc = Number(item.discount_amount || 0);
-          const amt  = (rate * qty) - disc;
-          return (
-            <div key={item.id} style={{ marginBottom: '3px' }}>
-              <div style={S.row}>
-                <span style={S.colName}>{item.name}</span>
-                <span style={S.colQty}>{qty}</span>
-                <span style={S.colRate}>{rate.toFixed(0)}</span>
-                <span style={S.colAmt}>{amt.toFixed(0)}</span>
-              </div>
-              {disc > 0 && (
-                <div style={{ textAlign: 'right', fontSize: '9px', fontStyle: 'italic' }}>
-                  (disc: -{disc.toFixed(2)})
+        {(() => {
+          let grossSubtotal = 0;
+          let totalItemDiscount = 0;
+
+          const renderedItems = (order.items || []).map(item => {
+            const rate = Number(item.price || 0);
+            const qty  = Number(item.quantity || 1);
+            const disc = Number(item.discount_amount || 0);
+            const itemGrossAmt = rate * qty;
+
+            grossSubtotal += itemGrossAmt;
+            totalItemDiscount += disc;
+
+            return (
+              <div key={item.id} style={{ marginBottom: '3px' }}>
+                <div style={S.row}>
+                  <span style={S.colName}>{item.name}</span>
+                  <span style={S.colQty}>{qty}</span>
+                  <span style={S.colRate}>{rate.toFixed(0)}</span>
+                  <span style={S.colAmt}>{itemGrossAmt.toFixed(0)}</span>
                 </div>
-              )}
-            </div>
+              </div>
+            );
+          });
+
+          const overallDiscount = Number(order.discount_amount || 0);
+          const combinedDiscount = totalItemDiscount + overallDiscount;
+          const displayDiscountPercent = order.discount_percent !== undefined 
+            ? order.discount_percent 
+            : (grossSubtotal > 0 ? Math.round((combinedDiscount / grossSubtotal) * 100) : 0);
+
+          return (
+            <>
+              {renderedItems}
+              <div style={S.dash} />
+              {/* ── Totals ── */}
+              <div style={{ marginBottom: '4px' }}>
+                <div style={S.totalRow}>
+                  <span style={S.lbl}>Subtotal</span>
+                  <span style={S.val}>Rs.{grossSubtotal.toFixed(2)}</span>
+                </div>
+                {combinedDiscount > 0 && (
+                  <div style={S.totalRow}>
+                    <span style={S.lbl}>Discount ({displayDiscountPercent}%)</span>
+                    <span style={S.val}>-{combinedDiscount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div style={S.totalRow}>
+                  <span style={S.lbl}>Tax ({restaurant?.tax_percent || 5}%)</span>
+                  <span style={S.val}>Rs.{tax.toFixed(2)}</span>
+                </div>
+                <div style={S.solid} />
+                <div style={{ ...S.totalRow, fontSize: '13px', fontWeight: 'bold', marginTop: '2px' }}>
+                  <span style={{ ...S.lbl, fontWeight: 'bold' }}>TOTAL</span>
+                  <span style={{ ...S.val, fontSize: '13px' }}>Rs.{total.toFixed(2)}</span>
+                </div>
+              </div>
+            </>
           );
-        })}
-
-        <div style={S.dash} />
-
-        {/* ── Totals ── */}
-        <div style={{ marginBottom: '4px' }}>
-          <div style={S.totalRow}><span style={S.lbl}>Subtotal</span>  <span style={S.val}>Rs.{subtotal.toFixed(2)}</span></div>
-          {discount > 0 && (
-            <div style={S.totalRow}><span style={S.lbl}>Discount</span><span style={S.val}>-{discount.toFixed(2)}</span></div>
-          )}
-          <div style={S.totalRow}><span style={S.lbl}>Tax ({restaurant?.tax_percent || 5}%)</span><span style={S.val}>Rs.{tax.toFixed(2)}</span></div>
-          <div style={S.solid} />
-          <div style={{ ...S.totalRow, fontSize: '13px', fontWeight: 'bold', marginTop: '2px' }}>
-            <span style={{ ...S.lbl, fontWeight: 'bold' }}>TOTAL</span>
-            <span style={{ ...S.val, fontSize: '13px' }}>Rs.{total.toFixed(2)}</span>
-          </div>
-        </div>
+        })()}
 
         <div style={S.dash} />
 
