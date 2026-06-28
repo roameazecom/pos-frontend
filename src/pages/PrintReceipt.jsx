@@ -1,54 +1,42 @@
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { formatIST } from '../utils/formatIST';
 
-// Resolve API base URL
 const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`;
 
 export default function PrintReceipt() {
   const { orderId } = useParams();
-  const [searchParams] = useSearchParams();
   const [order, setOrder] = useState(null);
   const [restaurant, setRestaurant] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // 1. FASTEST: Read from URL query param ?d= (base64 encoded — works on any device)
-    const encoded = searchParams.get('d');
-    if (encoded) {
-      try {
-        const payload = JSON.parse(decodeURIComponent(escape(atob(encoded))));
-        if (payload.order) setOrder(payload.order);
-        if (payload.restaurant) setRestaurant(payload.restaurant);
-        return; // Done instantly — no API, no localStorage needed
-      } catch (e) {
-        console.error('Failed to decode URL data', e);
-      }
-    }
-
-    // 2. FALLBACK: localStorage (same browser)
+    // 1. Try localStorage first (instant — set by Billing/QuickBill on same device)
     try {
       const cached = localStorage.getItem('print_order_' + orderId);
-      if (cached) { setOrder(JSON.parse(cached)); return; }
+      if (cached) {
+        setOrder(JSON.parse(cached));
+        return;
+      }
     } catch (e) {}
 
-    // 3. LAST RESORT: backend API (slow on Render free tier)
+    // 2. Fallback: fetch from API (works because fetchData() already warmed up Render on app load)
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 12000);
+    const timeout = setTimeout(() => controller.abort(), 15000);
     axios.get(`${API_URL}/orders/${orderId}`, { signal: controller.signal })
       .then(res => { clearTimeout(timeout); setOrder(res.data); })
       .catch(err => {
         clearTimeout(timeout);
         setError(err.code === 'ERR_CANCELED'
           ? 'Server timeout. Please try printing again.'
-          : 'Could not load order data.');
+          : 'Could not load order. Check connection and retry.');
       });
     return () => { clearTimeout(timeout); controller.abort(); };
-  }, [orderId, searchParams]);
+  }, [orderId]);
 
   useEffect(() => {
-    if (restaurant) return; // Already set from URL data
+    if (restaurant) return;
     try {
       const cached = localStorage.getItem('print_restaurant');
       if (cached) { setRestaurant(JSON.parse(cached)); return; }
@@ -56,26 +44,29 @@ export default function PrintReceipt() {
     axios.get(`${API_URL}/restaurant`).then(res => setRestaurant(res.data)).catch(() => {});
   }, [restaurant]);
 
-  // Auto-print once order data is loaded
+  // Auto-print once order data loaded
   useEffect(() => {
     if (order) {
-      setTimeout(() => { window.print(); }, 600);
+      setTimeout(() => window.print(), 600);
     }
   }, [order]);
 
   if (error) {
     return (
       <div style={{ fontFamily: 'monospace', fontSize: '12px', padding: '8px', color: '#000' }}>
-        <p><strong>Error:</strong> {error}</p>
-        <p>Order ID: #{orderId}</p>
+        <strong>Error:</strong> {error}<br />
+        Order ID: #{orderId}<br /><br />
+        <button onClick={() => window.location.reload()} style={{ padding: '6px 14px', cursor: 'pointer' }}>
+          Retry
+        </button>
       </div>
     );
   }
 
   if (!order) {
     return (
-      <div style={{ fontFamily: 'monospace', fontSize: '12px', padding: '8px', color: '#000', textAlign: 'center' }}>
-        Loading receipt...
+      <div style={{ fontFamily: 'monospace', fontSize: '12px', padding: '12px', color: '#000', textAlign: 'center' }}>
+        Loading receipt #{orderId}...
       </div>
     );
   }
@@ -85,86 +76,80 @@ export default function PrintReceipt() {
   const tax = Number(order.tax_amount || 0);
   const total = Number(order.total_amount || (subtotal - discount + tax));
 
+  /* ── Inline styles (work even if Tailwind/CSS bundle is not loaded in iframe) ── */
+  const font = "'Courier New', Courier, monospace";
   const S = {
-    // Page wrapper — exactly 80mm, pure white background
-    page: {
-      width: '72mm',
-      margin: '0 auto',
-      padding: '4mm 2mm',
-      fontFamily: "'Courier New', Courier, monospace",
-      fontSize: '11px',
-      lineHeight: '1.4',
-      color: '#000',
-      background: '#fff',
-    },
-    center: { textAlign: 'center' },
-    bold: { fontWeight: 'bold' },
-    dash: { borderTop: '1px dashed #000', margin: '4px 0' },
-    solid: { borderTop: '1px solid #000', margin: '4px 0' },
-    row: { display: 'flex', justifyContent: 'space-between', marginBottom: '1px' },
-    colName: { width: '50%', fontWeight: 'bold', wordBreak: 'break-word' },
-    colQty: { width: '10%', textAlign: 'center' },
-    colRate: { width: '20%', textAlign: 'right' },
-    colAmt: { width: '20%', textAlign: 'right', fontWeight: 'bold' },
-    small: { fontSize: '9px' },
-    labelRow: { display: 'flex', justifyContent: 'flex-end', marginBottom: '1px' },
-    label: { width: '90px', textAlign: 'left' },
-    noprint: { marginTop: '12px', textAlign: 'center' },
+    page:     { fontFamily: font, fontSize: '12px', lineHeight: '1.5', color: '#000', background: '#fff', width: '72mm', margin: '0 auto', padding: '4mm 2mm', boxSizing: 'border-box' },
+    center:   { textAlign: 'center' },
+    bold:     { fontWeight: 'bold' },
+    dash:     { borderTop: '1px dashed #000', margin: '5px 0' },
+    solid:    { borderTop: '1px solid #000', margin: '4px 0' },
+    row:      { display: 'flex', justifyContent: 'space-between', marginBottom: '2px', fontSize: '11px' },
+    hdr:      { display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '11px', marginBottom: '3px' },
+    colName:  { flex: '1', paddingRight: '4px', wordBreak: 'break-word' },
+    colQty:   { width: '22px', textAlign: 'center', flexShrink: 0 },
+    colRate:  { width: '38px', textAlign: 'right', flexShrink: 0 },
+    colAmt:   { width: '42px', textAlign: 'right', flexShrink: 0, fontWeight: 'bold' },
+    totalRow: { display: 'flex', justifyContent: 'flex-end', gap: '8px', fontSize: '11px', marginBottom: '2px' },
+    lbl:      { width: '80px', textAlign: 'right' },
+    val:      { width: '52px', textAlign: 'right', fontWeight: 'bold' },
+    noprint:  { marginTop: '14px', textAlign: 'center' },
   };
 
   return (
     <>
-      {/* 80mm Epson TM-T88IV print CSS */}
+      {/* ── 80mm Epson TM-T88IV print CSS ── */}
       <style>{`
         @page {
-          size: 80mm auto;
-          margin: 0;
+          size: 80mm auto !important;
+          margin: 0 !important;
+        }
+        * { box-sizing: border-box; }
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #fff !important;
+          width: 80mm !important;
         }
         @media print {
+          .no-print { display: none !important; }
           html, body {
             width: 80mm !important;
             margin: 0 !important;
             padding: 0 !important;
-            background: #fff !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
           }
-          .no-print { display: none !important; }
-        }
-        body {
-          margin: 0;
-          padding: 0;
-          background: #fff;
         }
       `}</style>
 
       <div style={S.page}>
-        {/* Header */}
+        {/* ── Restaurant Header ── */}
         <div style={S.center}>
-          <div style={{ ...S.bold, fontSize: '13px', letterSpacing: '1px', marginBottom: '2px' }}>
-            {restaurant?.name || 'AppThat Restaurant'}
+          <div style={{ ...S.bold, fontSize: '14px', letterSpacing: '0.5px' }}>
+            {restaurant?.name || 'Restaurant'}
           </div>
-          {restaurant?.address && <div style={S.small}>{restaurant.address}</div>}
-          {restaurant?.phone && <div style={S.small}>Ph: {restaurant.phone}</div>}
-          {restaurant?.gst && <div style={{ ...S.small, ...S.bold }}>GSTIN: {restaurant.gst}</div>}
+          {restaurant?.address && <div style={{ fontSize: '10px', marginTop: '1px' }}>{restaurant.address}</div>}
+          {restaurant?.phone   && <div style={{ fontSize: '10px' }}>Ph: {restaurant.phone}</div>}
+          {restaurant?.gst     && <div style={{ fontSize: '10px', fontWeight: 'bold' }}>GSTIN: {restaurant.gst}</div>}
         </div>
 
         <div style={S.dash} />
 
-        {/* Bill Meta */}
-        <div style={{ fontSize: '10px', marginBottom: '4px' }}>
-          <div style={S.row}><span style={S.bold}>BILL NO:</span><span>#{order.id}</span></div>
-          <div style={S.row}><span style={S.bold}>Date:</span><span>{formatIST(order.created_at)}</span></div>
-          <div style={S.row}><span style={S.bold}>Type:</span><span>{(order.order_type || 'dine_in').replace('_', ' ').toUpperCase()}</span></div>
-          {order.table_number && <div style={S.row}><span style={S.bold}>Table:</span><span>{order.table_number}</span></div>}
-          {order.customer_name && <div style={S.row}><span style={S.bold}>Cust:</span><span>{order.customer_name}</span></div>}
-          {order.waiter_name && <div style={S.row}><span style={S.bold}>Served By:</span><span>{order.waiter_name}</span></div>}
+        {/* ── Bill Meta ── */}
+        <div style={{ fontSize: '11px', marginBottom: '4px' }}>
+          <div style={S.row}><span style={S.bold}>Bill No:</span>    <span>#{order.id}</span></div>
+          <div style={S.row}><span style={S.bold}>Date:</span>       <span>{formatIST(order.created_at)}</span></div>
+          <div style={S.row}><span style={S.bold}>Type:</span>       <span>{(order.order_type || 'dine_in').replace('_', ' ').toUpperCase()}</span></div>
+          {order.table_number    && <div style={S.row}><span style={S.bold}>Table:</span>     <span>{order.table_number}</span></div>}
+          {order.customer_name   && <div style={S.row}><span style={S.bold}>Customer:</span>  <span>{order.customer_name}</span></div>}
+          {order.waiter_name     && <div style={S.row}><span style={S.bold}>Served by:</span> <span>{order.waiter_name}</span></div>}
         </div>
 
         <div style={S.dash} />
 
-        {/* Items Header */}
-        <div style={{ ...S.row, ...S.bold, fontSize: '10px', marginBottom: '2px' }}>
+        {/* ── Items Header ── */}
+        <div style={S.hdr}>
           <span style={S.colName}>Item</span>
           <span style={S.colQty}>Qty</span>
           <span style={S.colRate}>Rate</span>
@@ -172,12 +157,12 @@ export default function PrintReceipt() {
         </div>
         <div style={S.solid} />
 
-        {/* Items */}
+        {/* ── Items ── */}
         {(order.items || []).map(item => {
           const rate = Number(item.price || 0);
-          const qty = Number(item.quantity || 1);
-          const itemDiscount = Number(item.discount_amount || 0);
-          const amt = (rate * qty) - itemDiscount;
+          const qty  = Number(item.quantity || 1);
+          const disc = Number(item.discount_amount || 0);
+          const amt  = (rate * qty) - disc;
           return (
             <div key={item.id} style={{ marginBottom: '3px' }}>
               <div style={S.row}>
@@ -186,9 +171,9 @@ export default function PrintReceipt() {
                 <span style={S.colRate}>{rate.toFixed(0)}</span>
                 <span style={S.colAmt}>{amt.toFixed(0)}</span>
               </div>
-              {itemDiscount > 0 && (
+              {disc > 0 && (
                 <div style={{ textAlign: 'right', fontSize: '9px', fontStyle: 'italic' }}>
-                  (Item disc: -₹{itemDiscount.toFixed(2)})
+                  (disc: -{disc.toFixed(2)})
                 </div>
               )}
             </div>
@@ -197,46 +182,33 @@ export default function PrintReceipt() {
 
         <div style={S.dash} />
 
-        {/* Totals */}
-        <div style={{ fontSize: '10px' }}>
-          <div style={S.labelRow}>
-            <span style={S.label}>Subtotal:</span>
-            <span style={S.bold}>₹{subtotal.toFixed(2)}</span>
-          </div>
+        {/* ── Totals ── */}
+        <div style={{ marginBottom: '4px' }}>
+          <div style={S.totalRow}><span style={S.lbl}>Subtotal</span>  <span style={S.val}>Rs.{subtotal.toFixed(2)}</span></div>
           {discount > 0 && (
-            <div style={S.labelRow}>
-              <span style={S.label}>Discount:</span>
-              <span style={S.bold}>-₹{discount.toFixed(2)}</span>
-            </div>
+            <div style={S.totalRow}><span style={S.lbl}>Discount</span><span style={S.val}>-{discount.toFixed(2)}</span></div>
           )}
-          <div style={S.labelRow}>
-            <span style={S.label}>Tax ({restaurant?.tax_percent || 5}%):</span>
-            <span style={S.bold}>₹{tax.toFixed(2)}</span>
-          </div>
+          <div style={S.totalRow}><span style={S.lbl}>Tax ({restaurant?.tax_percent || 5}%)</span><span style={S.val}>Rs.{tax.toFixed(2)}</span></div>
           <div style={S.solid} />
-          <div style={{ ...S.labelRow, fontSize: '12px', fontWeight: 'bold' }}>
-            <span style={{ ...S.label, fontWeight: 'bold' }}>GRAND TOTAL:</span>
-            <span>₹{total.toFixed(2)}</span>
+          <div style={{ ...S.totalRow, fontSize: '13px', fontWeight: 'bold', marginTop: '2px' }}>
+            <span style={{ ...S.lbl, fontWeight: 'bold' }}>TOTAL</span>
+            <span style={{ ...S.val, fontSize: '13px' }}>Rs.{total.toFixed(2)}</span>
           </div>
         </div>
 
         <div style={S.dash} />
 
-        {/* Footer */}
+        {/* ── Footer ── */}
         <div style={{ ...S.center, fontSize: '10px', marginTop: '4px' }}>
           <div style={{ fontStyle: 'italic' }}>Thank you! Please visit again.</div>
-          <div style={{ fontSize: '8px', marginTop: '2px' }}>Powered by AppThat POS</div>
+          <div style={{ fontSize: '9px', marginTop: '2px', color: '#555' }}>Powered by AppThat POS</div>
         </div>
 
-        {/* Manual print button — hidden on print */}
+        {/* ── Manual print button (hidden on print) ── */}
         <div className="no-print" style={S.noprint}>
           <button
             onClick={() => window.print()}
-            style={{
-              background: '#000', color: '#fff', border: 'none',
-              padding: '6px 16px', borderRadius: '6px',
-              fontWeight: 'bold', fontSize: '12px', cursor: 'pointer'
-            }}
+            style={{ background: '#000', color: '#fff', border: 'none', padding: '7px 20px', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}
           >
             🖨 Print Receipt
           </button>

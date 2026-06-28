@@ -33,22 +33,17 @@ export default function Billing() {
   const calculatedTax = selectedOrder ? netSubtotal * taxRate : 0;
   const total = selectedOrder ? netSubtotal + calculatedTax : 0;
 
-  // Encode order + restaurant data in URL so any device can print instantly
-  const buildPrintUrl = (orderId, orderObj) => {
+  // Write order data to localStorage for instant iframe reading on same device
+  const cachePrintData = (orderId, orderObj) => {
     try {
-      const payload = {
-        order: orderObj,
-        restaurant: restaurantDetails || null,
-      };
-      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-      return `/print/receipt/${orderId}?d=${encoded}`;
-    } catch (e) {
-      return `/print/receipt/${orderId}`;
-    }
+      localStorage.setItem('print_order_' + orderId, JSON.stringify(orderObj));
+      if (restaurantDetails) localStorage.setItem('print_restaurant', JSON.stringify(restaurantDetails));
+    } catch (e) {}
   };
 
   const printReceiptSilently = (orderId, orderObj) => {
-    const url = buildPrintUrl(orderId, orderObj);
+    cachePrintData(orderId, orderObj);
+    const url = `/print/receipt/${orderId}`;
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
       || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);

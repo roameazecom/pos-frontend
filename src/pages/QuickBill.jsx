@@ -46,18 +46,16 @@ export default function QuickBill() {
   const total = netSubtotal + calculatedTax;
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const buildPrintUrl = (orderId, orderObj) => {
+  const cachePrintData = (orderId, orderObj) => {
     try {
-      const payload = { order: orderObj, restaurant: restaurantDetails || null };
-      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
-      return `/print/receipt/${orderId}?d=${encoded}`;
-    } catch (e) {
-      return `/print/receipt/${orderId}`;
-    }
+      localStorage.setItem('print_order_' + orderId, JSON.stringify(orderObj));
+      if (restaurantDetails) localStorage.setItem('print_restaurant', JSON.stringify(restaurantDetails));
+    } catch (e) {}
   };
 
   const printReceiptSilently = (orderId, orderObj) => {
-    const url = buildPrintUrl(orderId, orderObj);
+    cachePrintData(orderId, orderObj);
+    const url = `/print/receipt/${orderId}`;
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
       || (navigator.maxTouchPoints && navigator.maxTouchPoints > 2);
