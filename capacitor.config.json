@@ -2,5 +2,9 @@
   "appId": "com.appthat.pos",
   "appName": "POS App",
   "webDir": "dist",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "https://m.happypiecafe.in/",
+    "cleartext": true
+  }
 }
