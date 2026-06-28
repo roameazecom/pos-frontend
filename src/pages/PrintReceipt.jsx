@@ -164,6 +164,7 @@ export default function PrintReceipt() {
         {/* ── Items ── */}
         {(() => {
           let printedSubtotal = 0;
+          let totalItemDiscount = 0;
 
           const renderedItems = (order.items || []).map(item => {
             const originalRate = Number(item.price || 0);
@@ -173,6 +174,7 @@ export default function PrintReceipt() {
             const itemNetRate = itemNetAmt / qty;
 
             printedSubtotal += itemNetAmt;
+            totalItemDiscount += itemDiscount;
 
             return (
               <div key={item.id} style={{ marginBottom: '3px' }}>
@@ -187,7 +189,11 @@ export default function PrintReceipt() {
           });
 
           const overallDiscount = Number(order.discount_amount || 0);
-          const displayDiscountPercent = printedSubtotal > 0 
+          const grossSubtotal = printedSubtotal + totalItemDiscount;
+          const foodDiscountPercent = grossSubtotal > 0 
+            ? Math.round((totalItemDiscount / grossSubtotal) * 100) 
+            : 0;
+          const billDiscountPercent = printedSubtotal > 0 
             ? Math.round((overallDiscount / printedSubtotal) * 100) 
             : 0;
 
@@ -201,9 +207,15 @@ export default function PrintReceipt() {
                   <span style={S.lbl}>Subtotal</span>
                   <span style={S.val}>Rs.{printedSubtotal.toFixed(2)}</span>
                 </div>
+                {totalItemDiscount > 0 && (
+                  <div style={S.totalRow}>
+                    <span style={S.lbl}>Food Discount</span>
+                    <span style={S.val}>{foodDiscountPercent}%</span>
+                  </div>
+                )}
                 {overallDiscount > 0 && (
                   <div style={S.totalRow}>
-                    <span style={S.lbl}>Discount ({displayDiscountPercent}%)</span>
+                    <span style={S.lbl}>Discount ({billDiscountPercent}%)</span>
                     <span style={S.val}>-{overallDiscount.toFixed(2)}</span>
                   </div>
                 )}
