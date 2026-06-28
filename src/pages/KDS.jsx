@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { usePosStore } from '../store/posStore';
 import { Clock, CheckCircle2, ChefHat, History, Flame, Check, Search, ShoppingBag, Bike, Package, X } from 'lucide-react';
 import NotificationPanel from '../components/common/NotificationPanel';
+import { formatIST } from '../utils/formatIST';
 
 export default function KDS() {
   const { orders, orderHistory, updateItemStatus, updateKotStatus, tables, locations, inventoryItems, logInventoryUsage } = usePosStore();
@@ -461,10 +462,7 @@ export default function KDS() {
                     <td className="p-4 font-black text-surface-100">{ticket.tableNumber}</td>
                     <td className="p-4 font-bold" style={{ color: '#ea580c' }}>{ticket.waiterName}</td>
                     <td className="p-4 text-right font-bold text-xs text-surface-400">
-                      {new Date(ticket.timestamp).toLocaleString('en-IN', {
-                        timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short',
-                        hour: '2-digit', minute: '2-digit', hour12: true
-                      })}
+                      {formatIST(ticket.timestamp)}
                     </td>
                   </tr>
                 ))}

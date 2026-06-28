@@ -8,6 +8,7 @@ import {
   Printer
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatIST } from '../utils/formatIST';
 
 export default function CustomerDashboard() {
   const navigate = useNavigate();
@@ -483,11 +484,7 @@ export default function CustomerDashboard() {
                         <div>
                           <p className="text-xs font-bold text-slate-800">Order #{order.id}</p>
                           <p className="text-[10px] text-slate-400 font-medium">
-                            {new Date(order.created_at.includes('T') ? order.created_at : order.created_at.replace(' ', 'T') + '+05:30').toLocaleDateString('en-IN', {
-                              timeZone: 'Asia/Kolkata',
-                              day: '2-digit', month: 'short', year: 'numeric',
-                              hour: '2-digit', minute: '2-digit', hour12: true
-                            })}
+                            {formatIST(order.created_at)}
                           </p>
                         </div>
                         <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
