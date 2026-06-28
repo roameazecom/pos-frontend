@@ -163,35 +163,33 @@ export default function PrintReceipt() {
 
         {/* ── Items ── */}
         {(() => {
-          let grossSubtotal = 0;
-          let totalItemDiscount = 0;
+          let printedSubtotal = 0;
 
           const renderedItems = (order.items || []).map(item => {
-            const rate = Number(item.price || 0);
+            const originalRate = Number(item.price || 0);
             const qty  = Number(item.quantity || 1);
-            const disc = Number(item.discount_amount || 0);
-            const itemGrossAmt = rate * qty;
+            const itemDiscount = Number(item.discount_amount || 0);
+            const itemNetAmt = (originalRate * qty) - itemDiscount;
+            const itemNetRate = itemNetAmt / qty;
 
-            grossSubtotal += itemGrossAmt;
-            totalItemDiscount += disc;
+            printedSubtotal += itemNetAmt;
 
             return (
               <div key={item.id} style={{ marginBottom: '3px' }}>
                 <div style={S.row}>
                   <span style={S.colName}>{item.name}</span>
                   <span style={S.colQty}>{qty}</span>
-                  <span style={S.colRate}>{rate.toFixed(0)}</span>
-                  <span style={S.colAmt}>{itemGrossAmt.toFixed(0)}</span>
+                  <span style={S.colRate}>{itemNetRate.toFixed(0)}</span>
+                  <span style={S.colAmt}>{itemNetAmt.toFixed(0)}</span>
                 </div>
               </div>
             );
           });
 
           const overallDiscount = Number(order.discount_amount || 0);
-          const combinedDiscount = totalItemDiscount + overallDiscount;
-          const displayDiscountPercent = order.discount_percent !== undefined 
-            ? order.discount_percent 
-            : (grossSubtotal > 0 ? Math.round((combinedDiscount / grossSubtotal) * 100) : 0);
+          const displayDiscountPercent = printedSubtotal > 0 
+            ? Math.round((overallDiscount / printedSubtotal) * 100) 
+            : 0;
 
           return (
             <>
@@ -201,12 +199,12 @@ export default function PrintReceipt() {
               <div style={{ marginBottom: '4px' }}>
                 <div style={S.totalRow}>
                   <span style={S.lbl}>Subtotal</span>
-                  <span style={S.val}>Rs.{grossSubtotal.toFixed(2)}</span>
+                  <span style={S.val}>Rs.{printedSubtotal.toFixed(2)}</span>
                 </div>
-                {combinedDiscount > 0 && (
+                {overallDiscount > 0 && (
                   <div style={S.totalRow}>
                     <span style={S.lbl}>Discount ({displayDiscountPercent}%)</span>
-                    <span style={S.val}>-{combinedDiscount.toFixed(2)}</span>
+                    <span style={S.val}>-{overallDiscount.toFixed(2)}</span>
                   </div>
                 )}
                 <div style={S.totalRow}>
