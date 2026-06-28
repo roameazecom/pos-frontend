@@ -85,7 +85,7 @@ export default function QuickBill() {
       setCustomerPhone('');
       setDiscountAmount(0);
       setTimeout(() => {
-        printReceiptSilently(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/thermal/${orderId}`);
+        printReceiptSilently(`/print/receipt/${orderId}`);
         setSuccessOrderId(null);
       }, 1200);
     }

@@ -496,8 +496,12 @@ export default function WaiterDashboard() {
                             if (item.quantity > 1) {
                               updateActiveOrderItemQuantity(activeOrder.id, item.id, item.quantity - 1);
                             } else {
-                              setItemToCancel({ orderId: activeOrder.id, itemId: item.id, name: item.name });
-                              setIsAuthModalOpen(true);
+                              if (item.status === 'ready' || item.status === 'served') {
+                                setItemToCancel({ orderId: activeOrder.id, itemId: item.id, name: item.name });
+                                setIsAuthModalOpen(true);
+                              } else {
+                                deleteActiveOrderItem(activeOrder.id, item.id);
+                              }
                             }
                           }}
                           className="w-7 h-7 rounded-lg flex items-center justify-center transition-all bg-slate-50 hover:bg-slate-100 text-slate-600"
@@ -514,8 +518,12 @@ export default function WaiterDashboard() {
                       </div>
                       <button
                         onClick={() => {
-                          setItemToCancel({ orderId: activeOrder.id, itemId: item.id, name: item.name });
-                          setIsAuthModalOpen(true);
+                          if (item.status === 'ready' || item.status === 'served') {
+                            setItemToCancel({ orderId: activeOrder.id, itemId: item.id, name: item.name });
+                            setIsAuthModalOpen(true);
+                          } else {
+                            deleteActiveOrderItem(activeOrder.id, item.id);
+                          }
                         }}
                         className="w-8 h-8 rounded-xl flex items-center justify-center transition-all text-slate-400 hover:bg-red-50 hover:text-red-500"
                       >

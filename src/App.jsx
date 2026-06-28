@@ -14,6 +14,7 @@ import { useAuthStore } from './store/authStore';
 
 import CustomerLogin from './pages/CustomerLogin';
 import CustomerDashboard from './pages/CustomerDashboard';
+import PrintReceipt from './pages/PrintReceipt';
 
 function App() {
   const fetchData = usePosStore(state => state.fetchData);
@@ -31,6 +32,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/customer/login" element={<CustomerLogin />} />
         <Route path="/customer" element={<CustomerDashboard />} />
+        <Route path="/print/receipt/:orderId" element={<PrintReceipt />} />
         
         {/* All routes inside Layout are protected to some degree */}
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>

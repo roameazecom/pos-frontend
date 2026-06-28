@@ -9,7 +9,7 @@ import {
 import ManagerAuthModal from '../components/common/ManagerAuthModal';
 
 export default function Billing() {
-  const { orders, orderHistory, tables, checkoutOrder, restaurantDetails, deleteActiveOrderItem } = usePosStore();
+  const { orders, orderHistory, tables, checkoutOrder, restaurantDetails, deleteActiveOrderItem, updateOrderItemDiscount } = usePosStore();
   const { user } = useAuthStore();
   const [viewTab, setViewTab] = useState('active');
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,7 +101,7 @@ export default function Billing() {
       checkoutOrder(selectedOrderId, paymentType, checkoutName || selectedOrder?.customer_name || '', checkoutPhone || selectedOrder?.customer_phone || '', user?.id, discountAmount);
       
       // Auto-print thermal POS receipt silently
-      printReceiptSilently(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/thermal/${selectedOrderId}`);
+      printReceiptSilently(`/print/receipt/${selectedOrderId}`);
       
       setSelectedOrderId(null); setShowModal(false); setCheckoutName(''); setCheckoutPhone(''); setDiscountAmount(0);
     }
@@ -395,27 +395,51 @@ export default function Billing() {
                    style={{ color: 'rgba(15, 23, 42, 0.45)', borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
                 <span>Item</span><span>Total</span>
               </div>
-              {selectedOrder.items.map(item => (
-                <div key={item.id} className="flex justify-between items-center group gap-3">
-                  <div className="flex-1">
-                    <p className="font-black text-surface-100 text-sm group-hover:text-orange-600 transition-colors">{item.name}</p>
-                    <p className="text-xs font-bold mt-0.5" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>{item.quantity} × ₹{item.price}</p>
+              {selectedOrder.items.map(item => {
+                const itemTotal = (item.quantity * Number(item.price)) - Number(item.discount_amount || 0);
+                return (
+                  <div key={item.id} className="flex justify-between items-center group gap-3 border-b border-slate-50 pb-2">
+                    <div className="flex-1">
+                      <p className="font-black text-surface-100 text-sm group-hover:text-orange-600 transition-colors">{item.name}</p>
+                      <p className="text-xs font-bold mt-0.5" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>{item.quantity} × ₹{item.price}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {/* Food wise discount input */}
+                      <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
+                        <span className="text-[9px] font-black text-slate-400 uppercase">Disc:</span>
+                        <input
+                          type="number"
+                          min="0"
+                          max={item.price * item.quantity}
+                          placeholder="₹0"
+                          value={item.discount_amount || ''}
+                          onChange={(e) => {
+                            const discVal = Number(e.target.value);
+                            updateOrderItemDiscount(selectedOrder.id, item.id, discVal);
+                          }}
+                          className="w-10 bg-transparent text-xs font-black text-slate-800 focus:outline-none text-right"
+                        />
+                      </div>
+                      <span className="font-black text-surface-100 px-2 py-1 rounded-lg text-sm bg-slate-100">
+                        ₹{itemTotal.toFixed(0)}
+                      </span>
+                      <button
+                        onClick={() => {
+                          if (item.status === 'ready' || item.status === 'served') {
+                            setItemToCancel({ orderId: selectedOrder.id, itemId: item.id, name: item.name });
+                            setIsAuthModalOpen(true);
+                          } else {
+                            deleteActiveOrderItem(selectedOrder.id, item.id);
+                          }
+                        }}
+                        className="p-1 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-black text-surface-100 px-2 py-1 rounded-lg text-sm"
-                      style={{ background: 'rgba(0,0,0,0.04)' }}>₹{item.quantity * item.price}</span>
-                    <button
-                      onClick={() => {
-                        setItemToCancel({ orderId: selectedOrder.id, itemId: item.id, name: item.name });
-                        setIsAuthModalOpen(true);
-                      }}
-                      className="p-1 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Totals + Payment */}
@@ -557,7 +581,7 @@ export default function Billing() {
                   <Printer className="w-4 h-4 text-slate-500" /> A4 Invoice
                 </button>
                 <button
-                  onClick={() => printReceiptSilently(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/reports/invoice/thermal/${histOrder.id}`)}
+                  onClick={() => printReceiptSilently(`/print/receipt/${histOrder.id}`)}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs btn-orange shadow-md transition-all active:scale-95"
                 >
                   <Printer className="w-4 h-4 text-white" /> Print Thermal (80mm)

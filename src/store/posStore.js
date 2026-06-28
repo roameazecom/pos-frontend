@@ -242,6 +242,15 @@ export const usePosStore = create((set, get) => ({
       toast.error('Failed to update quantity');
     }
   },
+  updateOrderItemDiscount: async (orderId, itemId, discountAmount) => {
+    try {
+      await axios.put(`${API_URL}/orders/${orderId}/items/${itemId}/discount`, { discount_amount: discountAmount });
+      toast.success('Item discount updated');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update item discount');
+    }
+  },
 
   // Admin Configuration CRUD
   addCategory: async (category) => {
@@ -632,4 +641,10 @@ socket.on('waiter_called', (data) => {
     });
     showSystemNotification('🛎️ Waiter Assistance Called', msg);
   }
+});
+
+socket.on('config_updated', () => {
+  console.log('Socket event received: config_updated');
+  const store = usePosStore.getState();
+  store.fetchData();
 });
