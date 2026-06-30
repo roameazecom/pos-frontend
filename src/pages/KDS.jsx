@@ -121,6 +121,20 @@ export default function KDS() {
                   🔊 Sound Active
                 </span>
               )}
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'rgba(15, 23, 42, 0.2)' }} />
+              <button
+                onClick={() => {
+                  const currentUrl = usePosStore.getState().getServerUrl();
+                  const newUrl = prompt("Enter Server IP/URL (e.g. http://192.168.1.100:5000 or keep blank for default cloud):", currentUrl);
+                  if (newUrl !== null) {
+                    usePosStore.getState().setServerUrl(newUrl.trim());
+                  }
+                }}
+                className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 transition-all cursor-pointer shadow-sm hover:shadow"
+                title="Configure Server URL / IP Address"
+              >
+                ⚙️ Server IP
+              </button>
             </div>
           </div>
         </div>

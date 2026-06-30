@@ -6,9 +6,31 @@ import { useAuthStore } from './authStore';
 import { Capacitor } from '@capacitor/core';
 import { LocalNotifications } from '@capacitor/local-notifications';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-// Initialize Socket.io
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+const getStoredUrls = () => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('POS_SERVER_URL');
+    if (stored) {
+      const clean = stored.replace(/\/$/, "");
+      return {
+        api: `${clean}/api`,
+        socket: clean
+      };
+    }
+  }
+  const defaultSocket = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+  const defaultApi = import.meta.env.VITE_API_URL || `${defaultSocket}/api`;
+  return {
+    api: defaultApi,
+    socket: defaultSocket
+  };
+};
+
+const urls = getStoredUrls();
+const API_URL = urls.api;
+const SOCKET_URL = urls.socket;
+
+console.log('POS Connecting to Server:', SOCKET_URL);
+
 const socket = io(SOCKET_URL, {
   transports: ['websocket', 'polling'],
   reconnection: true,
@@ -22,6 +44,23 @@ const socket = io(SOCKET_URL, {
 let globalAudioCtx = null;
 
 export const usePosStore = create((set, get) => ({
+  getServerUrl: () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('POS_SERVER_URL') || import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    }
+    return 'http://localhost:5000';
+  },
+  setServerUrl: (url) => {
+    if (typeof window !== 'undefined') {
+      if (!url) {
+        localStorage.removeItem('POS_SERVER_URL');
+      } else {
+        const clean = url.trim().replace(/\/$/, "");
+        localStorage.setItem('POS_SERVER_URL', clean);
+      }
+      window.location.reload();
+    }
+  },
   orders: [],
   orderHistory: [],
   socketConnected: false,

@@ -4,7 +4,6 @@
   "webDir": "dist",
   "bundledWebRuntime": false,
   "server": {
-    "url": "https://m.happypiecafe.in/",
     "cleartext": true
   }
 }

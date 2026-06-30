@@ -226,8 +226,22 @@ export default function Login() {
               )}
             </button>
           </form>
+        </div>
 
-
+        {/* Server IP Config Button */}
+        <div className="absolute top-4 right-4 z-50">
+          <button
+            onClick={() => {
+              const currentUrl = usePosStore.getState().getServerUrl();
+              const newUrl = prompt("Enter Server IP/URL (e.g. http://192.168.1.100:5000 or keep blank for default cloud):", currentUrl);
+              if (newUrl !== null) {
+                usePosStore.getState().setServerUrl(newUrl.trim());
+              }
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-all cursor-pointer shadow-sm hover:shadow"
+          >
+            ⚙️ Server IP
+          </button>
         </div>
 
         {/* Mobile footer */}
