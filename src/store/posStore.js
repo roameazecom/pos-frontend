@@ -594,7 +594,30 @@ export const usePosStore = create((set, get) => ({
   
   // Notice: For brevity, updates and deletes would be implemented similarly using axios.put and axios.delete.
   // The local state should be updated to reflect changes immediately or wait for a fetch.
-  updateCategory: () => {}, deleteCategory: () => {},
+  updateCategory: async (id, name) => {
+    try {
+      const res = await axios.put(`${API_URL}/config/categories/${id}`, { name });
+      set((state) => ({
+        categories: state.categories.map(c => c.id === id ? { ...c, name: res.data.name } : c)
+      }));
+      toast.success('Category updated');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update category');
+    }
+  },
+  deleteCategory: async (id) => {
+    try {
+      await axios.delete(`${API_URL}/config/categories/${id}`);
+      set((state) => ({
+        categories: state.categories.filter(c => c.id !== id)
+      }));
+      toast.success('Category deleted');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to delete category');
+    }
+  },
   updateMenuItem: async (id, item) => {
     try {
       const res = await axios.put(`${API_URL}/config/menu-items/${id}`, item);
@@ -619,8 +642,54 @@ export const usePosStore = create((set, get) => ({
       toast.error('Failed to delete menu item');
     }
   },
-  updateLocation: () => {}, deleteLocation: () => {},
-  updateTable: () => {}, deleteTable: () => {},
+  updateLocation: async (id, name) => {
+    try {
+      const res = await axios.put(`${API_URL}/config/locations/${id}`, { name });
+      set((state) => ({
+        locations: state.locations.map(l => l.id === id ? { ...l, name: res.data.name } : l)
+      }));
+      toast.success('Location updated');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update location');
+    }
+  },
+  deleteLocation: async (id) => {
+    try {
+      await axios.delete(`${API_URL}/config/locations/${id}`);
+      set((state) => ({
+        locations: state.locations.filter(l => l.id !== id)
+      }));
+      toast.success('Location deleted');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to delete location');
+    }
+  },
+  updateTable: async (id, table) => {
+    try {
+      const res = await axios.put(`${API_URL}/config/tables/${id}`, table);
+      set((state) => ({
+        tables: state.tables.map(t => t.id === id ? { ...t, ...res.data } : t)
+      }));
+      toast.success('Table updated');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update table');
+    }
+  },
+  deleteTable: async (id) => {
+    try {
+      await axios.delete(`${API_URL}/config/tables/${id}`);
+      set((state) => ({
+        tables: state.tables.filter(t => t.id !== id)
+      }));
+      toast.success('Table deleted');
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to delete table');
+    }
+  },
   callWaiter: (tableId, tableNumber, locationId) => {
     socket.emit('call_waiter', { tableId, tableNumber, locationId });
   }
