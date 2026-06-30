@@ -3,8 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { usePosStore } from '../store/posStore';
 import { KeyRound, Mail, Lock, Store, Coffee, ChefHat, ShoppingBag } from 'lucide-react';
-
-
+import ServerConfigModal from '../components/common/ServerConfigModal';
 
 import { APP_LOGO_BASE64 } from '../constants/logo';
 
@@ -14,6 +13,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState(null);
+  const [isServerModalOpen, setIsServerModalOpen] = useState(false);
 
   const login = useAuthStore((state) => state.login);
   const { restaurantDetails } = usePosStore();
@@ -231,18 +231,17 @@ export default function Login() {
         {/* Server IP Config Button */}
         <div className="absolute top-4 right-4 z-50">
           <button
-            onClick={() => {
-              const currentUrl = usePosStore.getState().getServerUrl();
-              const newUrl = prompt("Enter Server IP/URL (e.g. http://192.168.1.100:5000 or keep blank for default cloud):", currentUrl);
-              if (newUrl !== null) {
-                usePosStore.getState().setServerUrl(newUrl.trim());
-              }
-            }}
+            onClick={() => setIsServerModalOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-all cursor-pointer shadow-sm hover:shadow"
           >
             ⚙️ Server IP
           </button>
         </div>
+
+        <ServerConfigModal 
+          isOpen={isServerModalOpen} 
+          onClose={() => setIsServerModalOpen(false)} 
+        />
 
         {/* Mobile footer */}
         <div className="lg:hidden absolute bottom-4 text-xs font-bold tracking-widest uppercase text-surface-400">

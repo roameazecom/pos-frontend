@@ -3,6 +3,7 @@ import { usePosStore } from '../store/posStore';
 import { Clock, CheckCircle2, ChefHat, History, Flame, Check, Search, ShoppingBag, Bike, Package, X } from 'lucide-react';
 import NotificationPanel from '../components/common/NotificationPanel';
 import { formatIST } from '../utils/formatIST';
+import ServerConfigModal from '../components/common/ServerConfigModal';
 
 export default function KDS() {
   const { orders, orderHistory, updateItemStatus, updateKotStatus, tables, locations, inventoryItems, logInventoryUsage, socketConnected, audioUnlocked, unlockAudio } = usePosStore();
@@ -12,6 +13,7 @@ export default function KDS() {
   const [kitchenSearch, setKitchenSearch] = useState('');
   const [loggingItemId, setLoggingItemId] = useState(null);
   const [useQty, setUseQty] = useState('');
+  const [isServerModalOpen, setIsServerModalOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(Date.now()), 60000);
@@ -123,18 +125,16 @@ export default function KDS() {
               )}
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'rgba(15, 23, 42, 0.2)' }} />
               <button
-                onClick={() => {
-                  const currentUrl = usePosStore.getState().getServerUrl();
-                  const newUrl = prompt("Enter Server IP/URL (e.g. http://192.168.1.100:5000 or keep blank for default cloud):", currentUrl);
-                  if (newUrl !== null) {
-                    usePosStore.getState().setServerUrl(newUrl.trim());
-                  }
-                }}
+                onClick={() => setIsServerModalOpen(true)}
                 className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 transition-all cursor-pointer shadow-sm hover:shadow"
                 title="Configure Server URL / IP Address"
               >
                 ⚙️ Server IP
               </button>
+              <ServerConfigModal 
+                isOpen={isServerModalOpen} 
+                onClose={() => setIsServerModalOpen(false)} 
+              />
             </div>
           </div>
         </div>
