@@ -14,6 +14,22 @@ export default function KDS() {
   const [loggingItemId, setLoggingItemId] = useState(null);
   const [useQty, setUseQty] = useState('');
   const [isServerModalOpen, setIsServerModalOpen] = useState(false);
+  const [logoClicks, setLogoClicks] = useState(0);
+
+  const handleLogoClick = () => {
+    setLogoClicks((prev) => {
+      const count = prev + 1;
+      if (count >= 5) {
+        setIsServerModalOpen(true);
+        return 0;
+      }
+      return count;
+    });
+    if (window.logoClickTimeout) clearTimeout(window.logoClickTimeout);
+    window.logoClickTimeout = setTimeout(() => {
+      setLogoClicks(0);
+    }, 2000);
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(Date.now()), 60000);
@@ -92,7 +108,7 @@ export default function KDS() {
         <div className="flex items-center gap-4">
           <NotificationPanel align="left" />
           <div>
-            <h1 className="text-xl lg:text-2xl font-black text-surface-100 flex items-center gap-2">
+            <h1 className="text-xl lg:text-2xl font-black text-surface-100 flex items-center gap-2 cursor-pointer select-none" onClick={handleLogoClick}>
               Kitchen Display
               <ChefHat className="w-6 h-6" style={{ color: '#f43f5e', filter: 'drop-shadow(0 0 8px rgba(244,63,94,0.3))' }} />
             </h1>
@@ -123,14 +139,6 @@ export default function KDS() {
                   🔊 Sound Active
                 </span>
               )}
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: 'rgba(15, 23, 42, 0.2)' }} />
-              <button
-                onClick={() => setIsServerModalOpen(true)}
-                className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg border bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200 transition-all cursor-pointer shadow-sm hover:shadow"
-                title="Configure Server URL / IP Address"
-              >
-                ⚙️ Server IP
-              </button>
               <ServerConfigModal 
                 isOpen={isServerModalOpen} 
                 onClose={() => setIsServerModalOpen(false)} 

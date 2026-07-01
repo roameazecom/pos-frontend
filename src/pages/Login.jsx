@@ -14,6 +14,23 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [focusedInput, setFocusedInput] = useState(null);
   const [isServerModalOpen, setIsServerModalOpen] = useState(false);
+  const [logoClicks, setLogoClicks] = useState(0);
+
+  const handleLogoClick = () => {
+    setLogoClicks((prev) => {
+      const count = prev + 1;
+      if (count >= 5) {
+        setIsServerModalOpen(true);
+        return 0;
+      }
+      return count;
+    });
+
+    if (window.logoClickTimeout) clearTimeout(window.logoClickTimeout);
+    window.logoClickTimeout = setTimeout(() => {
+      setLogoClicks(0);
+    }, 2000);
+  };
 
   const login = useAuthStore((state) => state.login);
   const { restaurantDetails } = usePosStore();
@@ -70,7 +87,7 @@ export default function Login() {
 
         {/* Top logo */}
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-16">
+          <div className="flex items-center gap-3 mb-16 cursor-pointer select-none" onClick={handleLogoClick}>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white" style={{
               boxShadow: '0 0 20px rgba(249,115,22,0.3)'
             }}>
@@ -138,7 +155,7 @@ export default function Login() {
 
         <div className="w-full max-w-md animate-slide-up relative z-10">
           
-          <div className="lg:hidden flex items-center justify-center gap-3 mb-10">
+          <div className="lg:hidden flex items-center justify-center gap-3 mb-10 cursor-pointer select-none" onClick={handleLogoClick}>
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white" style={{
               boxShadow: '0 0 25px rgba(249,115,22,0.3)'
             }}>
@@ -228,15 +245,7 @@ export default function Login() {
           </form>
         </div>
 
-        {/* Server IP Config Button */}
-        <div className="absolute top-4 right-4 z-50">
-          <button
-            onClick={() => setIsServerModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 transition-all cursor-pointer shadow-sm hover:shadow"
-          >
-            ⚙️ Server IP
-          </button>
-        </div>
+        {/* Server IP Config Button is now hidden (access by clicking logo 5 times) */}
 
         <ServerConfigModal 
           isOpen={isServerModalOpen} 
