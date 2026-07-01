@@ -83,21 +83,21 @@ export default function PrintReceipt() {
   /* ── Inline styles (work even if Tailwind/CSS bundle is not loaded in iframe) ── */
   const font = "'Courier New', Courier, monospace";
   const S = {
-    page:     { fontFamily: font, fontSize: '12px', lineHeight: '1.5', color: '#000', background: '#fff', width: '72mm', margin: '0 auto', padding: '4mm 2mm', boxSizing: 'border-box' },
+    page:     { fontFamily: font, fontSize: '14px', lineHeight: '1.4', color: '#000', background: '#fff', width: '100%', margin: '0', padding: '0 1mm', boxSizing: 'border-box' },
     center:   { textAlign: 'center' },
     bold:     { fontWeight: 'bold' },
-    dash:     { borderTop: '1px dashed #000', margin: '5px 0' },
-    solid:    { borderTop: '1px solid #000', margin: '4px 0' },
-    row:      { display: 'flex', justifyContent: 'space-between', marginBottom: '2px', fontSize: '11px' },
-    hdr:      { display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '11px', marginBottom: '3px' },
-    colName:  { flex: '1', paddingRight: '4px', wordBreak: 'break-word' },
-    colQty:   { width: '22px', textAlign: 'center', flexShrink: 0 },
-    colRate:  { width: '38px', textAlign: 'right', flexShrink: 0 },
-    colAmt:   { width: '42px', textAlign: 'right', flexShrink: 0, fontWeight: 'bold' },
-    totalRow: { display: 'flex', justifyContent: 'flex-end', gap: '8px', fontSize: '11px', marginBottom: '2px' },
-    lbl:      { width: '80px', textAlign: 'right' },
-    val:      { width: '52px', textAlign: 'right', fontWeight: 'bold' },
-    noprint:  { marginTop: '14px', textAlign: 'center' },
+    dash:     { borderTop: '1px dashed #000', margin: '6px 0' },
+    solid:    { borderTop: '1px solid #000', margin: '5px 0' },
+    row:      { display: 'flex', justifyContent: 'space-between', marginBottom: '3px', fontSize: '13px' },
+    hdr:      { display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', marginBottom: '4px' },
+    colName:  { flex: '1', paddingRight: '4px', overflow: 'hidden' },
+    colQty:   { width: '24px', textAlign: 'center', flexShrink: 0 },
+    colRate:  { width: '42px', textAlign: 'right', flexShrink: 0 },
+    colAmt:   { width: '46px', textAlign: 'right', flexShrink: 0, fontWeight: 'bold' },
+    totalRow: { display: 'flex', justifyContent: 'flex-end', gap: '8px', fontSize: '13px', marginBottom: '3px' },
+    lbl:      { width: '90px', textAlign: 'right' },
+    val:      { width: '60px', textAlign: 'right', fontWeight: 'bold' },
+    noprint:  { marginTop: '18px', textAlign: 'center' },
   };
 
   return (
@@ -105,24 +105,31 @@ export default function PrintReceipt() {
       {/* ── 80mm Epson TM-T88IV print CSS ── */}
       <style>{`
         @page {
-          size: 80mm auto !important;
-          margin: 0 !important;
+          size: auto;
+          margin: 0mm !important;
         }
         * { box-sizing: border-box; }
         html, body {
           margin: 0 !important;
           padding: 0 !important;
           background: #fff !important;
-          width: 80mm !important;
+          width: 100% !important;
+        }
+        @media screen {
+          body {
+            max-width: 76mm;
+            margin: 20px auto;
+            border: 1px dashed #ccc;
+            padding: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+          }
         }
         @media print {
           .no-print { display: none !important; }
           html, body {
-            width: 80mm !important;
+            width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
           }
         }
       `}</style>
@@ -180,9 +187,11 @@ export default function PrintReceipt() {
               <div key={item.id} style={{ marginBottom: '3px' }}>
                 <div style={S.row}>
                   <span style={S.colName}>
-                    <div>{item.name}</div>
+                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.name}>
+                      {item.name}
+                    </div>
                     {item.notes && (
-                      <div style={{ fontSize: '9px', fontStyle: 'italic', color: '#222', marginTop: '1px', fontWeight: 'bold' }}>
+                      <div style={{ fontSize: '9px', fontStyle: 'italic', color: '#222', marginTop: '1px', fontWeight: 'bold', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.notes}>
                         * {item.notes}
                       </div>
                     )}
