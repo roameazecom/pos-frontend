@@ -31,7 +31,7 @@ const SOCKET_URL = urls.socket;
 
 console.log('POS Connecting to Server:', SOCKET_URL);
 
-const socket = io(SOCKET_URL, {
+export const socket = io(SOCKET_URL, {
   transports: ['websocket', 'polling'],
   reconnection: true,
   reconnectionDelay: 1000,

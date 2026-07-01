@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { usePosStore } from '../store/posStore';
+import { usePosStore, socket } from '../store/posStore';
 import { useUiStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
 import {
@@ -739,6 +739,24 @@ export default function WaiterDashboard() {
             </>
           ) : rightTab === 'active' ? (
             <>
+              {activeOrder && (
+                <button
+                  onClick={() => {
+                    socket.emit('request_remote_print', {
+                      orderId: activeOrder.id,
+                      orderObj: {
+                        ...activeOrder,
+                        payment_type: 'ESTIMATE / UNPAID',
+                        is_estimate: true
+                      }
+                    });
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 mb-4 rounded-xl font-black text-xs transition-all border border-orange-200 text-orange-600 bg-orange-50/50 hover:bg-orange-100/60 active:scale-95 shadow-sm"
+                >
+                  <Receipt className="w-4 h-4 shrink-0" />
+                  <span>Print Customer Bill (Unpaid)</span>
+                </button>
+              )}
               <div className="flex justify-between items-center mb-4">
                 <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>Total Due</span>
                 <span className="text-2xl font-black" style={{ color: '#ea580c' }}>₹{activeOrder?.subtotal || 0}</span>

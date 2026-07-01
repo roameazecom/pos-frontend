@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { usePosStore } from '../store/posStore';
+import { useState, useMemo, useEffect } from 'react';
+import { usePosStore, socket } from '../store/posStore';
 import { useAuthStore } from '../store/authStore';
 import {
   Printer, CreditCard, Banknote, User, Phone, X, History,
@@ -81,6 +81,20 @@ export default function Billing() {
       }, 15000);
     }
   };
+
+  useEffect(() => {
+    const handleRemotePrint = (data) => {
+      if (data && data.orderId && data.orderObj) {
+        console.log('[Remote Print] Triggering print for order:', data.orderId);
+        printReceiptSilently(data.orderId, data.orderObj);
+      }
+    };
+
+    socket.on('trigger_remote_print', handleRemotePrint);
+    return () => {
+      socket.off('trigger_remote_print', handleRemotePrint);
+    };
+  }, [restaurantDetails]);
 
   const formatDateTime = (dateStr) => {
     if (!dateStr) return 'N/A';
