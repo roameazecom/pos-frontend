@@ -42,10 +42,18 @@ export default function RestaurantSettings() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const generateDailyPin = () => {
+  const generateDailyPin = async () => {
     const pin = Math.floor(1000 + Math.random() * 9000).toString();
-    setFormData(prev => ({ ...prev, daily_pin: pin }));
-    toast.success(`Generated Today's PIN: ${pin}`);
+    const updatedFormData = { ...formData, daily_pin: pin };
+    setFormData(updatedFormData);
+    try {
+      await axios.put(`${API_URL}/restaurant`, updatedFormData);
+      toast.success(`Generated & Saved Today's PIN: ${pin}`);
+      fetchData();
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to auto-save generated PIN');
+    }
   };
 
   const handleImageUpload = (e) => {

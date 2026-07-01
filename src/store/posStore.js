@@ -249,6 +249,7 @@ export const usePosStore = create((set, get) => ({
         apply_gst: applyGst
       });
       toast.success(`Bill closed successfully! (${paymentType})`);
+      await get().fetchData();
     } catch (err) {
       console.error(err);
       toast.error('Failed to checkout');
@@ -303,6 +304,7 @@ export const usePosStore = create((set, get) => ({
     try {
       await axios.put(`${API_URL}/orders/${orderId}/items/${itemId}`, { status: newStatus });
       if (newStatus === 'ready') toast.success(`Item is Ready!`);
+      await get().fetchData();
     } catch (err) {
       console.error(err);
       toast.error('Failed to update status');
@@ -313,6 +315,7 @@ export const usePosStore = create((set, get) => ({
     try {
       await axios.put(`${API_URL}/orders/${orderId}/kot/${kotId}`, { status: newStatus });
       if (newStatus === 'ready') toast.success(`KOT ${kotId} is Ready!`, { duration: 5000, icon: '🍲' });
+      await get().fetchData();
     } catch (err) {
       console.error(err);
       toast.error('Failed to update KOT status');
@@ -325,6 +328,7 @@ export const usePosStore = create((set, get) => ({
         data: { reason, cancelled_by_name: cancelledByName }
       });
       toast.success('Item deleted from KOT');
+      await get().fetchData();
     } catch (err) {
       console.error(err);
       toast.error('Failed to delete item from KOT');
@@ -338,6 +342,7 @@ export const usePosStore = create((set, get) => ({
         cancelled_by_name: cancelledByName
       });
       toast.success('Entire order cancelled successfully');
+      await get().fetchData();
     } catch (err) {
       console.error(err);
       toast.error('Failed to cancel order');
@@ -348,6 +353,7 @@ export const usePosStore = create((set, get) => ({
     try {
       await axios.put(`${API_URL}/orders/${orderId}/items/${itemId}/quantity`, { quantity });
       toast.success('Quantity updated');
+      await get().fetchData();
     } catch (err) {
       console.error(err);
       toast.error('Failed to update quantity');

@@ -83,7 +83,7 @@ export default function PrintReceipt() {
   /* ── Inline styles (work even if Tailwind/CSS bundle is not loaded in iframe) ── */
   const font = "'Courier New', Courier, monospace";
   const S = {
-    page:     { fontFamily: font, fontSize: '14px', lineHeight: '1.4', color: '#000', background: '#fff', width: '74mm', margin: '0 auto', padding: '0 1mm', boxSizing: 'border-box' },
+    page:     { fontFamily: font, fontSize: '14px', lineHeight: '1.4', color: '#000', background: '#fff', width: '100%', margin: '0', padding: '0', boxSizing: 'border-box' },
     center:   { textAlign: 'center' },
     bold:     { fontWeight: 'bold' },
     dash:     { borderTop: '1px dashed #000', margin: '6px 0' },
@@ -105,7 +105,7 @@ export default function PrintReceipt() {
       {/* ── 80mm Epson TM-T88IV print CSS ── */}
       <style>{`
         @page {
-          size: 80mm auto !important;
+          size: auto;
           margin: 0mm !important;
         }
         * { box-sizing: border-box; }
@@ -113,7 +113,7 @@ export default function PrintReceipt() {
           margin: 0 !important;
           padding: 0 !important;
           background: #fff !important;
-          width: 80mm !important;
+          width: 100% !important;
         }
         @media screen {
           body {
@@ -127,9 +127,10 @@ export default function PrintReceipt() {
         @media print {
           .no-print { display: none !important; }
           html, body {
-            width: 80mm !important;
+            width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
+          }
         }
       `}</style>
 
