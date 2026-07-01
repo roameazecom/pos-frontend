@@ -39,8 +39,33 @@ export default function WaiterDashboard() {
 
   const [rightTab, setRightTab] = useState('new');
   const [showTablesMobile, setShowTablesMobile] = useState(false);
+  const [currentTime, setCurrentTime] = useState(Date.now());
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [orderType, setOrderType] = useState('dine_in');
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 15000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getTableRunningTime = (tableId) => {
+    const order = orders.find(o => o.table_id === tableId && o.status === 'open');
+    if (!order) return null;
+    
+    const start = new Date(order.created_at.includes('T') ? order.created_at : order.created_at.replace(' ', 'T') + '+05:30').getTime();
+    const diffMs = currentTime - start;
+    if (diffMs < 0) return '0m';
+    
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 60) {
+      return `${diffMins}m`;
+    }
+    const hrs = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    return `${hrs}h ${mins}m`;
+  };
   const [takeawayName, setTakeawayName] = useState('');
   const [takeawayPhone, setTakeawayPhone] = useState('');
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
@@ -174,8 +199,13 @@ export default function WaiterDashboard() {
                 </div>
                 <div>
                   <span className="text-[9px] uppercase font-black text-orange-600 block leading-none">Active Table</span>
-                  <span className="text-xs font-black text-slate-800">
-                    Table {tables.find(t => t.id === activeTableId)?.table_number || '?'} {locations.find(l => l.id === tables.find(t => t.id === activeTableId)?.location_id)?.name ? `(${locations.find(l => l.id === tables.find(t => t.id === activeTableId)?.location_id)?.name})` : ''}
+                  <span className="text-xs font-black text-slate-800 flex items-center gap-2 flex-wrap mt-0.5">
+                    <span>Table {tables.find(t => t.id === activeTableId)?.table_number || '?'} {locations.find(l => l.id === tables.find(t => t.id === activeTableId)?.location_id)?.name ? `(${locations.find(l => l.id === tables.find(t => t.id === activeTableId)?.location_id)?.name})` : ''}</span>
+                    {tables.find(t => t.id === activeTableId)?.status === 'occupied' && getTableRunningTime(activeTableId) && (
+                      <span className="text-[9px] font-black text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-md shrink-0">
+                        ⏱️ {getTableRunningTime(activeTableId)}
+                      </span>
+                    )}
                   </span>
                 </div>
               </div>
@@ -238,10 +268,24 @@ export default function WaiterDashboard() {
                             style={{ color: isSelected ? '#ea580c' : isOccupied ? '#b45309' : 'rgba(15,23,42,0.8)' }}>
                             {t.table_number}
                           </span>
-                          <span className="text-[9px] uppercase tracking-wider font-bold"
-                            style={{ color: isOccupied ? '#b45309' : 'rgba(15,23,42,0.4)' }}>
-                            {t.status === 'occupied' ? '● Busy' : '○ Free'}
-                          </span>
+                          
+                          {isOccupied ? (
+                            <div className="flex flex-col items-center gap-0.5 mt-0.5">
+                              <span className="text-[9px] uppercase tracking-wider font-black text-amber-600 block">
+                                ● Busy
+                              </span>
+                              {getTableRunningTime(t.id) && (
+                                <span className="text-[8px] font-black text-slate-500 bg-slate-100 px-1 py-0.5 rounded flex items-center gap-0.5">
+                                  ⏱️ {getTableRunningTime(t.id)}
+                                </span>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-[9px] uppercase tracking-wider font-bold text-slate-400 block mt-0.5">
+                              ○ Free
+                            </span>
+                          )}
+
                           {isSelected && (
                             <div className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center animate-pulse-glow"
                                  style={{ background: '#f97316' }}>
