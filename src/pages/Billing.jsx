@@ -26,6 +26,7 @@ export default function Billing() {
   const [itemToCancel, setItemToCancel] = useState(null);
   const [showOrderCancelModal, setShowOrderCancelModal] = useState(false);
   const [applyGst, setApplyGst] = useState(true);
+  const [customDate, setCustomDate] = useState('');
 
   const activeOrders = orders.filter(o => o.status === 'open');
   const selectedOrder = activeOrders.find(o => o.id === selectedOrderId);
@@ -98,7 +99,9 @@ export default function Billing() {
           (o.id && o.id.toString().includes(q));
         if (!match) return false;
       }
-      if (filters.dateRange !== 'all') {
+      if (customDate) {
+        if (formatDateKeyIST(o.created_at) !== customDate) return false;
+      } else if (filters.dateRange !== 'all') {
         if (filters.dateRange === 'today' && !isToday(o.created_at)) return false;
         if (filters.dateRange === 'yesterday' && !isYesterday(o.created_at)) return false;
         if (filters.dateRange === 'this_week' && !isThisWeek(o.created_at)) return false;
@@ -107,7 +110,7 @@ export default function Billing() {
       if (filters.orderType !== 'all' && o.order_type !== filters.orderType) return false;
       return true;
     });
-  }, [orderHistory, searchQuery, filters]);
+  }, [orderHistory, searchQuery, filters, customDate]);
 
   const stats = useMemo(() => {
     let totalRev = 0, cash = 0, upi = 0, card = 0;
@@ -122,9 +125,9 @@ export default function Billing() {
   }, [filteredHistory]);
 
   const handleCheckoutClick = (type) => { setPaymentType(type); setDiscountAmount(0); setShowModal(true); };
-  const handleConfirmPayment = () => {
+  const handleConfirmPayment = async () => {
     if (selectedOrderId) {
-      checkoutOrder(selectedOrderId, paymentType, checkoutName || selectedOrder?.customer_name || '', checkoutPhone || selectedOrder?.customer_phone || '', user?.id, discountAmount, applyGst);
+      await checkoutOrder(selectedOrderId, paymentType, checkoutName || selectedOrder?.customer_name || '', checkoutPhone || selectedOrder?.customer_phone || '', user?.id, discountAmount, applyGst);
       
       const printOrderObj = {
         ...selectedOrder,
@@ -316,6 +319,30 @@ export default function Billing() {
                       </div>
                     </div>
                   ))}
+
+                  {/* Custom Date Input */}
+                  <div className="pt-2 border-t border-dashed border-slate-200">
+                    <label className="text-[10px] font-black uppercase tracking-widest block mb-1.5" style={{ color: 'rgba(15, 23, 42, 0.55)' }}>
+                      Search Calendar Date
+                    </label>
+                    <div className="flex gap-2 items-center">
+                      <input 
+                        type="date"
+                        value={customDate}
+                        onChange={(e) => setCustomDate(e.target.value)}
+                        className="glass-input px-3 py-1.5 rounded-lg text-xs font-bold w-full"
+                        style={{ background: 'rgba(255,255,255,0.85)', border: '1px solid rgba(0, 0, 0, 0.08)' }}
+                      />
+                      {customDate && (
+                        <button 
+                          onClick={() => setCustomDate('')}
+                          className="px-2 py-1.5 bg-rose-50 border border-rose-200 text-rose-600 font-bold rounded-lg text-[10px] uppercase hover:bg-rose-100"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -358,7 +385,14 @@ export default function Billing() {
                         {getOrderIcon(order.order_type || 'dine_in')}
                       </div>
                       <div>
-                        <h3 className="font-black text-slate-800 text-xs">Bill #{order.id}</h3>
+                        <h3 className="font-black text-slate-800 text-xs flex items-center gap-1.5 flex-wrap">
+                          <span>Bill #{order.id}</span>
+                          {order.order_type === 'dine_in' && order.table_number && (
+                            <span className="text-[9px] font-black text-orange-655 bg-orange-50/50 border border-orange-100/60 px-1.5 py-0.5 rounded-md shrink-0">
+                              T-{order.table_number} ({order.location_name})
+                            </span>
+                          )}
+                        </h3>
                         <p className="text-[10px] font-bold mt-0.5 text-slate-400">
                           {formatDateTime(order.created_at)} ·{' '}
                           <span style={{ color: '#ea580c' }}>{order.payment_type}</span>
