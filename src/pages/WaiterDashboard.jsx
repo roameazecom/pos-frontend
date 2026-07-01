@@ -38,6 +38,7 @@ export default function WaiterDashboard() {
   }, [locations, setActiveLocationTab]);
 
   const [rightTab, setRightTab] = useState('new');
+  const [showTablesMobile, setShowTablesMobile] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [orderType, setOrderType] = useState('dine_in');
   const [takeawayName, setTakeawayName] = useState('');
@@ -164,7 +165,31 @@ export default function WaiterDashboard() {
         <div className="sticky top-0 z-20 shrink-0 p-4 lg:p-5 space-y-4"
              style={panelStyle}>
 
-          <div className="space-y-4 max-h-[220px] overflow-y-auto pr-1.5 custom-scrollbar">
+          {/* Mobile Selected Table Banner (Collapsible) */}
+          {activeTableId && !showTablesMobile && (
+            <div className="flex items-center justify-between bg-orange-50 border border-orange-100/70 p-3 rounded-2xl animate-fade-in lg:hidden">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-600 shrink-0">
+                  <Coffee className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-[9px] uppercase font-black text-orange-600 block leading-none">Active Table</span>
+                  <span className="text-xs font-black text-slate-800">
+                    Table {tables.find(t => t.id === activeTableId)?.table_number || '?'} {locations.find(l => l.id === tables.find(t => t.id === activeTableId)?.location_id)?.name ? `(${locations.find(l => l.id === tables.find(t => t.id === activeTableId)?.location_id)?.name})` : ''}
+                  </span>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowTablesMobile(true)}
+                className="px-3 py-1.5 bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold rounded-xl text-[10px] uppercase transition-colors active:scale-95 shrink-0"
+              >
+                Change Table
+              </button>
+            </div>
+          )}
+
+          {/* Full Grid Container (hidden on mobile when table is selected and collapsed) */}
+          <div className={`${(activeTableId && !showTablesMobile) ? 'hidden lg:block' : 'block'} space-y-4 max-h-[190px] overflow-y-auto pr-1.5 custom-scrollbar`}>
             {locations.map(loc => {
               const locTables = tables.filter(t => t.location_id === loc.id);
               if (locTables.length === 0) return null;
@@ -187,6 +212,7 @@ export default function WaiterDashboard() {
                           key={t.id}
                           onClick={() => {
                             setActiveTableId(t.id);
+                            setShowTablesMobile(false); // Collapse grid on mobile
                             if (t.status === 'occupied') setRightTab('active');
                             else setRightTab('new');
                           }}
