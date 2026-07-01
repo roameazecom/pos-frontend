@@ -761,11 +761,9 @@ if (typeof window !== 'undefined') {
 // Helper to play synthesized sounds using a single global AudioContext
 const playSound = (type) => {
   try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    
     if (!globalAudioCtx) {
-      globalAudioCtx = new AudioContext();
+      // Return early if user hasn't clicked/interacted to prevent browser autoplay warnings
+      return;
     }
     
     const ctx = globalAudioCtx;
