@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build-local": "vite build && node copy-to-backend.cjs",
+    "build-local": "vite build && node copy-to-backend.cjs && npx cap copy",
     "lint": "eslint .",
     "preview": "vite preview"
   },
