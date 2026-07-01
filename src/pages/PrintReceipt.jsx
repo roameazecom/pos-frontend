@@ -83,29 +83,29 @@ export default function PrintReceipt() {
   /* ── Inline styles (work even if Tailwind/CSS bundle is not loaded in iframe) ── */
   const font = "'Courier New', Courier, monospace";
   const S = {
-    page:     { fontFamily: font, fontSize: '14px', lineHeight: '1.4', color: '#000', background: '#fff', width: '100%', margin: '0', padding: '0', boxSizing: 'border-box' },
+    page:     { fontFamily: font, fontSize: '12px', lineHeight: '1.3', color: '#000', background: '#fff', width: '65mm', margin: '0 auto', padding: '0 1mm', boxSizing: 'border-box' },
     center:   { textAlign: 'center' },
     bold:     { fontWeight: 'bold' },
     dash:     { borderTop: '1px dashed #000', margin: '6px 0' },
     solid:    { borderTop: '1px solid #000', margin: '5px 0' },
-    row:      { display: 'flex', justifyContent: 'space-between', marginBottom: '3px', fontSize: '13px' },
-    hdr:      { display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '13px', marginBottom: '4px' },
+    row:      { display: 'flex', justifyContent: 'space-between', marginBottom: '3px', fontSize: '11px' },
+    hdr:      { display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '11px', marginBottom: '4px' },
     colName:  { flex: '1', paddingRight: '4px', overflow: 'hidden' },
-    colQty:   { width: '24px', textAlign: 'center', flexShrink: 0 },
-    colRate:  { width: '42px', textAlign: 'right', flexShrink: 0 },
-    colAmt:   { width: '46px', textAlign: 'right', flexShrink: 0, fontWeight: 'bold' },
-    totalRow: { display: 'flex', justifyContent: 'flex-end', gap: '8px', fontSize: '13px', marginBottom: '3px' },
-    lbl:      { width: '90px', textAlign: 'right' },
-    val:      { width: '60px', textAlign: 'right', fontWeight: 'bold' },
+    colQty:   { width: '20px', textAlign: 'center', flexShrink: 0 },
+    colRate:  { width: '38px', textAlign: 'right', flexShrink: 0 },
+    colAmt:   { width: '42px', textAlign: 'right', flexShrink: 0, fontWeight: 'bold' },
+    totalRow: { display: 'flex', justifyContent: 'flex-end', gap: '6px', fontSize: '11px', marginBottom: '3px' },
+    lbl:      { width: '80px', textAlign: 'right' },
+    val:      { width: '55px', textAlign: 'right', fontWeight: 'bold' },
     noprint:  { marginTop: '18px', textAlign: 'center' },
   };
 
   return (
     <>
-      {/* ── 80mm Epson TM-T88IV print CSS ── */}
+      {/* ── 70mm Thermal Print CSS ── */}
       <style>{`
         @page {
-          size: auto;
+          size: 70mm auto !important;
           margin: 0mm !important;
         }
         * { box-sizing: border-box; }
@@ -113,11 +113,11 @@ export default function PrintReceipt() {
           margin: 0 !important;
           padding: 0 !important;
           background: #fff !important;
-          width: 100% !important;
+          width: 70mm !important;
         }
         @media screen {
           body {
-            max-width: 76mm;
+            max-width: 70mm;
             margin: 20px auto;
             border: 1px dashed #ccc;
             padding: 10px;
@@ -127,7 +127,7 @@ export default function PrintReceipt() {
         @media print {
           .no-print { display: none !important; }
           html, body {
-            width: 100% !important;
+            width: 70mm !important;
             margin: 0 !important;
             padding: 0 !important;
           }
