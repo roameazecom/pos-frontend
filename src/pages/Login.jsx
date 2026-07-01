@@ -19,7 +19,7 @@ export default function Login() {
   const handleLogoClick = () => {
     setLogoClicks((prev) => {
       const count = prev + 1;
-      if (count >= 5) {
+      if (count >= 3) {
         setIsServerModalOpen(true);
         return 0;
       }
@@ -29,7 +29,7 @@ export default function Login() {
     if (window.logoClickTimeout) clearTimeout(window.logoClickTimeout);
     window.logoClickTimeout = setTimeout(() => {
       setLogoClicks(0);
-    }, 2000);
+    }, 4000);
   };
 
   const login = useAuthStore((state) => state.login);

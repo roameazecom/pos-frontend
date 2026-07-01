@@ -19,7 +19,7 @@ export default function KDS() {
   const handleLogoClick = () => {
     setLogoClicks((prev) => {
       const count = prev + 1;
-      if (count >= 5) {
+      if (count >= 3) {
         setIsServerModalOpen(true);
         return 0;
       }
@@ -28,7 +28,7 @@ export default function KDS() {
     if (window.logoClickTimeout) clearTimeout(window.logoClickTimeout);
     window.logoClickTimeout = setTimeout(() => {
       setLogoClicks(0);
-    }, 2000);
+    }, 4000);
   };
 
   useEffect(() => {
