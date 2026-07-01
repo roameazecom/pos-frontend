@@ -10,7 +10,7 @@ import ManagerAuthModal from '../components/common/ManagerAuthModal';
 import { formatIST, formatDateKeyIST, todayIST } from '../utils/formatIST';
 
 export default function Billing() {
-  const { orders, orderHistory, tables, checkoutOrder, restaurantDetails, deleteActiveOrderItem, updateOrderItemDiscount, cancelEntireOrder } = usePosStore();
+  const { orders, orderHistory, tables, checkoutOrder, restaurantDetails, deleteActiveOrderItem, updateOrderItemDiscount, cancelEntireOrder, updateHistoryOrderDiscount } = usePosStore();
   const { user } = useAuthStore();
   const [viewTab, setViewTab] = useState('active');
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,7 +19,13 @@ export default function Billing() {
   const [paymentType, setPaymentType] = useState('Cash');
   const [checkoutName, setCheckoutName] = useState('');
   const [checkoutPhone, setCheckoutPhone] = useState('');
-  const [discountAmount, setDiscountAmount] = useState(0);
+  const [checkoutDiscountType, setCheckoutDiscountType] = useState('flat'); // 'flat' or 'percent'
+  const [checkoutDiscountValue, setCheckoutDiscountValue] = useState(0);
+  const [showHistoryDiscountModal, setShowHistoryDiscountModal] = useState(false);
+  const [historyDiscountOrder, setHistoryDiscountOrder] = useState(null);
+  const [historyDiscountType, setHistoryDiscountType] = useState('flat');
+  const [historyDiscountValue, setHistoryDiscountValue] = useState(0);
+  const [historyApplyGst, setHistoryApplyGst] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({ dateRange: 'all', paymentType: 'all', orderType: 'all' });
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -31,6 +37,9 @@ export default function Billing() {
   const activeOrders = orders.filter(o => o.status === 'open');
   const selectedOrder = activeOrders.find(o => o.id === selectedOrderId);
   const subtotal = selectedOrder ? selectedOrder.subtotal : 0;
+  const discountAmount = checkoutDiscountType === 'percent' 
+    ? Number(((subtotal * checkoutDiscountValue) / 100).toFixed(2)) 
+    : Number(checkoutDiscountValue || 0);
   const taxRate = applyGst && restaurantDetails?.tax_percent ? (restaurantDetails.tax_percent / 100) : 0;
   const netSubtotal = Math.max(0, subtotal - discountAmount);
   const calculatedTax = selectedOrder ? netSubtotal * taxRate : 0;
@@ -124,7 +133,7 @@ export default function Billing() {
     return { totalOrders: filteredHistory.length, totalRev, cash, upi, card };
   }, [filteredHistory]);
 
-  const handleCheckoutClick = (type) => { setPaymentType(type); setDiscountAmount(0); setShowModal(true); };
+  const handleCheckoutClick = (type) => { setPaymentType(type); setCheckoutDiscountValue(0); setCheckoutDiscountType('flat'); setShowModal(true); };
   const handleConfirmPayment = async () => {
     if (selectedOrderId) {
       await checkoutOrder(selectedOrderId, paymentType, checkoutName || selectedOrder?.customer_name || '', checkoutPhone || selectedOrder?.customer_phone || '', user?.id, discountAmount, applyGst);
@@ -142,7 +151,7 @@ export default function Billing() {
       // Auto-print thermal POS receipt silently
       printReceiptSilently(selectedOrderId, printOrderObj);
       
-      setSelectedOrderId(null); setShowModal(false); setCheckoutName(''); setCheckoutPhone(''); setDiscountAmount(0); setApplyGst(true);
+      setSelectedOrderId(null); setShowModal(false); setCheckoutName(''); setCheckoutPhone(''); setCheckoutDiscountValue(0); setCheckoutDiscountType('flat'); setApplyGst(true);
     }
   };
   const handlePrintUnpaidBill = () => {
@@ -684,12 +693,24 @@ export default function Billing() {
                     <div className="flex justify-between font-bold text-sm" style={{ color: 'rgba(15, 23, 42, 0.55)' }}>
                       <span>Subtotal</span><span className="text-surface-100">₹{(histOrder.subtotal || 0).toFixed(2)}</span>
                     </div>
-                    {histOrder.discount_amount > 0 && (
-                      <div className="flex justify-between font-bold text-sm text-emerald-600">
-                        <span>Discount</span>
+                    <div className="flex justify-between font-bold text-sm text-emerald-600 items-center">
+                      <span>Discount</span>
+                      <div className="flex items-center gap-1.5">
                         <span className="font-semibold">-₹{(histOrder.discount_amount || 0).toFixed(2)}</span>
+                        <button
+                          onClick={() => {
+                            setHistoryDiscountOrder(histOrder);
+                            setHistoryDiscountValue(histOrder.discount_amount || 0);
+                            setHistoryDiscountType('flat');
+                            setHistoryApplyGst(histOrder.tax_amount > 0);
+                            setShowHistoryDiscountModal(true);
+                          }}
+                          className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-50 text-emerald-700 border border-emerald-200/60 hover:bg-emerald-100/70 transition-all shrink-0 cursor-pointer"
+                        >
+                          {histOrder.discount_amount > 0 ? 'Edit' : 'Apply'}
+                        </button>
                       </div>
-                    )}
+                    </div>
                     <div className="flex justify-between font-bold text-sm pb-3"
                          style={{ color: 'rgba(15, 23, 42, 0.5)', borderBottom: '1px dashed rgba(0,0,0,0.08)' }}>
                       <span>Taxes</span><span>₹{(histOrder.tax_amount || 0).toFixed(2)}</span>
@@ -759,16 +780,46 @@ export default function Billing() {
 
               {/* Discount */}
               <div>
-                <label className="block text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>
-                  Discount (₹) <span style={{ color: 'rgba(15, 23, 42, 0.35)' }}>(Optional)</span>
-                </label>
-                <div className="relative">
-                  <Banknote className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: 'rgba(15, 23, 42, 0.35)' }} />
-                  <input type="number" min="0" max={subtotal} value={discountAmount || ''}
-                    onChange={(e) => setDiscountAmount(Number(e.target.value))}
-                    className="glass-input w-full pl-11 pr-4 py-3 rounded-xl text-sm font-medium"
-                    placeholder="Enter discount amount" />
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Discount <span style={{ color: 'rgba(15, 23, 42, 0.35)' }}>(Optional)</span>
+                  </label>
+                  <div className="flex bg-slate-100 rounded-lg p-0.5 border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => { setCheckoutDiscountType('flat'); setCheckoutDiscountValue(0); }}
+                      className={`px-2 py-0.5 text-[10px] font-black rounded-md transition-all ${checkoutDiscountType === 'flat' ? 'bg-white text-orange-650 shadow-sm' : 'text-slate-500'}`}
+                    >
+                      Flat (₹)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setCheckoutDiscountType('percent'); setCheckoutDiscountValue(0); }}
+                      className={`px-2 py-0.5 text-[10px] font-black rounded-md transition-all ${checkoutDiscountType === 'percent' ? 'bg-white text-orange-655 shadow-sm' : 'text-slate-500'}`}
+                    >
+                      Percent (%)
+                    </button>
+                  </div>
                 </div>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-450">
+                    {checkoutDiscountType === 'flat' ? '₹' : '%'}
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    max={checkoutDiscountType === 'flat' ? subtotal : 100}
+                    value={checkoutDiscountValue || ''}
+                    onChange={(e) => setCheckoutDiscountValue(Number(e.target.value))}
+                    className="glass-input w-full pl-9 pr-4 py-3 rounded-xl text-sm font-medium"
+                    placeholder={checkoutDiscountType === 'flat' ? 'Enter rupees discount' : 'Enter percentage e.g. 10'}
+                  />
+                </div>
+                {checkoutDiscountType === 'percent' && checkoutDiscountValue > 0 && (
+                  <p className="text-[10px] font-black text-emerald-600 mt-1">
+                    Equivalent Discount: -₹{discountAmount.toFixed(2)}
+                  </p>
+                )}
               </div>
 
               {[
@@ -822,6 +873,119 @@ export default function Billing() {
             setSelectedOrderId(null);
           }}
         />
+      )}
+
+      {/* History Discount Edit Modal */}
+      {showHistoryDiscountModal && historyDiscountOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 backdrop-blur-sm" style={{ background: 'rgba(0,0,0,0.35)' }}
+               onClick={() => setShowHistoryDiscountModal(false)} />
+          <div className="w-full max-w-md rounded-3xl overflow-hidden animate-slide-up relative z-10"
+               style={{ background: 'rgba(255, 255, 255, 0.95)', border: '1px solid rgba(0, 0, 0, 0.1)', backdropFilter: 'blur(30px)' }}>
+            <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #10b981, #059669)' }} />
+            <div className="p-6 flex justify-between items-center" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
+              <h3 className="font-black text-xl text-surface-100">Update Bill Discount</h3>
+              <button onClick={() => setShowHistoryDiscountModal(false)} className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(15, 23, 42, 0.5)' }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 text-left">
+              <div className="p-4 rounded-2xl flex justify-between items-center"
+                   style={{ background: 'rgba(5, 150, 105, 0.08)', border: '1px solid rgba(5, 150, 105, 0.2)' }}>
+                <span className="font-bold text-sm text-slate-700">Subtotal</span>
+                <span className="text-xl font-black text-slate-800">₹{historyDiscountOrder.subtotal.toFixed(2)}</span>
+              </div>
+
+              {/* Discount Selection */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
+                    Discount Amount
+                  </label>
+                  <div className="flex bg-slate-100 rounded-lg p-0.5 border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => { setHistoryDiscountType('flat'); setHistoryDiscountValue(0); }}
+                      className={`px-2 py-0.5 text-[10px] font-black rounded-md transition-all ${historyDiscountType === 'flat' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
+                    >
+                      Flat (₹)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setHistoryDiscountType('percent'); setHistoryDiscountValue(0); }}
+                      className={`px-2 py-0.5 text-[10px] font-black rounded-md transition-all ${historyDiscountType === 'percent' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}`}
+                    >
+                      Percent (%)
+                    </button>
+                  </div>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">
+                    {historyDiscountType === 'flat' ? '₹' : '%'}
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    max={historyDiscountType === 'flat' ? historyDiscountOrder.subtotal : 100}
+                    value={historyDiscountValue || ''}
+                    onChange={(e) => setHistoryDiscountValue(Number(e.target.value))}
+                    className="glass-input w-full pl-9 pr-4 py-3 rounded-xl text-sm font-medium"
+                    placeholder={historyDiscountType === 'flat' ? 'Enter rupees discount' : 'Enter percentage e.g. 10'}
+                  />
+                </div>
+                {historyDiscountType === 'percent' && historyDiscountValue > 0 && (
+                  <p className="text-[10px] font-black text-emerald-600 mt-1">
+                    Equivalent Discount: -₹{((historyDiscountOrder.subtotal * historyDiscountValue) / 100).toFixed(2)}
+                  </p>
+                )}
+              </div>
+
+              {/* GST Checkbox */}
+              <div className="flex justify-between items-center p-3 rounded-2xl text-left"
+                   style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                <div>
+                  <span className="text-xs font-black text-slate-800 block">Apply GST ({restaurantDetails?.tax_percent || 5}%)</span>
+                  <span className="text-[10px] text-slate-400 font-bold block mt-0.5">Recalculate tax with new discount</span>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={historyApplyGst} 
+                  onChange={(e) => setHistoryApplyGst(e.target.checked)}
+                  className="w-4.5 h-4.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                  style={{ accentColor: '#10b981' }}
+                />
+              </div>
+            </div>
+
+            <div className="p-5 flex gap-3" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
+              <button onClick={() => setShowHistoryDiscountModal(false)} className="px-5 py-3 rounded-xl font-bold text-sm transition-all"
+                style={{ background: 'rgba(0,0,0,0.04)', color: 'rgba(15, 23, 42, 0.55)' }}>Cancel</button>
+              <button 
+                onClick={async () => {
+                  const finalDiscount = historyDiscountType === 'percent' 
+                    ? Number(((historyDiscountOrder.subtotal * historyDiscountValue) / 100).toFixed(2)) 
+                    : Number(historyDiscountValue || 0);
+                  await updateHistoryOrderDiscount(historyDiscountOrder.id, finalDiscount, historyApplyGst);
+                  setShowHistoryDiscountModal(false);
+                  
+                  // Automatically trigger silent print update
+                  const updatedOrderObj = {
+                    ...historyDiscountOrder,
+                    discount_amount: finalDiscount,
+                    tax_amount: historyApplyGst ? (historyDiscountOrder.subtotal - finalDiscount) * ((restaurantDetails?.tax_percent || 5) / 100) : 0,
+                    total_amount: (historyDiscountOrder.subtotal - finalDiscount) + (historyApplyGst ? (historyDiscountOrder.subtotal - finalDiscount) * ((restaurantDetails?.tax_percent || 5) / 100) : 0),
+                  };
+                  printReceiptSilently(historyDiscountOrder.id, updatedOrderObj);
+                }} 
+                className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1 py-3 rounded-xl text-sm font-black transition-all active:scale-95 shadow-md cursor-pointer"
+              >
+                Save & Print Updated Bill
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

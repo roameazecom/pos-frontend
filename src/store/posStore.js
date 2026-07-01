@@ -256,6 +256,20 @@ export const usePosStore = create((set, get) => ({
     }
   },
 
+  updateHistoryOrderDiscount: async (orderId, discountAmount, applyGst = true) => {
+    try {
+      await axios.put(`${API_URL}/orders/${orderId}/history/discount`, {
+        discount_amount: discountAmount,
+        apply_gst: applyGst
+      });
+      toast.success('Bill discount updated successfully!');
+      await get().fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to update discount');
+    }
+  },
+
   transferTable: async (sourceTableId, targetTableId, orderId, waiterName) => {
     try {
       await axios.post(`${API_URL}/orders/transfer`, {
