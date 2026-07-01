@@ -18,7 +18,7 @@ export default function WaiterDashboard() {
     tables, locations, categories, menuItems, orders, orderHistory,
     activeTableId, setActiveTableId,
     cart, addToCart, removeFromCart, updateCartQuantity, clearCart, placeOrder, checkoutOrder,
-    deleteActiveOrderItem, updateActiveOrderItemQuantity, cancelEntireOrder, transferTable
+    deleteActiveOrderItem, updateActiveOrderItemQuantity, cancelEntireOrder, transferTable, updateCartItemNotes
   } = usePosStore();
 
   const { activeLocationTab, setActiveLocationTab, activeCategoryTab, setActiveCategoryTab, mobileView, setMobileView } = useUiStore();
@@ -459,42 +459,56 @@ export default function WaiterDashboard() {
             ) : (
               <div className="space-y-2.5 pb-4">
                 {cart.map(item => (
-                  <div key={item.id} className="p-4 rounded-2xl flex items-center justify-between gap-3 animate-fade-in transition-all"
+                  <div key={item.id} className="p-4 rounded-2xl flex flex-col gap-3 animate-fade-in transition-all"
                        style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-surface-100 text-sm line-clamp-2 leading-tight break-words">{item.name}</h4>
-                      <span className="text-xs font-black mt-1 inline-block px-2 py-0.5 rounded-md"
-                         style={{ background: 'rgba(249,115,22,0.1)', color: '#ea580c' }}>
-                        ₹{item.price}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 rounded-xl p-1"
-                         style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(0,0,0,0.08)' }}>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-bold text-surface-100 text-sm line-clamp-2 leading-tight break-words">{item.name}</h4>
+                        <span className="text-xs font-black mt-1 inline-block px-2 py-0.5 rounded-md"
+                           style={{ background: 'rgba(249,115,22,0.1)', color: '#ea580c' }}>
+                          ₹{item.price}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 rounded-xl p-1"
+                           style={{ background: 'rgba(255,255,255,0.9)', border: '1px solid rgba(0,0,0,0.08)' }}>
+                        <button
+                          onClick={() => item.quantity > 1 ? updateCartQuantity(item.menu_item_id, item.quantity - 1) : removeFromCart(item.menu_item_id)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                          style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(15, 23, 42, 0.6)' }}
+                        >
+                          <Minus className="w-3.5 h-3.5" />
+                        </button>
+                        <span className="font-black text-surface-100 text-sm min-w-[20px] text-center">{item.quantity}</span>
+                        <button
+                          onClick={() => updateCartQuantity(item.menu_item_id, item.quantity + 1)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
+                          style={{ background: 'rgba(249,115,22,0.12)', color: '#ea580c' }}
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                       <button
-                        onClick={() => item.quantity > 1 ? updateCartQuantity(item.menu_item_id, item.quantity - 1) : removeFromCart(item.menu_item_id)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                        style={{ background: 'rgba(0,0,0,0.05)', color: 'rgba(15, 23, 42, 0.6)' }}
+                        onClick={() => removeFromCart(item.menu_item_id)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                        style={{ color: 'rgba(15, 23, 42, 0.4)' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#dc2626'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(15, 23, 42, 0.4)'; }}
                       >
-                        <Minus className="w-3.5 h-3.5" />
-                      </button>
-                      <span className="font-black text-surface-100 text-sm min-w-[20px] text-center">{item.quantity}</span>
-                      <button
-                        onClick={() => updateCartQuantity(item.menu_item_id, item.quantity + 1)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center transition-all"
-                        style={{ background: 'rgba(249,115,22,0.12)', color: '#ea580c' }}
-                      >
-                        <Plus className="w-3.5 h-3.5" />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                    <button
-                      onClick={() => removeFromCart(item.menu_item_id)}
-                      className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
-                      style={{ color: 'rgba(15, 23, 42, 0.4)' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.color = '#dc2626'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(15, 23, 42, 0.4)'; }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+
+                    {/* Instruction Comment Input */}
+                    <div className="relative group/input">
+                      <input 
+                        type="text"
+                        placeholder="Add special instructions (e.g. extra spicy)"
+                        value={item.notes || ''}
+                        onChange={(e) => updateCartItemNotes(item.menu_item_id, e.target.value)}
+                        className="w-full px-3 py-1.5 rounded-xl border border-slate-200/80 bg-white/70 text-[11px] font-medium outline-none focus:border-orange-500 focus:bg-white transition-all shadow-sm"
+                      />
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] pointer-events-none text-slate-400">✍️</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -521,6 +535,12 @@ export default function WaiterDashboard() {
                            style={{ background: 'rgba(249,115,22,0.1)', color: '#ea580c' }}>
                           ₹{item.price}
                         </span>
+                        {item.notes && (
+                          <div className="text-[10px] font-bold text-orange-600 mt-1.5 bg-orange-50/50 border border-orange-100/60 px-2 py-0.5 rounded-md flex items-center gap-1 w-fit">
+                            <span>✍️</span>
+                            <span className="italic">{item.notes}</span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex flex-col items-end shrink-0">
                         <span className="font-black text-surface-100 text-base">₹{item.quantity * item.price}</span>

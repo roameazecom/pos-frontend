@@ -420,6 +420,11 @@ export default function Billing() {
                     <div className="flex-1">
                       <p className="font-black text-surface-100 text-sm group-hover:text-orange-600 transition-colors">{item.name}</p>
                       <p className="text-xs font-bold mt-0.5" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>{item.quantity} × ₹{item.price}</p>
+                      {item.notes && (
+                        <p className="text-[10px] font-bold text-orange-600 mt-1 bg-orange-50/50 border border-orange-100/55 px-2 py-0.5 rounded w-fit flex items-center gap-1">
+                          <span>✍️</span><span className="italic">{item.notes}</span>
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-3">
                       {/* Food wise discount input */}
@@ -564,7 +569,14 @@ export default function Billing() {
                           <tr key={idx} className="transition-colors" style={{ borderBottom: '1px solid rgba(0,0,0,0.04)' }}
                               onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.02)'}
                               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                            <td className="p-4 font-black text-surface-100">{item.name}</td>
+                             <td className="p-4 font-black text-surface-100">
+                               <div>{item.name}</div>
+                               {item.notes && (
+                                 <div className="text-[10px] font-bold text-orange-600 mt-1 bg-orange-50/50 border border-orange-100/40 px-2 py-0.5 rounded-md w-fit inline-flex items-center gap-1">
+                                   <span>✍️</span><span className="italic">{item.notes}</span>
+                                 </div>
+                               )}
+                             </td>
                             <td className="p-4 text-center font-bold text-surface-550">{item.quantity}</td>
                             <td className="p-4 text-right font-bold text-surface-550">₹{item.price}</td>
                             <td className="p-4 text-right font-black text-surface-100">₹{item.quantity * item.price}</td>

@@ -219,9 +219,20 @@ export default function KDS() {
       )}
 
       {/* KOT Cards Grid */}
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-hidden flex flex-col gap-3">
+        {activeTab === 'active' && !audioUnlocked && (
+          <div 
+            onClick={unlockAudio}
+            className="bg-amber-500 hover:bg-amber-600 border border-amber-600 text-white font-black text-xs px-4 py-3 rounded-xl flex items-center justify-between cursor-pointer animate-pulse shrink-0 shadow-lg"
+          >
+            <span className="flex items-center gap-2">
+              🔇 <strong>TAP TO UNLOCK SOUND:</strong> Web browser blocked audio. Click this banner to enable buzzer notifications for new orders!
+            </span>
+            <span className="bg-white/20 px-2.5 py-1 rounded-lg text-[10px] uppercase font-black border border-white/20">Click here</span>
+          </div>
+        )}
         {activeTab === 'active' ? (
-          <div className="flex gap-4 lg:gap-5 h-full overflow-hidden">
+          <div className="flex gap-4 lg:gap-5 h-full overflow-hidden flex-1">
             {/* Sidebar with pending/cooking orders checklist */}
             <aside className="w-64 xl:w-80 shrink-0 hidden md:flex flex-col bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden min-h-0">
               <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -405,6 +416,12 @@ export default function KDS() {
                                 <Flame className="w-4 h-4 shrink-0 animate-pulse" style={{ color: '#4f46e5' }} />
                               )}
                             </div>
+                            {item.notes && (
+                              <div className="mt-2 text-[11px] font-black text-red-650 bg-rose-50 border border-rose-200/50 px-2.5 py-1 rounded-lg flex items-center gap-1 w-fit">
+                                <span className="animate-bounce">⚠️</span>
+                                <span className="italic uppercase tracking-wide">{item.notes}</span>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

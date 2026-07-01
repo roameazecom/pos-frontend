@@ -179,7 +179,14 @@ export default function PrintReceipt() {
             return (
               <div key={item.id} style={{ marginBottom: '3px' }}>
                 <div style={S.row}>
-                  <span style={S.colName}>{item.name}</span>
+                  <span style={S.colName}>
+                    <div>{item.name}</div>
+                    {item.notes && (
+                      <div style={{ fontSize: '9px', fontStyle: 'italic', color: '#222', marginTop: '1px', fontWeight: 'bold' }}>
+                        * {item.notes}
+                      </div>
+                    )}
+                  </span>
                   <span style={S.colQty}>{qty}</span>
                   <span style={S.colRate}>{itemNetRate.toFixed(0)}</span>
                   <span style={S.colAmt}>{itemNetAmt.toFixed(0)}</span>

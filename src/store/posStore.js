@@ -193,7 +193,7 @@ export const usePosStore = create((set, get) => ({
     if (existing) {
       return { cart: state.cart.map(i => i.menu_item_id === item.id ? { ...i, quantity: i.quantity + 1 } : i) };
     }
-    return { cart: [...state.cart, { id: Date.now(), menu_item_id: item.id, quantity: 1, name: item.name, price: item.price, status: 'pending' }] };
+    return { cart: [...state.cart, { id: Date.now(), menu_item_id: item.id, quantity: 1, name: item.name, price: item.price, status: 'pending', notes: '' }] };
   }),
 
   removeFromCart: (itemId) => set((state) => ({
@@ -202,6 +202,10 @@ export const usePosStore = create((set, get) => ({
 
   updateCartQuantity: (itemId, quantity) => set((state) => ({
     cart: state.cart.map(i => i.menu_item_id === itemId ? { ...i, quantity } : i)
+  })),
+
+  updateCartItemNotes: (itemId, notes) => set((state) => ({
+    cart: state.cart.map(i => i.menu_item_id === itemId ? { ...i, notes } : i)
   })),
 
   clearCart: () => set({ cart: [] }),
@@ -758,9 +762,8 @@ const playSound = (type) => {
     
     const ctx = globalAudioCtx;
     if (ctx.state === 'suspended') {
-      ctx.resume().then(() => {
-        usePosStore.setState({ audioUnlocked: true });
-      }).catch(e => console.warn('Context resume failed:', e));
+      console.warn(`[Audio] AudioContext is suspended. Playback of "${type}" bypassed until user gesture.`);
+      return;
     }
     
     if (type === 'new_order') {
