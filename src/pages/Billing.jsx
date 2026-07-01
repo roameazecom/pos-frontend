@@ -145,6 +145,22 @@ export default function Billing() {
       setSelectedOrderId(null); setShowModal(false); setCheckoutName(''); setCheckoutPhone(''); setDiscountAmount(0); setApplyGst(true);
     }
   };
+  const handlePrintUnpaidBill = () => {
+    if (selectedOrderId && selectedOrder) {
+      const printOrderObj = {
+        ...selectedOrder,
+        discount_amount: discountAmount,
+        tax_amount: applyGst ? calculatedTax : 0,
+        total_amount: applyGst ? (netSubtotal + calculatedTax) : netSubtotal,
+        payment_type: 'ESTIMATE / UNPAID',
+        customer_name: checkoutName || selectedOrder?.customer_name,
+        customer_phone: checkoutPhone || selectedOrder?.customer_phone,
+        is_estimate: true
+      };
+      printReceiptSilently(selectedOrderId, printOrderObj);
+      toast.success('Unpaid estimate bill sent to print!');
+    }
+  };
   const handleFilterChange = (key, val) => setFilters(prev => ({ ...prev, [key]: val }));
   const activeFiltersCount = Object.values(filters).filter(v => v !== 'all').length;
 
@@ -540,31 +556,45 @@ export default function Billing() {
                 <span className="text-lg font-black text-surface-100 uppercase tracking-wide">Total</span>
                 <span className="text-4xl font-black gradient-text">₹{total.toFixed(2)}</span>
               </div>
-              <div className="grid grid-cols-2 gap-2.5">
+              {/* 1. Print Unpaid Bill (Estimate) Button */}
+              <button
+                onClick={handlePrintUnpaidBill}
+                className="w-full flex items-center justify-center gap-2 py-3 mb-4 rounded-xl font-bold text-xs transition-all border border-orange-200 text-orange-600 bg-orange-50/50 hover:bg-orange-100/60 active:scale-95 shadow-sm"
+              >
+                <Printer className="w-4 h-4 shrink-0" />
+                <span>Print Customer Bill (Unpaid)</span>
+              </button>
+
+              {/* Label for checkout options */}
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">
+                Checkout & Close Bill (Select Payment)
+              </label>
+
+              {/* 2. Compact payment modes selection */}
+              <div className="flex gap-2 mb-4">
                 {[
-                  { label: 'Cash', type: 'Cash', icon: Banknote, color: '#047857', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.2)' },
-                  { label: 'UPI', type: 'UPI', icon: CreditCard, color: '#6d28d9', bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.2)' },
-                ].map(({ label, type, icon: Icon, color, bg, border }) => (
-                  <button key={type} onClick={() => handleCheckoutClick(type)}
-                    className="flex items-center justify-center gap-2 p-4 rounded-xl font-black transition-all hover-lift active:scale-95"
-                    style={{ background: bg, border: `1px solid ${border}`, color }}>
-                    <Icon className="w-5 h-5" /> {label}
+                  { label: 'Cash', type: 'Cash', color: '#047857', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.18)' },
+                  { label: 'UPI', type: 'UPI', color: '#6d28d9', bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.18)' },
+                  { label: 'Card', type: 'Card', color: '#1d4ed8', bg: 'rgba(96,165,250,0.1)', border: 'rgba(96,165,250,0.18)' },
+                ].map(({ label, type, color, bg, border }) => (
+                  <button
+                    key={type}
+                    onClick={() => handleCheckoutClick(type)}
+                    className="flex-1 flex items-center justify-center py-2.5 rounded-xl font-black text-xs transition-all hover-lift active:scale-95"
+                    style={{ background: bg, border: `1px solid ${border}`, color }}
+                  >
+                    {label}
                   </button>
                 ))}
-                <button onClick={() => handleCheckoutClick('Card')}
-                  className="col-span-2 flex items-center justify-center gap-2 p-4 rounded-xl font-black transition-all hover-lift active:scale-95"
-                  style={{ background: 'rgba(96,165,250,0.1)', border: '1px solid rgba(96,165,250,0.2)', color: '#1d4ed8' }}>
-                  <CreditCard className="w-5 h-5" /> Card Payment
-                </button>
-                
-                {/* Cancel Entire Order (Manager Authorization Required) */}
-                <button
-                  onClick={() => setShowOrderCancelModal(true)}
-                  className="col-span-2 flex items-center justify-center gap-2 p-3 mt-2 rounded-xl font-black text-xs border border-red-200 text-red-650 hover:bg-red-50 transition-all active:scale-95"
-                >
-                  Cancel Entire Order
-                </button>
               </div>
+              
+              {/* 3. Cancel Entire Order (Manager Authorization Required) */}
+              <button
+                onClick={() => setShowOrderCancelModal(true)}
+                className="w-full py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider border border-rose-100 text-rose-500 hover:bg-rose-50/50 transition-all active:scale-95"
+              >
+                Cancel Entire Order
+              </button>
             </div>
           </div>
 

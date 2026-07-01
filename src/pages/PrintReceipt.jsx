@@ -135,6 +135,12 @@ export default function PrintReceipt() {
       `}</style>
 
       <div style={S.page}>
+        {/* ── Unpaid Watermark / Header ── */}
+        {(order.status === 'open' || order.is_estimate || order.payment_type === 'ESTIMATE / UNPAID') && (
+          <div style={{ ...S.center, ...S.bold, fontSize: '11px', background: '#000', color: '#fff', padding: '3px 0', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            *** Unpaid Bill / Estimate ***
+          </div>
+        )}
         {/* ── Restaurant Header ── */}
         <div style={S.center}>
           <div style={{ ...S.bold, fontSize: '14px', letterSpacing: '0.5px' }}>
