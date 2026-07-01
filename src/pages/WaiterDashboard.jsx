@@ -202,7 +202,7 @@ export default function WaiterDashboard() {
                   <span className="text-xs font-black text-slate-800 flex items-center gap-2 flex-wrap mt-0.5">
                     <span>Table {tables.find(t => t.id === activeTableId)?.table_number || '?'} {locations.find(l => l.id === tables.find(t => t.id === activeTableId)?.location_id)?.name ? `(${locations.find(l => l.id === tables.find(t => t.id === activeTableId)?.location_id)?.name})` : ''}</span>
                     {tables.find(t => t.id === activeTableId)?.status === 'occupied' && getTableRunningTime(activeTableId) && (
-                      <span className="text-[9px] font-black text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-md shrink-0">
+                      <span className="text-xs font-black text-amber-800 bg-amber-100/90 px-2.5 py-0.5 rounded-md shrink-0">
                         ⏱️ {getTableRunningTime(activeTableId)}
                       </span>
                     )}
@@ -275,7 +275,7 @@ export default function WaiterDashboard() {
                                 ● Busy
                               </span>
                               {getTableRunningTime(t.id) && (
-                                <span className="text-[8px] font-black text-slate-500 bg-slate-100 px-1 py-0.5 rounded flex items-center gap-0.5">
+                                <span className="text-[10px] font-black text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded flex items-center gap-0.5 mt-0.5">
                                   ⏱️ {getTableRunningTime(t.id)}
                                 </span>
                               )}
