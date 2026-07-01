@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePosStore } from '../store/posStore';
 import { useUiStore } from '../store/uiStore';
 import { useAuthStore } from '../store/authStore';
@@ -18,7 +18,7 @@ export default function WaiterDashboard() {
     tables, locations, categories, menuItems, orders, orderHistory,
     activeTableId, setActiveTableId,
     cart, addToCart, removeFromCart, updateCartQuantity, clearCart, placeOrder, checkoutOrder,
-    deleteActiveOrderItem, updateActiveOrderItemQuantity, cancelEntireOrder
+    deleteActiveOrderItem, updateActiveOrderItemQuantity, cancelEntireOrder, transferTable
   } = usePosStore();
 
   const { activeLocationTab, setActiveLocationTab, activeCategoryTab, setActiveCategoryTab, mobileView, setMobileView } = useUiStore();
@@ -51,6 +51,47 @@ export default function WaiterDashboard() {
   const [showOrderCancelModal, setShowOrderCancelModal] = useState(false);
 
   const [menuSearch, setMenuSearch] = useState('');
+
+  // Table transfer modal states
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferSourceTable, setTransferSourceTable] = useState(null);
+  const [isTransferring, setIsTransferring] = useState(false);
+  const longPressTimerRef = useRef(null);
+
+  const handleTableLongPressStart = (table) => {
+    if (table.status !== 'occupied') return;
+    longPressTimerRef.current = setTimeout(() => {
+      setTransferSourceTable(table);
+      setShowTransferModal(true);
+    }, 650);
+  };
+
+  const handleTableLongPressEnd = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleConfirmTransfer = async (targetTable) => {
+    const sourceOrder = orders.find(o => o.table_id === transferSourceTable.id && o.status === 'open');
+    if (!sourceOrder) {
+      toast.error('No active order found on this table');
+      return;
+    }
+
+    setIsTransferring(true);
+    try {
+      await transferTable(transferSourceTable.id, targetTable.id, sourceOrder.id, user?.name || 'Waiter');
+      setActiveTableId(targetTable.id);
+      setRightTab('active');
+      setShowTransferModal(false);
+    } catch (err) {
+      toast.error('Failed to transfer table');
+    } finally {
+      setIsTransferring(false);
+    }
+  };
 
   const filteredTables = tables.filter(t => t.location_id === activeLocationTab);
   const activeTable = tables.find(t => t.id === activeTableId);
@@ -123,73 +164,71 @@ export default function WaiterDashboard() {
         <div className="sticky top-0 z-20 shrink-0 p-4 lg:p-5 space-y-4"
              style={panelStyle}>
 
-          <div className="space-y-3">
-            {/* Location tabs */}
-            <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
-              {locations.map(loc => (
-                <button
-                  key={loc.id}
-                  onClick={() => { setActiveLocationTab(loc.id); setActiveTableId(null); setRightTab('new'); }}
-                  className="px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all duration-300 shrink-0"
-                  style={activeLocationTab === loc.id ? {
-                    background: 'linear-gradient(135deg, #f97316, #ea580c)',
-                    color: 'white',
-                    boxShadow: '0 4px 12px rgba(249,115,22,0.35)'
-                  } : {
-                    background: 'rgba(255,255,255,0.85)',
-                    border: '1px solid rgba(0,0,0,0.07)',
-                    color: 'rgba(15,23,42,0.55)'
-                  }}
-                >
-                  {loc.name}
-                </button>
-              ))}
-            </div>
+          <div className="space-y-4 max-h-[220px] overflow-y-auto pr-1.5 custom-scrollbar">
+            {locations.map(loc => {
+              const locTables = tables.filter(t => t.location_id === loc.id);
+              if (locTables.length === 0) return null;
+              return (
+                <div key={loc.id} className="space-y-2">
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="w-1 h-3.5 rounded bg-orange-500 animate-pulse" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-700">{loc.name}</h3>
+                  </div>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 2xl:grid-cols-10 gap-2.5">
+                    {locTables.map(t => {
+                      const isSelected = activeTableId === t.id;
+                      const isOccupied = t.status === 'occupied';
 
-            {/* Table grid */}
-            <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 2xl:grid-cols-10 gap-2.5">
-              {filteredTables.map(t => {
-                const isSelected = activeTableId === t.id;
-                const isOccupied = t.status === 'occupied';
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => {
-                      setActiveTableId(t.id);
-                      if (t.status === 'occupied') setRightTab('active');
-                      else setRightTab('new');
-                    }}
-                    className="relative p-3 rounded-xl text-center transition-all duration-300 hover-lift"
-                    style={isSelected ? {
-                      background: 'rgba(249,115,22,0.12)',
-                      border: '2px solid rgba(249,115,22,0.55)',
-                      boxShadow: '0 0 20px rgba(249,115,22,0.12)'
-                    } : isOccupied ? {
-                      background: 'rgba(251,191,36,0.08)',
-                      border: '1px solid rgba(251,191,36,0.25)'
-                    } : {
-                      background: 'rgba(255,255,255,0.85)',
-                      border: '1px solid rgba(0,0,0,0.06)'
-                    }}
-                  >
-                    <span className="block text-lg font-black"
-                      style={{ color: isSelected ? '#ea580c' : isOccupied ? '#b45309' : 'rgba(15,23,42,0.8)' }}>
-                      {t.table_number}
-                    </span>
-                    <span className="text-[9px] uppercase tracking-wider font-bold"
-                      style={{ color: isOccupied ? '#b45309' : 'rgba(15,23,42,0.4)' }}>
-                      {t.status === 'occupied' ? '● Busy' : '○ Free'}
-                    </span>
-                    {isSelected && (
-                      <div className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center animate-pulse-glow"
-                           style={{ background: '#f97316' }}>
-                         <CheckCircle2 className="w-2.5 h-2.5 text-white" />
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+                      const handleStart = () => handleTableLongPressStart(t);
+                      const handleEnd = () => handleTableLongPressEnd();
+
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => {
+                            setActiveTableId(t.id);
+                            if (t.status === 'occupied') setRightTab('active');
+                            else setRightTab('new');
+                          }}
+                          onMouseDown={handleStart}
+                          onMouseUp={handleEnd}
+                          onMouseLeave={handleEnd}
+                          onTouchStart={handleStart}
+                          onTouchEnd={handleEnd}
+                          className="relative p-3 rounded-xl text-center transition-all duration-300 hover-lift select-none"
+                          style={isSelected ? {
+                            background: 'rgba(249,115,22,0.12)',
+                            border: '2px solid rgba(249,115,22,0.55)',
+                            boxShadow: '0 0 20px rgba(249,115,22,0.12)'
+                          } : isOccupied ? {
+                            background: 'rgba(251,191,36,0.08)',
+                            border: '1px solid rgba(251,191,36,0.25)'
+                          } : {
+                            background: 'rgba(255,255,255,0.85)',
+                            border: '1px solid rgba(0,0,0,0.06)'
+                          }}
+                        >
+                          <span className="block text-lg font-black"
+                            style={{ color: isSelected ? '#ea580c' : isOccupied ? '#b45309' : 'rgba(15,23,42,0.8)' }}>
+                            {t.table_number}
+                          </span>
+                          <span className="text-[9px] uppercase tracking-wider font-bold"
+                            style={{ color: isOccupied ? '#b45309' : 'rgba(15,23,42,0.4)' }}>
+                            {t.status === 'occupied' ? '● Busy' : '○ Free'}
+                          </span>
+                          {isSelected && (
+                            <div className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full flex items-center justify-center animate-pulse-glow"
+                                 style={{ background: '#f97316' }}>
+                               <CheckCircle2 className="w-2.5 h-2.5 text-white" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -360,44 +399,49 @@ export default function WaiterDashboard() {
             <div className="p-4 space-y-4">
               <p className="text-sm font-bold text-center text-slate-500">Select a Table to View/Active Billing</p>
               
-              {/* Location tabs inline */}
-              <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar">
-                {locations.map(loc => (
-                  <button
-                    key={loc.id}
-                    onClick={() => setActiveLocationTab(loc.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
-                      activeLocationTab === loc.id
-                        ? 'bg-orange-500 text-white'
-                        : 'bg-white text-slate-600 border border-slate-200'
-                    }`}
-                  >
-                    {loc.name}
-                  </button>
-                ))}
-              </div>
-
-              {/* Tables grid inline */}
-              <div className="grid grid-cols-3 gap-2">
-                {filteredTables.map(t => {
-                  const isOccupied = t.status === 'occupied';
+              <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1.5 custom-scrollbar">
+                {locations.map(loc => {
+                  const locTables = tables.filter(t => t.location_id === loc.id);
+                  if (locTables.length === 0) return null;
                   return (
-                    <button
-                      key={t.id}
-                      onClick={() => {
-                        setActiveTableId(t.id);
-                        if (t.status === 'occupied') setRightTab('active');
-                        else setRightTab('new');
-                      }}
-                      className="p-3.5 rounded-xl text-center border border-slate-200 bg-white transition-all active:scale-95 shadow-sm"
-                    >
-                      <span className="block text-base font-black text-slate-800">
-                        {t.table_number}
-                      </span>
-                      <span className="text-[9px] uppercase font-bold text-slate-400">
-                        {isOccupied ? '● Busy' : '○ Free'}
-                      </span>
-                    </button>
+                    <div key={loc.id} className="space-y-2">
+                      <div className="flex items-center gap-2 px-1">
+                        <span className="w-1 h-3.5 rounded bg-orange-500 animate-pulse" />
+                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-700">{loc.name}</h4>
+                      </div>
+                      <div className="grid grid-cols-4 gap-2">
+                        {locTables.map(t => {
+                          const isOccupied = t.status === 'occupied';
+                          
+                          const handleStart = () => handleTableLongPressStart(t);
+                          const handleEnd = () => handleTableLongPressEnd();
+
+                          return (
+                            <button
+                              key={t.id}
+                              onClick={() => {
+                                setActiveTableId(t.id);
+                                if (t.status === 'occupied') setRightTab('active');
+                                else setRightTab('new');
+                              }}
+                              onMouseDown={handleStart}
+                              onMouseUp={handleEnd}
+                              onMouseLeave={handleEnd}
+                              onTouchStart={handleStart}
+                              onTouchEnd={handleEnd}
+                              className="p-3 rounded-xl text-center border border-slate-200 bg-white transition-all active:scale-95 shadow-sm select-none"
+                            >
+                              <span className="block text-base font-black text-slate-800">
+                                {t.table_number}
+                              </span>
+                              <span className="text-[9px] uppercase font-bold text-slate-400">
+                                {isOccupied ? '● Busy' : '○ Free'}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -752,6 +796,77 @@ export default function WaiterDashboard() {
             setActiveTableId(null);
           }}
         />
+      )}
+      {/* Table Transfer Modal */}
+      {showTransferModal && transferSourceTable && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 backdrop-blur-sm" style={{ background: 'rgba(0,0,0,0.35)' }}
+               onClick={() => { if (!isTransferring) setShowTransferModal(false); }} />
+          <div className="w-full max-w-md rounded-3xl overflow-hidden animate-slide-up relative z-10"
+               style={{ background: 'rgba(255, 255, 255, 0.95)', border: '1px solid rgba(0, 0, 0, 0.1)', backdropFilter: 'blur(30px)' }}>
+
+            {/* Top border */}
+            <div className="h-1 w-full bg-gradient-to-r from-orange-500 to-amber-500" />
+
+            <div className="p-6 flex justify-between items-center" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)' }}>
+              <div>
+                <h3 className="font-black text-lg text-slate-800">Transfer Table</h3>
+                <p className="text-xs text-slate-400 font-bold mt-0.5">Move orders from Table {transferSourceTable.table_number}</p>
+              </div>
+              <button 
+                disabled={isTransferring}
+                onClick={() => setShowTransferModal(false)}
+                className="w-8 h-8 rounded-xl flex items-center justify-center transition-all bg-slate-100 text-slate-500 hover:bg-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                Select Destination Table
+              </label>
+
+              {/* Free tables selection grid */}
+              <div className="max-h-[220px] overflow-y-auto pr-1 space-y-4 custom-scrollbar">
+                {locations.map(loc => {
+                  const freeTables = tables.filter(t => t.location_id === loc.id && t.status === 'available');
+                  if (freeTables.length === 0) return null;
+                  return (
+                    <div key={loc.id} className="space-y-1.5">
+                      <h4 className="text-[10px] font-black uppercase text-slate-400 px-1">{loc.name}</h4>
+                      <div className="grid grid-cols-4 gap-2">
+                        {freeTables.map(t => (
+                          <button
+                            key={t.id}
+                            disabled={isTransferring}
+                            onClick={() => handleConfirmTransfer(t)}
+                            className="p-3 rounded-xl text-center border border-slate-200 bg-white hover:border-orange-500 hover:bg-orange-50/30 transition-all font-black text-sm text-slate-700 active:scale-95"
+                          >
+                            {t.table_number}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+                {tables.filter(t => t.status === 'available').length === 0 && (
+                  <p className="text-xs font-bold text-center text-slate-500 py-4">No available free tables to transfer to.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="p-5 flex justify-end gap-3 bg-slate-50" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
+              <button 
+                disabled={isTransferring}
+                onClick={() => setShowTransferModal(false)}
+                className="px-5 py-2.5 rounded-xl font-bold text-xs bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

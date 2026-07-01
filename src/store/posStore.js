@@ -250,6 +250,20 @@ export const usePosStore = create((set, get) => ({
     }
   },
 
+  transferTable: async (sourceTableId, targetTableId, orderId, waiterName) => {
+    try {
+      await axios.post(`${API_URL}/orders/transfer`, {
+        orderId,
+        sourceTableId,
+        targetTableId,
+        waiterName
+      });
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  },
+
   quickBillOrder: async (orderType = 'takeaway', paymentType = 'Cash', customerName = '', customerPhone = '', discountAmount = 0, userId = null) => {
     const state = get();
     if (state.cart.length === 0) return null;
@@ -856,6 +870,11 @@ socket.on('order_updated', (data) => {
       store.addNotification(msg, 'info', null);
       showSystemNotification('Order Update', msg);
     }
+  } else if (data.action === 'table_transfer') {
+    const msg = `Table ${data.source_table_number} moved to Table ${data.target_table_number} by ${data.waiter_name || 'Staff'}`;
+    store.addNotification(msg, 'info', 'ready_order');
+    toast.success(msg, { icon: '🔄', duration: 6000 });
+    showSystemNotification('Table Transferred', msg);
   }
 
   // Re-fetch all data to ensure synchronization
