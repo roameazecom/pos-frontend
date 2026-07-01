@@ -25,11 +25,12 @@ export default function Billing() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [itemToCancel, setItemToCancel] = useState(null);
   const [showOrderCancelModal, setShowOrderCancelModal] = useState(false);
+  const [applyGst, setApplyGst] = useState(true);
 
   const activeOrders = orders.filter(o => o.status === 'open');
   const selectedOrder = activeOrders.find(o => o.id === selectedOrderId);
   const subtotal = selectedOrder ? selectedOrder.subtotal : 0;
-  const taxRate = restaurantDetails?.tax_percent ? (restaurantDetails.tax_percent / 100) : 0.05;
+  const taxRate = applyGst && restaurantDetails?.tax_percent ? (restaurantDetails.tax_percent / 100) : 0;
   const netSubtotal = Math.max(0, subtotal - discountAmount);
   const calculatedTax = selectedOrder ? netSubtotal * taxRate : 0;
   const total = selectedOrder ? netSubtotal + calculatedTax : 0;
@@ -123,12 +124,22 @@ export default function Billing() {
   const handleCheckoutClick = (type) => { setPaymentType(type); setDiscountAmount(0); setShowModal(true); };
   const handleConfirmPayment = () => {
     if (selectedOrderId) {
-      checkoutOrder(selectedOrderId, paymentType, checkoutName || selectedOrder?.customer_name || '', checkoutPhone || selectedOrder?.customer_phone || '', user?.id, discountAmount);
+      checkoutOrder(selectedOrderId, paymentType, checkoutName || selectedOrder?.customer_name || '', checkoutPhone || selectedOrder?.customer_phone || '', user?.id, discountAmount, applyGst);
       
+      const printOrderObj = {
+        ...selectedOrder,
+        discount_amount: discountAmount,
+        tax_amount: applyGst ? calculatedTax : 0,
+        total_amount: applyGst ? (netSubtotal + calculatedTax) : netSubtotal,
+        payment_type: paymentType,
+        customer_name: checkoutName || selectedOrder?.customer_name,
+        customer_phone: checkoutPhone || selectedOrder?.customer_phone
+      };
+
       // Auto-print thermal POS receipt silently
-      printReceiptSilently(selectedOrderId, selectedOrder);
+      printReceiptSilently(selectedOrderId, printOrderObj);
       
-      setSelectedOrderId(null); setShowModal(false); setCheckoutName(''); setCheckoutPhone(''); setDiscountAmount(0);
+      setSelectedOrderId(null); setShowModal(false); setCheckoutName(''); setCheckoutPhone(''); setDiscountAmount(0); setApplyGst(true);
     }
   };
   const handleFilterChange = (key, val) => setFilters(prev => ({ ...prev, [key]: val }));
@@ -466,13 +477,29 @@ export default function Billing() {
             </div>
 
             {/* Totals + Payment */}
-            <div className="shrink-0 p-6" style={{ borderTop: '1px dashed rgba(0, 0, 0, 0.1)' }}>
+            <div className="shrink-0 p-6 font-sans text-left" style={{ borderTop: '1px dashed rgba(0, 0, 0, 0.1)' }}>
+              {/* GST Toggle Checkbox */}
+              <div className="flex justify-between items-center p-3 rounded-2xl mb-4 text-left shadow-sm"
+                   style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
+                <div>
+                  <span className="text-xs font-black text-slate-800 block">Apply GST ({restaurantDetails?.tax_percent || 5}%)</span>
+                  <span className="text-[10px] text-slate-400 font-bold block mt-0.5">Turn off if customer asks for tax-free bill</span>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={applyGst} 
+                  onChange={(e) => setApplyGst(e.target.checked)}
+                  className="w-4 h-4 rounded text-orange-500 focus:ring-orange-400 cursor-pointer border-slate-350"
+                  style={{ accentColor: '#ea580c' }}
+                />
+              </div>
+
               <div className="space-y-2 mb-5">
                 <div className="flex justify-between text-sm font-bold" style={{ color: 'rgba(15, 23, 42, 0.55)' }}>
                   <span>Subtotal</span><span className="text-surface-100">₹{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-xs font-bold" style={{ color: 'rgba(15, 23, 42, 0.5)' }}>
-                  <span>Tax ({restaurantDetails?.tax_percent || 5}%)</span><span>₹{calculatedTax.toFixed(2)}</span>
+                  <span>Tax ({applyGst ? (restaurantDetails?.tax_percent || 5) : 0}%)</span><span>₹{calculatedTax.toFixed(2)}</span>
                 </div>
               </div>
               <div className="flex justify-between items-center pt-4 mb-5" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>

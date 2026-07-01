@@ -238,14 +238,15 @@ export const usePosStore = create((set, get) => ({
     }
   },
 
-  checkoutOrder: async (orderId, paymentType = 'Cash', customerName = '', customerPhone = '', userId = null, discountAmount = 0) => {
+  checkoutOrder: async (orderId, paymentType = 'Cash', customerName = '', customerPhone = '', userId = null, discountAmount = 0, applyGst = true) => {
     try {
       await axios.post(`${API_URL}/orders/${orderId}/checkout`, { 
         payment_type: paymentType,
         customer_name: customerName,
         customer_phone: customerPhone,
         user_id: userId,
-        discount_amount: discountAmount
+        discount_amount: discountAmount,
+        apply_gst: applyGst
       });
       toast.success(`Bill closed successfully! (${paymentType})`);
     } catch (err) {
@@ -268,7 +269,7 @@ export const usePosStore = create((set, get) => ({
     }
   },
 
-  quickBillOrder: async (orderType = 'takeaway', paymentType = 'Cash', customerName = '', customerPhone = '', discountAmount = 0, userId = null) => {
+  quickBillOrder: async (orderType = 'takeaway', paymentType = 'Cash', customerName = '', customerPhone = '', discountAmount = 0, userId = null, applyGst = true) => {
     const state = get();
     if (state.cart.length === 0) return null;
 
@@ -283,7 +284,8 @@ export const usePosStore = create((set, get) => ({
         customer_name: customerName,
         customer_phone: customerPhone,
         payment_type: paymentType,
-        discount_amount: discountAmount
+        discount_amount: discountAmount,
+        apply_gst: applyGst
       });
       
       toast.success(`Quick Bill generated successfully!`);
