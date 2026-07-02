@@ -406,28 +406,44 @@ export const usePosStore = create((set, get) => ({
     try {
       const res = await axios.post(`${API_URL}/config/categories`, category);
       set((state) => ({ categories: [...state.categories, res.data] }));
-    } catch (err) { console.error(err); }
+      toast.success('Category added successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.error || 'Failed to add category');
+    }
   },
   
   addMenuItem: async (item) => {
     try {
       const res = await axios.post(`${API_URL}/config/menu-items`, item);
       set((state) => ({ menuItems: [...state.menuItems, res.data] }));
-    } catch (err) { console.error(err); }
+      toast.success('Menu item added successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.error || 'Failed to add menu item');
+    }
   },
   
   addLocation: async (loc) => {
     try {
       const res = await axios.post(`${API_URL}/config/locations`, loc);
       set((state) => ({ locations: [...state.locations, res.data] }));
-    } catch (err) { console.error(err); }
+      toast.success('Location added successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.error || 'Failed to add location');
+    }
   },
   
   addTable: async (table) => {
     try {
       const res = await axios.post(`${API_URL}/config/tables`, table);
       set((state) => ({ tables: [...state.tables, res.data] }));
-    } catch (err) { console.error(err); }
+      toast.success('Table added successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.error || 'Failed to add table');
+    }
   },
 
   fetchExpensesData: async () => {
