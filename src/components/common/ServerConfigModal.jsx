@@ -65,8 +65,8 @@ export default function ServerConfigModal({ isOpen, onClose }) {
           <div className="grid grid-cols-2 gap-2.5 mb-4">
             <button
               type="button"
-              onClick={() => setUrl('https://darkblue-mosquito-432951.hostingersite.com')}
-              className={`py-2.5 px-3 border rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 active:scale-95 ${url === 'https://darkblue-mosquito-432951.hostingersite.com' ? 'bg-emerald-600/15 border-emerald-500/35 text-emerald-400' : 'bg-surface-950/20 border-surface-800 hover:bg-surface-800/40 text-slate-400'}`}
+              onClick={() => setUrl('https://apn.happypiecafe.in')}
+              className={`py-2.5 px-3 border rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 active:scale-95 ${url === 'https://apn.happypiecafe.in' ? 'bg-emerald-600/15 border-emerald-500/35 text-emerald-400' : 'bg-surface-950/20 border-surface-800 hover:bg-surface-800/40 text-slate-400'}`}
             >
               ☁️ Cloud Server
             </button>
