@@ -48,7 +48,12 @@ let globalAudioCtx = null;
 export const usePosStore = create((set, get) => ({
   getServerUrl: () => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('POS_SERVER_URL') || import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+      const saved = localStorage.getItem('POS_SERVER_URL');
+      if (saved && saved.includes('darkblue-mosquito')) {
+        localStorage.setItem('POS_SERVER_URL', 'https://apn.happypiecafe.in');
+        return 'https://apn.happypiecafe.in';
+      }
+      return saved || import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
     }
     return 'http://localhost:5000';
   },
