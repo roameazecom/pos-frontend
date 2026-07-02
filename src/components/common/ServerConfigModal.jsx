@@ -61,6 +61,24 @@ export default function ServerConfigModal({ isOpen, onClose }) {
         
         {/* Content */}
         <div className="p-6 space-y-5">
+          {/* Quick Preset Toggles */}
+          <div className="grid grid-cols-2 gap-2.5 mb-4">
+            <button
+              type="button"
+              onClick={() => setUrl('https://darkblue-mosquito-432951.hostingersite.com')}
+              className={`py-2.5 px-3 border rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 active:scale-95 ${url === 'https://darkblue-mosquito-432951.hostingersite.com' ? 'bg-emerald-600/15 border-emerald-500/35 text-emerald-400' : 'bg-surface-950/20 border-surface-800 hover:bg-surface-800/40 text-slate-400'}`}
+            >
+              ☁️ Cloud Server
+            </button>
+            <button
+              type="button"
+              onClick={() => setUrl('http://localhost:5000')}
+              className={`py-2.5 px-3 border rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-200 active:scale-95 ${url === 'http://localhost:5000' ? 'bg-emerald-600/15 border-emerald-500/35 text-emerald-400' : 'bg-surface-950/20 border-surface-800 hover:bg-surface-800/40 text-slate-400'}`}
+            >
+              💻 Local Server
+            </button>
+          </div>
+
           <form onSubmit={handleSave} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-surface-400 mb-2">
