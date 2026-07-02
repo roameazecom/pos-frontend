@@ -32,11 +32,11 @@ const SOCKET_URL = urls.socket;
 console.log('POS Connecting to Server:', SOCKET_URL);
 
 export const socket = io(SOCKET_URL, {
-  transports: ['websocket', 'polling'],
+  transports: ['polling', 'websocket'], // Try polling first to avoid HTTP 403 preflight blocks on Hostinger proxies
   reconnection: true,
-  reconnectionDelay: 1000,
-  reconnectionDelayMax: 5000,
-  reconnectionAttempts: Infinity,
+  reconnectionDelay: 3000, // Slower reconnection intervals (3s) to prevent spamming the firewall
+  reconnectionDelayMax: 15000,
+  reconnectionAttempts: 10, // Avoid infinite loop floods if server goes down
   autoConnect: true
 });
 
