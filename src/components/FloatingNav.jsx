@@ -138,11 +138,15 @@ export default function FloatingNav() {
             </div>
           )}
 
-          {/* Server Switch Toggle (Only visible to Admin & Manager) */}
-          {user && (user.role === 'admin' || user.role === 'manager') && (
+          {/* Server Switch Toggle (Visible to everyone, but only interactive for Admin & Manager) */}
+          {user && (
             <button
-              onClick={toggleServer}
-              title={isCloud ? "Switch to Local Server" : "Switch to Cloud Server"}
+              onClick={(user.role === 'admin' || user.role === 'manager') ? toggleServer : undefined}
+              title={
+                (user.role === 'admin' || user.role === 'manager')
+                  ? (isCloud ? "Switch to Local Server" : "Switch to Cloud Server")
+                  : `Server Mode: ${isCloud ? 'Cloud' : 'Local'}`
+              }
               className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
               style={{
                 background: isCloud 
@@ -152,7 +156,8 @@ export default function FloatingNav() {
                   ? '1px solid rgba(96,165,250,0.25)' 
                   : '1px solid rgba(52,211,153,0.25)',
                 color: isCloud ? '#3b82f6' : '#10b981',
-                cursor: 'pointer'
+                cursor: (user.role === 'admin' || user.role === 'manager') ? 'pointer' : 'default',
+                opacity: (user.role === 'admin' || user.role === 'manager') ? 1 : 0.85
               }}
             >
               <span className="text-sm">{isCloud ? '☁️' : '💻'}</span>
