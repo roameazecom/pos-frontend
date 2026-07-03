@@ -901,6 +901,21 @@ socket.on('disconnect', (reason) => {
   usePosStore.setState({ socketConnected: false });
 });
 
+socket.on('sync_status', (data) => {
+  if (data && data.success) {
+    const ordersCount = data.ordersCount || 0;
+    const expensesCount = data.expensesCount || 0;
+    if (ordersCount > 0 || expensesCount > 0) {
+      toast.success(
+        `Sync Alert: Successfully synced ${ordersCount} offline orders & ${expensesCount} expenses to Cloud Database!`,
+        { duration: 7000, icon: '🔄' }
+      );
+      // Fetch fresh data from server to reflect synced updates in the UI
+      usePosStore.getState().fetchData();
+    }
+  }
+});
+
 socket.on('order_updated', (data) => {
   console.log('Socket event received: order_updated', data);
   const store = usePosStore.getState();
