@@ -16,6 +16,17 @@ const getStoredUrls = () => {
         socket: clean
       };
     }
+    
+    // Auto-detect local host if loaded locally
+    const hostname = window.location.hostname;
+    const port = window.location.port;
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.')) {
+      const localUrl = `http://${hostname}${port ? ':' + port : ''}`;
+      return {
+        api: `${localUrl}/api`,
+        socket: localUrl
+      };
+    }
   }
   const defaultSocket = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
   const defaultApi = import.meta.env.VITE_API_URL || `${defaultSocket}/api`;

@@ -14,9 +14,16 @@ if (typeof window !== 'undefined') {
 
 axios.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const savedServer = localStorage.getItem('POS_SERVER_URL');
-    if (savedServer) {
-      const cleanServer = savedServer.trim().replace(/\/$/, "");
+    let targetServer = localStorage.getItem('POS_SERVER_URL');
+    if (!targetServer) {
+      const hostname = window.location.hostname;
+      const port = window.location.port;
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.')) {
+        targetServer = `http://${hostname}${port ? ':' + port : ''}`;
+      }
+    }
+    if (targetServer) {
+      const cleanServer = targetServer.trim().replace(/\/$/, "");
       const currentUrl = config.url || '';
       const apiIndex = currentUrl.indexOf('/api');
       if (apiIndex !== -1) {
