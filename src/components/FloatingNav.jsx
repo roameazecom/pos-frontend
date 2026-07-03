@@ -15,6 +15,10 @@ export default function FloatingNav() {
   const isCloud = !currentUrl || currentUrl.includes('happypiecafe.in');
 
   const toggleServer = () => {
+    const targetMode = isCloud ? 'Local Server (http://localhost:5000)' : 'Cloud Server (https://apn.happypiecafe.in)';
+    const confirmSwitch = window.confirm(`Are you sure you want to switch the application to ${targetMode}?`);
+    if (!confirmSwitch) return;
+
     if (isCloud) {
       localStorage.setItem('POS_SERVER_URL', 'http://localhost:5000');
       toast.success('Switched to Local Server Mode (http://localhost:5000)');
@@ -124,24 +128,26 @@ export default function FloatingNav() {
             </div>
           )}
 
-          {/* Server Switch Toggle */}
-          <button
-            onClick={toggleServer}
-            title={isCloud ? "Switch to Local Server" : "Switch to Cloud Server"}
-            className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
-            style={{
-              background: isCloud 
-                ? 'linear-gradient(135deg, rgba(96,165,250,0.15), rgba(59,130,246,0.08))' 
-                : 'linear-gradient(135deg, rgba(52,211,153,0.15), rgba(16,185,129,0.08))',
-              border: isCloud 
-                ? '1px solid rgba(96,165,250,0.25)' 
-                : '1px solid rgba(52,211,153,0.25)',
-              color: isCloud ? '#3b82f6' : '#10b981',
-              cursor: 'pointer'
-            }}
-          >
-            <span className="text-sm">{isCloud ? '☁️' : '💻'}</span>
-          </button>
+          {/* Server Switch Toggle (Only visible to Admin & Manager) */}
+          {user && (user.role === 'admin' || user.role === 'manager') && (
+            <button
+              onClick={toggleServer}
+              title={isCloud ? "Switch to Local Server" : "Switch to Cloud Server"}
+              className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
+              style={{
+                background: isCloud 
+                  ? 'linear-gradient(135deg, rgba(96,165,250,0.15), rgba(59,130,246,0.08))' 
+                  : 'linear-gradient(135deg, rgba(52,211,153,0.15), rgba(16,185,129,0.08))',
+                border: isCloud 
+                  ? '1px solid rgba(96,165,250,0.25)' 
+                  : '1px solid rgba(52,211,153,0.25)',
+                color: isCloud ? '#3b82f6' : '#10b981',
+                cursor: 'pointer'
+              }}
+            >
+              <span className="text-sm">{isCloud ? '☁️' : '💻'}</span>
+            </button>
+          )}
 
           {/* Logout */}
           <button
