@@ -3,11 +3,29 @@ import { ChefHat, Coffee, Receipt, Settings, LogOut, ShoppingBag, User, Shopping
 import { useAuthStore } from '../store/authStore';
 import { useUiStore } from '../store/uiStore';
 
+import toast from 'react-hot-toast';
+
 export default function FloatingNav() {
   const { user, logout } = useAuthStore();
   const { mobileView, setMobileView } = useUiStore();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+
+  const currentUrl = localStorage.getItem('POS_SERVER_URL') || '';
+  const isCloud = !currentUrl || currentUrl.includes('happypiecafe.in');
+
+  const toggleServer = () => {
+    if (isCloud) {
+      localStorage.setItem('POS_SERVER_URL', 'http://localhost:5000');
+      toast.success('Switched to Local Server Mode (http://localhost:5000)');
+    } else {
+      localStorage.setItem('POS_SERVER_URL', 'https://apn.happypiecafe.in');
+      toast.success('Switched to Cloud Server Mode (https://apn.happypiecafe.in)');
+    }
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
+  };
 
   const handleLogout = () => {
     logout();
@@ -105,6 +123,25 @@ export default function FloatingNav() {
               {user.name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />}
             </div>
           )}
+
+          {/* Server Switch Toggle */}
+          <button
+            onClick={toggleServer}
+            title={isCloud ? "Switch to Local Server" : "Switch to Cloud Server"}
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200"
+            style={{
+              background: isCloud 
+                ? 'linear-gradient(135deg, rgba(96,165,250,0.15), rgba(59,130,246,0.08))' 
+                : 'linear-gradient(135deg, rgba(52,211,153,0.15), rgba(16,185,129,0.08))',
+              border: isCloud 
+                ? '1px solid rgba(96,165,250,0.25)' 
+                : '1px solid rgba(52,211,153,0.25)',
+              color: isCloud ? '#3b82f6' : '#10b981',
+              cursor: 'pointer'
+            }}
+          >
+            <span className="text-sm">{isCloud ? '☁️' : '💻'}</span>
+          </button>
 
           {/* Logout */}
           <button
