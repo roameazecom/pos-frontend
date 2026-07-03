@@ -14,7 +14,7 @@ export default function FloatingNav() {
   const currentUrl = localStorage.getItem('POS_SERVER_URL') || '';
   const isCloud = !currentUrl || currentUrl.includes('happypiecafe.in');
 
-  const toggleServer = () => {
+  const toggleServer = async () => {
     const targetMode = isCloud ? 'Local Server (http://localhost:5000)' : 'Cloud Server (https://apn.happypiecafe.in)';
     const confirmSwitch = window.confirm(`Are you sure you want to switch the application to ${targetMode}?`);
     if (!confirmSwitch) return;
@@ -22,13 +22,23 @@ export default function FloatingNav() {
     if (isCloud) {
       localStorage.setItem('POS_SERVER_URL', 'http://localhost:5000');
       toast.success('Switched to Local Server Mode (http://localhost:5000)');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } else {
+      const syncToast = toast.loading('Syncing offline data to cloud database...');
+      try {
+        await axios.post('/api/config/sync-now');
+        toast.success('Offline data successfully synced to Cloud!', { id: syncToast });
+      } catch (err) {
+        toast.error('Sync failed (offline or connection issue), switching anyway...', { id: syncToast });
+      }
       localStorage.setItem('POS_SERVER_URL', 'https://apn.happypiecafe.in');
       toast.success('Switched to Cloud Server Mode (https://apn.happypiecafe.in)');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     }
-    setTimeout(() => {
-      window.location.reload();
-    }, 1000);
   };
 
   const handleLogout = () => {
