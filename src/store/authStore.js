@@ -30,7 +30,17 @@ export const useAuthStore = create(
           throw new Error(error.response?.data?.error || 'Invalid email or password');
         }
       },
-
+      
+      kdsLogin: async () => {
+        try {
+          const response = await axios.post(`${getApiUrl()}/kds-login`);
+          set({ user: response.data.user });
+          return response.data.user;
+        } catch (error) {
+          throw new Error(error.response?.data?.error || 'KDS login failed');
+        }
+      },
+ 
       logout: () => set({ user: null }),
 
       fetchUsers: async () => {

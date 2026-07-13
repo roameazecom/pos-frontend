@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 import StatCards from './StatCards';
 import SalesChart from './SalesChart';
 import FinancialCharts from './FinancialCharts';
@@ -6,9 +7,41 @@ import RunningStatusViews from './RunningStatusViews';
 
 export default function AdminDashboard() {
   const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }));
+  const [serverIp, setServerIp] = useState('Loading...');
+  const [serverPort, setServerPort] = useState('5000');
+
+  useEffect(() => {
+    axios.get('/api/config/server-ip')
+      .then(res => {
+        setServerIp(res.data.ip);
+        setServerPort(res.data.port);
+      })
+      .catch(err => {
+        console.error('Failed to get server IP:', err);
+        setServerIp('localhost');
+      });
+  }, []);
 
   return (
     <div className="flex flex-col space-y-6 overflow-y-auto pb-8 p-4 lg:p-6 bg-surface-950">
+      
+      {/* Local Server IP Connection Info Banner */}
+      <div className="bg-blue-50 border-l-4 border-blue-500 rounded-xl p-4 shadow-sm animate-fade-in">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+            <span className="text-lg">📶</span>
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-blue-800">LOCAL SERVER WI-FI CONNECTION IP</h3>
+            <p className="text-xs text-blue-700 font-bold mt-0.5">
+              Connect Waiters' Phones & TVs to: <span className="underline select-all text-sm bg-blue-200 px-1.5 py-0.5 rounded text-blue-900">http://{serverIp}:{serverPort}</span>
+            </p>
+            <p className="text-[10px] text-blue-500 mt-1">
+              * Note: Make sure all devices are connected to the same Wi-Fi router.
+            </p>
+          </div>
+        </div>
+      </div>
       {/* Policy Banner */}
       <div className="bg-orange-50 border-l-4 border-orange-500 rounded-xl p-4 shadow-sm animate-fade-in">
         <div className="flex">

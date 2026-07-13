@@ -33,6 +33,7 @@ export default function Login() {
   };
 
   const login = useAuthStore((state) => state.login);
+  const kdsLogin = useAuthStore((state) => state.kdsLogin);
   const { restaurantDetails } = usePosStore();
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,6 +46,18 @@ export default function Login() {
     setIsLoading(true);
     try {
       const user = await login(email, password);
+      redirectUser(user.role);
+    } catch (err) {
+      setError(err.message);
+      setIsLoading(false);
+    }
+  };
+
+  const handleKdsLogin = async () => {
+    setError('');
+    setIsLoading(true);
+    try {
+      const user = await kdsLogin();
       redirectUser(user.role);
     } catch (err) {
       setError(err.message);
@@ -243,6 +256,35 @@ export default function Login() {
               )}
             </button>
           </form>
+
+          {/* One-Tap KDS Bypass */}
+          <div className="relative flex py-2 items-center">
+            <div className="flex-grow border-t" style={{ borderColor: 'rgba(15,23,42,0.06)' }} />
+            <span className="flex-shrink mx-4 text-[10px] font-black text-surface-400 uppercase tracking-widest">Kitchen Screen / Android TV</span>
+            <div className="flex-grow border-t" style={{ borderColor: 'rgba(15,23,42,0.06)' }} />
+          </div>
+
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={handleKdsLogin}
+            className="w-full py-3.5 rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-all mt-2"
+            style={{
+              background: 'linear-gradient(135deg, rgba(244,63,94,0.1), rgba(244,63,94,0.05))',
+              border: '1px solid rgba(244,63,94,0.25)',
+              color: '#f43f5e',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(244,63,94,0.15)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'linear-gradient(135deg, rgba(244,63,94,0.1), rgba(244,63,94,0.05))';
+            }}
+          >
+            <ChefHat className="w-4 h-4" />
+            <span>One-Tap KDS Login</span>
+          </button>
         </div>
 
         {/* Server IP Config Button is now hidden (access by clicking logo 5 times) */}
