@@ -9,7 +9,16 @@ const getApiUrl = () => {
       localStorage.setItem('POS_SERVER_URL', 'https://apn.happypiecafe.in');
       return 'https://apn.happypiecafe.in/api/auth';
     }
-    const base = saved || import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    let base = saved;
+    if (!base) {
+      const hostname = window.location.hostname;
+      const port = window.location.port;
+      if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.')) {
+        base = `http://${hostname}${port ? ':' + port : ''}`;
+      } else {
+        base = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+      }
+    }
     return `${base.replace(/\/$/, '')}/api/auth`;
   }
   return 'http://localhost:5000/api/auth';
