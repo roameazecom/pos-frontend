@@ -130,7 +130,8 @@ export default function QuickBill() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full bg-surface-950 overflow-hidden relative font-sans">
+    <div className="flex flex-col lg:flex-row h-screen max-h-screen bg-surface-950 overflow-hidden relative font-sans"
+         style={{ height: '100vh', minHeight: '100vh' }}>
 
       {/* Ambient Background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -254,7 +255,8 @@ export default function QuickBill() {
       </div>
 
       {/* ─── RIGHT PANEL: Cart + Checkout ─────────────────────────── */}
-      <div className="w-full lg:w-[460px] glass-panel border-y-0 border-r-0 flex flex-col z-20 shrink-0 lg:h-full overflow-hidden shadow-[-12px_0_40px_-15px_rgba(0,0,0,0.08)]">
+      <div className="w-full lg:w-[460px] glass-panel border-y-0 border-r-0 flex flex-col z-20 shrink-0 lg:h-full overflow-hidden shadow-[-12px_0_40px_-15px_rgba(0,0,0,0.08)]"
+           style={{ height: '100vh' }}>
 
         {/* Cart Header */}
         <div className="px-5 pt-5 pb-3 border-b border-surface-700/50 bg-surface-900 shrink-0">
@@ -310,13 +312,13 @@ export default function QuickBill() {
               <p className="text-sm text-surface-400 mt-1 text-center">Tap items on the left menu to add them here</p>
             </div>
           ) : (
-            <div className="p-4 space-y-5">
+            <div className="p-3 space-y-3">
 
               {/* Cart Items */}
               <div className="space-y-2">
                 <p className="text-[10px] font-black text-surface-400 uppercase tracking-widest px-1">Order Items</p>
                 {cart.map(item => (
-                  <div key={item.id} className="bg-white border border-surface-700/60 rounded-2xl p-3 flex items-center gap-3 shadow-sm hover:shadow-md transition-all group">
+                  <div key={item.id} className="bg-white border border-surface-700/60 rounded-xl p-2 flex items-center gap-2 shadow-sm hover:shadow-md transition-all group">
                     {/* Item color dot */}
                     <div className="w-2 h-10 rounded-full bg-gradient-to-b from-brand-400 to-indigo-500 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
@@ -364,7 +366,7 @@ export default function QuickBill() {
                       type="text"
                       value={customerName}
                       onChange={e => setCustomerName(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 text-xs font-medium bg-surface-900/70 border border-surface-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 transition-all placeholder:text-surface-550"
+                      className="w-full pl-9 pr-3 py-2 text-xs font-medium bg-surface-900/70 border border-surface-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 transition-all placeholder:text-surface-550"
                       placeholder="Customer Name"
                     />
                   </div>
@@ -374,7 +376,7 @@ export default function QuickBill() {
                       type="tel"
                       value={customerPhone}
                       onChange={e => setCustomerPhone(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 text-xs font-medium bg-surface-900/70 border border-surface-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 transition-all placeholder:text-surface-550"
+                      className="w-full pl-9 pr-3 py-2 text-xs font-medium bg-surface-900/70 border border-surface-700 rounded-xl outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-400 transition-all placeholder:text-surface-550"
                       placeholder="Phone Number"
                     />
                   </div>
@@ -389,13 +391,13 @@ export default function QuickBill() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => setDiscountType('flat')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition-all ${discountType === 'flat' ? 'bg-rose-500 text-white shadow-md' : 'bg-surface-700/60 text-surface-400 hover:bg-surface-700'}`}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-black transition-all ${discountType === 'flat' ? 'bg-rose-500 text-white shadow-md' : 'bg-surface-700/60 text-surface-400 hover:bg-surface-700'}`}
                     >
                       <Tag className="w-3.5 h-3.5" /> Flat (₹)
                     </button>
                     <button
                       onClick={() => setDiscountType('percent')}
-                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-black transition-all ${discountType === 'percent' ? 'bg-rose-500 text-white shadow-md' : 'bg-surface-700/60 text-surface-400 hover:bg-surface-700'}`}
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-xl text-xs font-black transition-all ${discountType === 'percent' ? 'bg-rose-500 text-white shadow-md' : 'bg-surface-700/60 text-surface-400 hover:bg-surface-700'}`}
                     >
                       <Percent className="w-3.5 h-3.5" /> Percent (%)
                     </button>
@@ -407,7 +409,7 @@ export default function QuickBill() {
                       max={discountType === 'percent' ? 100 : cartSubtotal}
                       value={discountAmount || ''}
                       onChange={e => setDiscountAmount(Number(e.target.value))}
-                      className="w-full px-4 py-2.5 text-sm font-bold bg-white border border-surface-700 rounded-xl outline-none focus:ring-2 focus:ring-rose-400/30 focus:border-rose-400 transition-all placeholder:text-surface-500 placeholder:font-medium"
+                      className="w-full px-4 py-2 text-sm font-bold bg-white border border-surface-700 rounded-xl outline-none focus:ring-2 focus:ring-rose-400/30 focus:border-rose-400 transition-all placeholder:text-surface-500 placeholder:font-medium"
                       placeholder={discountType === 'flat' ? 'Enter discount in ₹' : 'Enter discount %'}
                     />
                     {computedDiscount > 0 && (
@@ -424,11 +426,11 @@ export default function QuickBill() {
         </div>
 
         {/* ─── Footer: Totals + Payment ─── */}
-        <div className="shrink-0 border-t border-surface-700/60 bg-white/60 backdrop-blur-xl p-4 lg:p-5 space-y-4">
+        <div className="shrink-0 border-t border-surface-700/60 bg-white/60 backdrop-blur-xl p-3 space-y-3">
 
           {/* Bill Breakdown */}
           {cart.length > 0 && (
-            <div className="bg-surface-800/80 rounded-2xl p-4 border border-surface-700/50 space-y-2">
+            <div className="bg-surface-800/80 rounded-xl p-3 border border-surface-700/50 space-y-1.5">
               <div className="flex justify-between text-xs font-bold text-surface-400">
                 <span>Subtotal</span>
                 <span>₹{cartSubtotal.toFixed(2)}</span>
@@ -468,7 +470,7 @@ export default function QuickBill() {
                 <button
                   onClick={() => handleSettleBill('Cash')}
                   disabled={isProcessing}
-                  className="relative flex flex-col items-center justify-center gap-1 py-4 bg-gradient-to-br from-emerald-500 to-green-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-500/25 active:scale-95 transition-all disabled:opacity-60 hover:shadow-emerald-500/40 hover:shadow-xl overflow-hidden group"
+                  className="relative flex flex-col items-center justify-center gap-1 py-3 bg-gradient-to-br from-emerald-500 to-green-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-500/25 active:scale-95 transition-all disabled:opacity-60 hover:shadow-emerald-500/40 hover:shadow-xl overflow-hidden group"
                 >
                   <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                   {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Banknote className="w-5 h-5 relative z-10" />}
@@ -477,7 +479,7 @@ export default function QuickBill() {
                 <button
                   onClick={() => handleSettleBill('UPI')}
                   disabled={isProcessing}
-                  className="relative flex flex-col items-center justify-center gap-1 py-4 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-500/25 active:scale-95 transition-all disabled:opacity-60 hover:shadow-indigo-500/40 hover:shadow-xl overflow-hidden group"
+                  className="relative flex flex-col items-center justify-center gap-1 py-3 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-500/25 active:scale-95 transition-all disabled:opacity-60 hover:shadow-indigo-500/40 hover:shadow-xl overflow-hidden group"
                 >
                   <div className="absolute inset-0 bg-white/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                   {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5 relative z-10" />}
@@ -486,7 +488,7 @@ export default function QuickBill() {
                 <button
                   onClick={() => handleSettleBill('Card')}
                   disabled={isProcessing}
-                  className="relative col-span-2 flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-surface-300 to-surface-400 text-white rounded-2xl font-black shadow-xl active:scale-95 transition-all disabled:opacity-60 overflow-hidden group"
+                  className="relative col-span-2 flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-surface-300 to-surface-400 text-white rounded-2xl font-black shadow-xl active:scale-95 transition-all disabled:opacity-60 overflow-hidden group"
                 >
                   <div className="absolute inset-0 bg-white/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                   {isProcessing ? <Loader2 className="w-5 h-5 animate-spin" /> : <CreditCard className="w-5 h-5 relative z-10" />}

@@ -206,8 +206,8 @@ export default function Billing() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-full overflow-hidden relative font-sans"
-         style={{ background: '#f8fafc', minHeight: '100vh' }}>
+    <div className="flex flex-col lg:flex-row h-screen max-h-screen overflow-hidden relative font-sans"
+         style={{ background: '#f8fafc', height: '100vh' }}>
 
       {/* Ambient glows */}
       <div className="fixed top-0 right-0 w-[40%] h-[40%] rounded-full pointer-events-none"
@@ -550,9 +550,9 @@ export default function Billing() {
             </div>
 
             {/* Totals + Payment */}
-            <div className="shrink-0 p-6 font-sans text-left" style={{ borderTop: '1px dashed rgba(0, 0, 0, 0.1)' }}>
+            <div className="shrink-0 p-4 font-sans text-left" style={{ borderTop: '1px dashed rgba(0, 0, 0, 0.1)' }}>
               {/* GST Toggle Checkbox */}
-              <div className="flex justify-between items-center p-3 rounded-2xl mb-4 text-left shadow-sm"
+              <div className="flex justify-between items-center p-2.5 rounded-2xl mb-2 text-left shadow-sm"
                    style={{ background: 'rgba(0,0,0,0.02)', border: '1px solid rgba(0,0,0,0.06)' }}>
                 <div>
                   <span className="text-xs font-black text-slate-800 block">Apply GST ({restaurantDetails?.tax_percent || 5}%)</span>
@@ -567,7 +567,7 @@ export default function Billing() {
                 />
               </div>
 
-              <div className="space-y-2 mb-5">
+              <div className="space-y-1 mb-2">
                 <div className="flex justify-between text-sm font-bold" style={{ color: 'rgba(15, 23, 42, 0.55)' }}>
                   <span>Subtotal</span><span className="text-surface-100">₹{subtotal.toFixed(2)}</span>
                 </div>
@@ -575,14 +575,14 @@ export default function Billing() {
                   <span>Tax ({applyGst ? (restaurantDetails?.tax_percent || 5) : 0}%)</span><span>₹{calculatedTax.toFixed(2)}</span>
                 </div>
               </div>
-              <div className="flex justify-between items-center pt-4 mb-5" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
+              <div className="flex justify-between items-center pt-2 mb-2.5" style={{ borderTop: '1px solid rgba(0, 0, 0, 0.08)' }}>
                 <span className="text-lg font-black text-surface-100 uppercase tracking-wide">Total</span>
                 <span className="text-4xl font-black gradient-text">₹{total.toFixed(2)}</span>
               </div>
               {/* 1. Print Unpaid Bill (Estimate) Button */}
               <button
                 onClick={handlePrintUnpaidBill}
-                className="w-full flex items-center justify-center gap-2 py-3 mb-4 rounded-xl font-bold text-xs transition-all border border-orange-200 text-orange-600 bg-orange-50/50 hover:bg-orange-100/60 active:scale-95 shadow-sm"
+                className="w-full flex items-center justify-center gap-2 py-2.5 mb-2.5 rounded-xl font-bold text-xs transition-all border border-orange-200 text-orange-600 bg-orange-50/50 hover:bg-orange-100/60 active:scale-95 shadow-sm"
               >
                 <Printer className="w-4 h-4 shrink-0" />
                 <span>Print Customer Bill (Unpaid)</span>
@@ -594,7 +594,7 @@ export default function Billing() {
               </label>
 
               {/* 2. Compact payment modes selection */}
-              <div className="flex gap-2 mb-4">
+              <div className="flex gap-2 mb-3">
                 {[
                   { label: 'Cash', type: 'Cash', color: '#047857', bg: 'rgba(52,211,153,0.1)', border: 'rgba(52,211,153,0.18)' },
                   { label: 'UPI', type: 'UPI', color: '#6d28d9', bg: 'rgba(167,139,250,0.1)', border: 'rgba(167,139,250,0.18)' },
@@ -603,7 +603,7 @@ export default function Billing() {
                   <button
                     key={type}
                     onClick={() => handleCheckoutClick(type)}
-                    className="flex-1 flex items-center justify-center py-2.5 rounded-xl font-black text-xs transition-all hover-lift active:scale-95"
+                    className="flex-1 flex items-center justify-center py-2 rounded-xl font-black text-xs transition-all hover-lift active:scale-95"
                     style={{ background: bg, border: `1px solid ${border}`, color }}
                   >
                     {label}
@@ -614,7 +614,7 @@ export default function Billing() {
               {/* 3. Cancel Entire Order (Manager Authorization Required) */}
               <button
                 onClick={() => setShowOrderCancelModal(true)}
-                className="w-full py-2.5 rounded-xl font-bold text-[10px] uppercase tracking-wider border border-rose-100 text-rose-500 hover:bg-rose-50/50 transition-all active:scale-95"
+                className="w-full py-2 rounded-xl font-bold text-[10px] uppercase tracking-wider border border-rose-100 text-rose-500 hover:bg-rose-50/50 transition-all active:scale-95"
               >
                 Cancel Entire Order
               </button>
